@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ADMIN LANDING PAGE</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
@@ -14,30 +16,29 @@
         }
 
         ::selection {
-            background: linear-gradient(145deg, #a1ffce,#05eebb,#025240);  
-            color: #003d28;  
-            text-shadow: 0 0 10px rgba(86, 209, 183, 0.7);  
-          }
-          
-          ::-moz-selection {
-            background: linear-gradient(145deg, #a1ffce, #05eebb,#025846);  
-            color: #003d28;  
-            text-shadow: 0 0 10px rgba(6, 61, 49, 0.7);  
-          }
-          
-          ::-webkit-scrollbar {
-    width:5px;
-}
+            background: linear-gradient(145deg, #a1ffce, #05eebb, #025240);
+            color: #003d28;
+            text-shadow: 0 0 10px rgba(86, 209, 183, 0.7);
+        }
 
-::-webkit-scrollbar-thumb {
-    background-color: #66cdaa; 
-    border-radius: 10px;
-}
+        ::-moz-selection {
+            background: linear-gradient(145deg, #a1ffce, #05eebb, #025846);
+            color: #003d28;
+            text-shadow: 0 0 10px rgba(6, 61, 49, 0.7);
+        }
 
-::-webkit-scrollbar-track {
-    background-color: #66cdaa;
-}
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
 
+        ::-webkit-scrollbar-thumb {
+            background-color: #66cdaa;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background-color: #66cdaa;
+        }
     </style>
     <script>
 
