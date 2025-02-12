@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ADMIN LANDING PAGE</title>
     <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
@@ -68,92 +68,69 @@
 
         <ul class="space-y-2">
             <li>
-                <a href="<?= base_url('controller_admin_landing/loadView/LandTax'); ?>" class="flex items-center p-2 text-gray-600 rounded-md hover:bg-blue-50 transition 
-       <?= (uri_string() == 'controller_admin_landing/loadView/LandTax') ? 'bg-blue-100 text-blue-900' : '' ?>">
-                    <span
-                        class="material-icons-outlined text-base mr-2 
-            <?= (uri_string() == 'controller_admin_landing/loadView/LandTax') ? 'text-blue-900' : 'text-primary' ?>">account_balance</span>
-                    <span
-                        class="text-sm font-medium <?= (uri_string() == 'controller_admin_landing/loadView/LandTax') ? 'text-blue-900' : '' ?>">Land
-                        Tax</span>
+                <a href="<?= base_url('controller_admin_landing/loadView/LandTax'); ?>"
+                    class="flex items-center p-2 text-gray-600 rounded-md hover:bg-blue-50 transition">
+                    <span class="material-icons-outlined text-base mr-2">account_balance</span>
+                    <span class="text-sm font-medium">Land Tax</span>
                 </a>
             </li>
 
             <li>
-                <a href="<?= base_url('controller_admin_landing/loadView/BackRoom'); ?>" class="flex items-center p-2 text-gray-600 rounded-md hover:bg-blue-50 transition 
-       <?= (uri_string() == 'controller_admin_landing/loadView/BackRoom') ? 'bg-blue-100 text-blue-900' : '' ?>">
-                    <span
-                        class="material-icons-outlined text-base mr-2 
-            <?= (uri_string() == 'controller_admin_landing/loadView/BackRoom') ? 'text-blue-900' : 'text-primary' ?>">meeting_room</span>
-                    <span
-                        class="text-sm font-medium <?= (uri_string() == 'controller_admin_landing/loadView/BackRoom') ? 'text-blue-900' : '' ?>">Backroom</span>
+                <a href="<?= base_url('controller_admin_landing/loadView/BackRoom'); ?>"
+                    class="flex items-center p-2 text-gray-600 rounded-md hover:bg-blue-50 transition">
+                    <span class="material-icons-outlined text-base mr-2">meeting_room</span>
+                    <span class="text-sm font-medium">Backroom</span>
                 </a>
             </li>
 
             <li>
-                <a href="<?= base_url('controller_admin_landing/loadView/Examiners'); ?>" class="flex items-center p-2 text-gray-600 rounded-md hover:bg-blue-50 transition 
-       <?= (uri_string() == 'controller_admin_landing/loadView/Examiners') ? 'bg-blue-100 text-blue-900' : '' ?>">
-                    <span
-                        class="material-icons-outlined text-base mr-2 
-            <?= (uri_string() == 'controller_admin_landing/loadView/Examiners') ? 'text-blue-900' : 'text-primary' ?>">fact_check</span>
-                    <span
-                        class="text-sm font-medium <?= (uri_string() == 'controller_admin_landing/loadView/Examiners') ? 'text-blue-900' : '' ?>">Examiners</span>
+                <a href="<?= base_url('controller_admin_landing/loadView/Examiners'); ?>"
+                    class="flex items-center p-2 text-gray-600 rounded-md hover:bg-blue-50 transition">
+                    <span class="material-icons-outlined text-base mr-2">fact_check</span>
+                    <span class="text-sm font-medium">Examiners</span>
                 </a>
             </li>
 
             <li>
-                <a href="<?= base_url('controller_admin_landing/loadView/BusinessTax'); ?>" class="flex items-center p-2 text-gray-600 rounded-md hover:bg-blue-50 transition 
-       <?= (uri_string() == 'controller_admin_landing/loadView/BusinessTax') ? 'bg-blue-100 text-blue-900' : '' ?>">
-                    <span
-                        class="material-icons-outlined text-base mr-2 
-            <?= (uri_string() == 'controller_admin_landing/loadView/BusinessTax') ? 'text-blue-900' : 'text-primary' ?>">store</span>
-                    <span
-                        class="text-sm font-medium <?= (uri_string() == 'controller_admin_landing/loadView/BusinessTax') ? 'text-blue-900' : '' ?>">Business
-                        Tax</span>
+                <a href="<?= base_url('controller_admin_landing/loadView/BusinessTax'); ?>"
+                    class="flex items-center p-2 text-gray-600 rounded-md hover:bg-blue-50 transition">
+                    <span class="material-icons-outlined text-base mr-2">store</span>
+                    <span class="text-sm font-medium">Business Tax</span>
                 </a>
             </li>
 
             <li>
-                <a href="<?= base_url('controller_admin_landing/loadView/Payment'); ?>" class="flex items-center p-2 text-gray-600 rounded-md hover:bg-blue-50 transition 
-       <?= (uri_string() == 'controller_admin_landing/loadView/Payment') ? 'bg-blue-100 text-blue-900' : '' ?>">
-                    <span
-                        class="material-icons-outlined text-base mr-2 
-            <?= (uri_string() == 'controller_admin_landing/loadView/Payment') ? 'text-blue-900' : 'text-primary' ?>">payment</span>
-                    <span
-                        class="text-sm font-medium <?= (uri_string() == 'controller_admin_landing/loadView/Payment') ? 'text-blue-900' : '' ?>">Payment</span>
+                <a href="<?= base_url('controller_admin_landing/loadView/Payment'); ?>"
+                    class="flex items-center p-2 text-gray-600 rounded-md hover:bg-blue-50 transition">
+                    <span class="material-icons-outlined text-base mr-2">payment</span>
+                    <span class="text-sm font-medium">Payment</span>
                 </a>
             </li>
 
             <li>
-                <a href="<?= base_url('controller_admin_landing/loadView/fireprotection'); ?>" class="flex items-center p-2 text-gray-600 rounded-md hover:bg-blue-50 transition 
-       <?= (uri_string() == 'controller_admin_landing/loadView/fireprotection') ? 'bg-blue-100 text-blue-900' : '' ?>">
-                    <span
-                        class="material-icons-outlined text-base mr-2 
-            <?= (uri_string() == 'controller_admin_landing/loadView/fireprotection') ? 'text-blue-900' : 'text-primary' ?>">local_fire_department</span>
-                    <span
-                        class="text-sm font-medium <?= (uri_string() == 'controller_admin_landing/loadView/fireprotection') ? 'text-blue-900' : '' ?>">Fire
-                        Protection</span>
+                <a href="<?= base_url('controller_admin_landing/loadView/fireprotection'); ?>"
+                    class="flex items-center p-2 text-gray-600 rounded-md hover:bg-blue-50 transition">
+                    <span class="material-icons-outlined text-base mr-2">local_fire_department</span>
+                    <span class="text-sm font-medium">Fire Protection</span>
                 </a>
             </li>
 
             <li>
-                <a href="<?= base_url('controller_admin_landing/loadView/Releasing'); ?>" class="flex items-center p-2 text-gray-600 rounded-md hover:bg-blue-50 transition 
-       <?= (uri_string() == 'controller_admin_landing/loadView/Releasing') ? 'bg-blue-100 text-blue-900' : '' ?>">
-                    <span
-                        class="material-icons-outlined text-base mr-2 
-            <?= (uri_string() == 'controller_admin_landing/loadView/Releasing') ? 'text-blue-900' : 'text-primary' ?>">publish</span>
-                    <span
-                        class="text-sm font-medium <?= (uri_string() == 'controller_admin_landing/loadView/Releasing') ? 'text-blue-900' : '' ?>">Releasing</span>
+                <a href="<?= base_url('controller_admin_landing/loadView/Releasing'); ?>"
+                    class="flex items-center p-2 text-gray-600 rounded-md hover:bg-blue-50 transition">
+                    <span class="material-icons-outlined text-base mr-2">publish</span>
+                    <span class="text-sm font-medium">Releasing</span>
                 </a>
             </li>
-
         </ul>
 
-        <!-- Sidebar Toggle Button -->
-        <button id="toggleSidebar"
-            class="absolute -right-4 top-6 w-8 h-8 flex items-center justify-center bg-primary text-white rounded-full shadow-md transition">
-            <span id="toggleIcon" class="material-icons-outlined text-sm">chevron_left</span>
-        </button>
+        <!-- Logout Button -->
+        <div class="mt-10">
+            <a href="<?= base_url('controller_admin_landing/logout'); ?>"
+                class="flex items-center justify-center bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
+                <i class="fas fa-sign-out-alt mr-2"></i> Logout
+            </a>
+        </div>
     </div>
 
     <!-- Main Content -->
