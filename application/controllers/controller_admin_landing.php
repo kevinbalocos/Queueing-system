@@ -13,7 +13,7 @@ class controller_admin_landing extends CI_Controller {
         $this->load->view('adminpanel/admin_view_landingpage');
     }
 
-    // Load views dynamically based on the link clicked
+    // Load views dynamically based on the link clicke
     public function loadView($view) {
         $data = [];
 
