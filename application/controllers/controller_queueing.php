@@ -63,49 +63,74 @@ class controller_queueing extends CI_Controller
         $reason = $this->input->post('reason'); // Get reason from form input
 
         $this->model_queueing->add_to_queue($name, $reason);
-        redirect('controller_queueing/LandTax');
     }
+
+    public function add_to_backroom() {
+        $name = $this->input->post('name');
+        $reason = $this->input->post('reason');
+        // Call the model method to add a new backroom queue item
+        $this->model_queueing->add_to_backroom($name, $reason);
+    }
+    
+    public function add_to_examiners() {
+        $name = $this->input->post('name');
+        $reason = $this->input->post('reason');
+        $this->model_queueing->add_to_examiners($name, $reason);
+    }
+    
+    public function add_to_businesstax() {
+        $name = $this->input->post('name');
+        $reason = $this->input->post('reason');
+        $this->model_queueing->add_to_businesstax($name, $reason);
+    }
+    
+    public function add_to_payment() {
+        $name = $this->input->post('name');
+        $reason = $this->input->post('reason');
+        $this->model_queueing->add_to_payment($name, $reason);
+    }
+    
+    public function add_to_fireprotection() {
+        $name = $this->input->post('name');
+        $reason = $this->input->post('reason');
+        $this->model_queueing->add_to_fireprotection($name, $reason);
+    }
+    
 
 
     // Proceed from queue to backroom
     public function proceed_to_backroom($id)
     {
         $this->model_queueing->proceed_queue($id, 'backroom');
-        redirect('controller_queueing/LandTax');
     }
 
     // Proceed from backroom to examiners
     public function proceed_to_examiners($id)
     {
         $this->model_queueing->proceed_queue($id, 'examiner');
-        redirect('controller_queueing/BackRoom');
     }
     // Proceed from Examiners to Business Tax
     public function proceed_to_businesstax($id)
     {
         $this->model_queueing->proceed_queue($id, 'businesstax');
-        redirect('controller_queueing/Examiners');
     }
 
     // Proceed from Business Tax to Payment
     public function proceed_to_payment($id)
     {
         $this->model_queueing->proceed_queue($id, 'payment');
-        redirect('controller_queueing/BusinessTax');
     }
 
     // Proceed from Payment to Fire Protection
     public function proceed_to_fireprotection($id)
     {
         $this->model_queueing->proceed_queue($id, 'fireprotection');
-        redirect('controller_queueing/Payment');
     }
 
     // Proceed from Fire Protection to Releasing
     public function proceed_to_releasing($id)
     {
         $this->model_queueing->proceed_queue($id, 'releasing');
-        redirect('controller_queueing/fireprotection');
     }
 
 }

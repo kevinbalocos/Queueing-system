@@ -36,6 +36,69 @@ class model_queueing extends CI_Model
             ->get('queue')
             ->result();
     }
+    public function add_to_backroom($name, $reason) {
+        // Get the last queue number (you may wish to use a common sequence for all statuses)
+        $last_queue = $this->db->select_max('queue_number')->get('queue')->row();
+        $new_queue_number = $last_queue->queue_number + 1;
+    
+        $data = array(
+            'queue_number' => $new_queue_number,
+            'name'         => $name,
+            'reason'       => $reason,
+            'status'       => 'backroom'  // Set status to backroom
+        );
+    
+        return $this->db->insert('queue', $data);
+    }
+    
+    public function add_to_examiners($name, $reason) {
+        $last_queue = $this->db->select_max('queue_number')->get('queue')->row();
+        $new_queue_number = $last_queue->queue_number + 1;
+        $data = array(
+            'queue_number' => $new_queue_number,
+            'name'         => $name,
+            'reason'       => $reason,
+            'status'       => 'examiner'
+        );
+        return $this->db->insert('queue', $data);
+    }
+    
+    public function add_to_businesstax($name, $reason) {
+        $last_queue = $this->db->select_max('queue_number')->get('queue')->row();
+        $new_queue_number = $last_queue->queue_number + 1;
+        $data = array(
+            'queue_number' => $new_queue_number,
+            'name'         => $name,
+            'reason'       => $reason,
+            'status'       => 'businesstax'
+        );
+        return $this->db->insert('queue', $data);
+    }
+    
+    public function add_to_payment($name, $reason) {
+        $last_queue = $this->db->select_max('queue_number')->get('queue')->row();
+        $new_queue_number = $last_queue->queue_number + 1;
+        $data = array(
+            'queue_number' => $new_queue_number,
+            'name'         => $name,
+            'reason'       => $reason,
+            'status'       => 'payment'
+        );
+        return $this->db->insert('queue', $data);
+    }
+    
+    public function add_to_fireprotection($name, $reason) {
+        $last_queue = $this->db->select_max('queue_number')->get('queue')->row();
+        $new_queue_number = $last_queue->queue_number + 1;
+        $data = array(
+            'queue_number' => $new_queue_number,
+            'name'         => $name,
+            'reason'       => $reason,
+            'status'       => 'fireprotection'
+        );
+        return $this->db->insert('queue', $data);
+    }
+    
 
 
     // Get the first in queue
