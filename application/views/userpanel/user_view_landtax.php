@@ -74,6 +74,15 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
         </select>
         <button type="submit" class="mt-2 w-full bg-green-500 text-white py-2 rounded">Add to Queue</button>
       </form>
+
+      <!-- Logout Button -->
+      <div class="mt-10">
+        <a href="<?= base_url('controller_admin_landing/logout'); ?>"
+          class="flex items-center justify-center bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
+          <i class="fas fa-sign-out-alt mr-2"></i> Logout
+        </a>
+      </div>
+
     </div>
   </div>
 </body>

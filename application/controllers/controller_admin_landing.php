@@ -1,20 +1,43 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') or exit('No direct script access allowed');
 
-class controller_admin_landing extends CI_Controller {
-
-    public function __construct() {
+class controller_admin_landing extends CI_Controller
+{
+    public function __construct()
+    {
         parent::__construct();
         $this->load->model('model_queueing');
+
+        // Check if the user is logged in
+        if (!$this->session->userdata('logged_in')) {
+            redirect('controller_login'); // Redirect to login page
+            exit;
+        }
+
+        // Get user role from session
+        $this->user_role = strtolower($this->session->userdata('role'));
     }
 
-    // Admin Landing Page
-    public function AdminLandingPage() {
+    // Admin Landing Page (Only Admins can access)
+    public function AdminLandingPage()
+    {
+        if ($this->user_role !== 'admin') {
+            redirect('controller_login'); // Prevent unauthorized access
+            exit;
+        }
+
         $this->load->view('adminpanel/admin_view_landingpage');
     }
 
-    // Load views dynamically based on the link clicke
-    public function loadView($view) {
+    // Logout function
+    public function logout()
+    {
+        $this->session->sess_destroy(); // Destroy session
+        redirect('controller_login');   // Redirect to login page
+    }
+    // Load views dynamically based on the link clicked
+    public function loadView($view)
+    {
         $data = [];
 
         // Load data for each view
