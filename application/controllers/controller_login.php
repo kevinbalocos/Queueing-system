@@ -38,6 +38,20 @@ class controller_login extends CI_Controller
                 redirect('controller_admin_landing/AdminLandingPage');
             } elseif ($role == 'landtax') {
                 redirect('controller_queueing/LandTax');
+            } elseif ($role == 'backroom') {
+                redirect('controller_queueing/Backroom');
+            } elseif ($role == 'examiners') {
+                redirect('controller_queueing/examiners');
+            } elseif ($role == 'businesstax') {
+                redirect('controller_queueing/businesstax');
+            } elseif ($role == 'payment') {
+                redirect('controller_queueing/payment');
+            } elseif ($role == 'fireprotection') {
+                redirect('controller_queueing/fireprotection');
+            } elseif ($role == 'releasing') {
+                redirect('controller_queueing/releasing');
+            } elseif ($role == 'landtax') {
+                redirect('controller_queueing/LandTax');
             } else {
                 redirect('controller_login'); // Default redirection
             }

@@ -8,66 +8,75 @@ class controller_admin_landing extends CI_Controller
         parent::__construct();
         $this->load->model('model_queueing');
 
-        // Check if the user is logged in
         if (!$this->session->userdata('logged_in')) {
-            redirect('controller_login'); // Redirect to login page
+            redirect('controller_login'); 
             exit;
         }
 
-        // Get user role from session
         $this->user_role = strtolower($this->session->userdata('role'));
     }
 
-    // Admin Landing Page (Only Admins can access)
     public function AdminLandingPage()
     {
         if ($this->user_role !== 'admin') {
-            redirect('controller_login'); // Prevent unauthorized access
+            redirect('controller_login'); 
             exit;
         }
 
         $this->load->view('adminpanel/admin_view_landingpage');
     }
 
-    // Logout function
+    public function UserLandingPage()
+    {
+        $this->load->view('userpanel/user_view_landingpage');
+    }
+
+
+
     public function logout()
     {
-        $this->session->sess_destroy(); // Destroy session
-        redirect('controller_login');   // Redirect to login page
+        $this->session->sess_destroy(); 
+        redirect('controller_login');  
     }
-    // Load views dynamically based on the link clicked
     public function loadView($view)
     {
         $data = [];
-
-        // Load data for each view
-        if ($view == 'LandTax') {
-            $data['queue'] = $this->model_queueing->get_queue();
-            $data['first'] = $this->model_queueing->get_first_in_queue();
-            $content = $this->load->view('userpanel/user_view_landtax', $data, TRUE);
-        } elseif ($view == 'BackRoom') {
-            $data['backroom'] = $this->model_queueing->get_backroom();
-            $content = $this->load->view('userpanel/user_view_backroom', $data, TRUE);
-        } elseif ($view == 'Examiners') {
-            $data['examiners'] = $this->model_queueing->get_examiners();
-            $content = $this->load->view('userpanel/user_view_examiners', $data, TRUE);
-        } elseif ($view == 'BusinessTax') {
-            $data['businesstax'] = $this->model_queueing->get_businesstax();
-            $content = $this->load->view('userpanel/user_view_businesstax', $data, TRUE);
-        } elseif ($view == 'Payment') {
-            $data['payment'] = $this->model_queueing->get_payment();
-            $content = $this->load->view('userpanel/user_view_payment', $data, TRUE);
-        } elseif ($view == 'fireprotection') {
-            $data['fireprotection'] = $this->model_queueing->get_fireprotection();
-            $content = $this->load->view('userpanel/user_view_fireprotection', $data, TRUE);
-        } elseif ($view == 'Releasing') {
-            $data['releasing'] = $this->model_queueing->get_releasing();
-            $content = $this->load->view('userpanel/user_view_releasing', $data, TRUE);
-        } else {
-            $content = "<p class='text-red-500'>Invalid section selected.</p>";
+        $content = '';
+    
+        switch ($view) {
+            case 'LandTax':
+                $data['queue'] = $this->model_queueing->get_queue();
+                $data['first'] = $this->model_queueing->get_first_in_queue();
+                $content = $this->load->view('adminpanel/admin_view_landtax', $data, TRUE);
+                break;
+            case 'BackRoom':
+                $data['backroom'] = $this->model_queueing->get_backroom();
+                $content = $this->load->view('adminpanel/admin_view_backroom', $data, TRUE);
+                break;
+            case 'Examiners':
+                $data['examiners'] = $this->model_queueing->get_examiners();
+                $content = $this->load->view('adminpanel/admin_view_examiners', $data, TRUE);
+                break;
+            case 'BusinessTax':
+                $data['businesstax'] = $this->model_queueing->get_businesstax();
+                $content = $this->load->view('adminpanel/admin_view_businesstax', $data, TRUE);
+                break;
+            case 'Payment':
+                $data['payment'] = $this->model_queueing->get_payment();
+                $content = $this->load->view('adminpanel/admin_view_payment', $data, TRUE);
+                break;
+            case 'FireProtection':
+                $data['fireprotection'] = $this->model_queueing->get_fireprotection();
+                $content = $this->load->view('adminpanel/admin_view_fireprotection', $data, TRUE);
+                break;
+            case 'Releasing':
+                $data['releasing'] = $this->model_queueing->get_releasing();
+                $content = $this->load->view('adminpanel/admin_view_releasing', $data, TRUE);
+                break;
+            default:
+                $content = "<p class='text-red-500'>Invalid section selected.</p>";
         }
-
-        // Pass the dynamic content to the main admin page
+    
         $this->load->view('adminpanel/admin_view_landingpage', ['content' => $content]);
     }
-}
+}    
