@@ -78,4 +78,5 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
   </div>
 </body>
 
+
 </html>

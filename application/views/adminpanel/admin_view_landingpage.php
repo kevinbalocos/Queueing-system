@@ -183,6 +183,7 @@
             toggleIcon.textContent = sidebar.classList.contains('-translate-x-64') ? 'chevron_right' : 'chevron_left';
         });
     </script>
+    
 
 </body>
 
