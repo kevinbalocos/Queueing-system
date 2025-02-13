@@ -22,7 +22,7 @@
                 </div>
             <?php endforeach; ?>
         </div>
-        
+
     </div>
 
 </body>
