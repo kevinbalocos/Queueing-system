@@ -108,7 +108,7 @@
             </li>
 
             <li>
-                <a href="<?= base_url('controller_admin_landing/loadView/fireprotection'); ?>"
+                <a href="<?= base_url('controller_admin_landing/loadView/FireProtection'); ?>"
                     class="flex items-center p-2 text-gray-600 rounded-md hover:bg-blue-50 transition">
                     <span class="material-icons-outlined text-base mr-2">local_fire_department</span>
                     <span class="text-sm font-medium">Fire Protection</span>
@@ -160,6 +160,7 @@
             toggleIcon.textContent = sidebar.classList.contains('-translate-x-64') ? 'chevron_right' : 'chevron_left';
         });
     </script>
+    
 
 </body>
 

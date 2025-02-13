@@ -64,16 +64,6 @@ class controller_login extends CI_Controller
 
             if ($role == 'admin') {
                 redirect('controller_admin_landing/AdminLandingPage');
-            } elseif ($role == 'backroom') {
-                redirect('controller_queueing/BackRoom');
-            } elseif ($role == 'examiners') {
-                redirect('controller_queueing/Examiners');
-            } elseif ($role == 'businesstax') {
-                redirect('controller_queueing/BusinessTax');
-            } elseif ($role == 'payment') {
-                redirect('controller_queueing/Payment');
-            } elseif ($role == 'fireprotection') {
-                redirect('controller_queueing/fireprotection');
             } elseif ($role == 'landtax') {
                 redirect('controller_queueing/LandTax');
             } elseif ($role == 'releasing') {
