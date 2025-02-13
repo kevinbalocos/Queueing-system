@@ -32,9 +32,15 @@ class controller_admin_landing extends CI_Controller
     // Logout function
     public function logout()
     {
-        $this->session->sess_destroy(); // Destroy session
-        redirect('controller_login');   // Redirect to login page
+        $this->session->sess_destroy();
+        setcookie("logged_in", "", time() - 3600, "/"); // Expire the cookie
+        header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+        header("Pragma: no-cache");
+        header("Expires: 0");
+        redirect('controller_login');
     }
+
+
     // Load views dynamically based on the link clicked
     public function loadView($view)
     {

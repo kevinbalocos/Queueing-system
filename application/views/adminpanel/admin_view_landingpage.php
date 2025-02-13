@@ -137,10 +137,10 @@
     <div class="flex-1 p-6">
         <div id="content" class="bg-white p-4 shadow-md rounded-md">
             <?php if ($this->session->flashdata('success')): ?>
-  <div class="bg-green-200 text-green-800 p-3 rounded mb-4 text-center">
-    <?= $this->session->flashdata('success'); ?>
-  </div>
-<?php endif; ?>
+                <div class="bg-green-200 text-green-800 p-3 rounded mb-4 text-center">
+                    <?= $this->session->flashdata('success'); ?>
+                </div>
+            <?php endif; ?>
 
             <?php if (isset($content))
                 echo $content; ?>

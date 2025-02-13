@@ -1,5 +1,5 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') or exit('No direct script access allowed');
 
 class controller_queueing extends CI_Controller
 {
@@ -70,8 +70,10 @@ class controller_queueing extends CI_Controller
         redirect("controller_admin_landing/loadView/{$current_view}");
     }
 
+
     // Add to Backroom Queue
-    public function add_to_backroom() {
+    public function add_to_backroom()
+    {
         $name = $this->input->post('name');
         $reason = $this->input->post('reason');
 
@@ -80,9 +82,10 @@ class controller_queueing extends CI_Controller
         $current_view = $this->input->get('current_view') ? $this->input->get('current_view') : 'BackRoom';
         redirect("controller_admin_landing/loadView/{$current_view}");
     }
-    
+
     // Add to Examiners Queue
-    public function add_to_examiners() {
+    public function add_to_examiners()
+    {
         $name = $this->input->post('name');
         $reason = $this->input->post('reason');
 
@@ -91,9 +94,10 @@ class controller_queueing extends CI_Controller
         $current_view = $this->input->get('current_view') ? $this->input->get('current_view') : 'Examiners';
         redirect("controller_admin_landing/loadView/{$current_view}");
     }
-    
+
     // Add to Business Tax Queue
-    public function add_to_businesstax() {
+    public function add_to_businesstax()
+    {
         $name = $this->input->post('name');
         $reason = $this->input->post('reason');
 
@@ -102,9 +106,10 @@ class controller_queueing extends CI_Controller
         $current_view = $this->input->get('current_view') ? $this->input->get('current_view') : 'BusinessTax';
         redirect("controller_admin_landing/loadView/{$current_view}");
     }
-    
+
     // Add to Payment Queue
-    public function add_to_payment() {
+    public function add_to_payment()
+    {
         $name = $this->input->post('name');
         $reason = $this->input->post('reason');
 
@@ -113,9 +118,10 @@ class controller_queueing extends CI_Controller
         $current_view = $this->input->get('current_view') ? $this->input->get('current_view') : 'Payment';
         redirect("controller_admin_landing/loadView/{$current_view}");
     }
-    
+
     // Add to Fire Protection Queue
-    public function add_to_fireprotection() {
+    public function add_to_fireprotection()
+    {
         $name = $this->input->post('name');
         $reason = $this->input->post('reason');
 
@@ -134,7 +140,8 @@ class controller_queueing extends CI_Controller
         $current_view = $this->input->get('current_view') ? $this->input->get('current_view') : 'LandTax';
         redirect("controller_admin_landing/loadView/{$current_view}");
     }
-    
+
+
     public function proceed_to_examiners($id)
     {
         $this->model_queueing->proceed_queue($id, 'examiner');
@@ -142,7 +149,7 @@ class controller_queueing extends CI_Controller
         $current_view = $this->input->get('current_view') ? $this->input->get('current_view') : 'BackRoom';
         redirect("controller_admin_landing/loadView/{$current_view}");
     }
-    
+
     public function proceed_to_businesstax($id)
     {
         $this->model_queueing->proceed_queue($id, 'businesstax');
@@ -174,4 +181,13 @@ class controller_queueing extends CI_Controller
         $current_view = $this->input->get('current_view') ? $this->input->get('current_view') : 'fireprotection';
         redirect("controller_admin_landing/loadView/{$current_view}");
     }
+    // private function sendToWebSocket($data)
+    // {
+    //     $socket = fsockopen("localhost", 8080); // Connect to WebSocket server
+    //     if ($socket) {
+    //         fwrite($socket, json_encode($data));
+    //         fclose($socket);
+    //     }
+    // }
+
 }
