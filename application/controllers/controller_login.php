@@ -8,40 +8,52 @@ class controller_login extends CI_Controller
         parent::__construct();
         $this->load->model('model_login');
         $this->load->library('session');
+        $this->load->helper('url');
     }
 
     public function index()
     {
         // Check if user is already logged in
         if ($this->session->userdata('logged_in')) {
-            // Redirect based on their role
             $role = strtolower($this->session->userdata('role'));
 
-            if ($role == 'admin') {
-                redirect('controller_admin_landing/AdminLandingPage');
-            } elseif ($role == 'backroom') {
-                redirect('controller_queueing/BackRoom');
-            } elseif ($role == 'examiners') {
-                redirect('controller_queueing/Examiners');
-            } elseif ($role == 'businesstax') {
-                redirect('controller_queueing/BusinessTax');
-            } elseif ($role == 'payment') {
-                redirect('controller_queueing/Payment');
-            } elseif ($role == 'fireprotection') {
-                redirect('controller_queueing/fireprotection');
-            } elseif ($role == 'landtax') {
-                redirect('controller_queueing/LandTax');
-            } elseif ($role == 'releasing') {
-                redirect('controller_queueing/Releasing');
-            } else {
-                redirect('controller_admin_landing/AdminLandingPage'); // Default redirection
+            switch ($role) {
+                case 'superadmin':
+                    redirect('SuperAdmin');
+                    break;
+                case 'admin':
+                    redirect('controller_admin_landing/AdminLandingPage');
+                    break;
+                case 'backroom':
+                    redirect('controller_queueing/BackRoom');
+                    break;
+                case 'examiners':
+                    redirect('controller_queueing/Examiners');
+                    break;
+                case 'businesstax':
+                    redirect('controller_queueing/BusinessTax');
+                    break;
+                case 'payment':
+                    redirect('controller_queueing/Payment');
+                    break;
+                case 'fireprotection':
+                    redirect('controller_queueing/FireProtection');
+                    break;
+                case 'landtax':
+                    redirect('controller_queueing/LandTax');
+                    break;
+                case 'releasing':
+                    redirect('controller_queueing/Releasing');
+                    break;
+                default:
+                    redirect('controller_admin_landing/AdminLandingPage');
+                    break;
             }
         }
 
         // Show the login page if not logged in
         $this->load->view('userlogin/user_view_login');
     }
-
 
     public function login_process()
     {
@@ -59,17 +71,23 @@ class controller_login extends CI_Controller
             ];
             $this->session->set_userdata($session_data);
 
-            // Convert role to lowercase to prevent case-sensitive issues
-            $role = strtolower($user->role);
-
-            if ($role == 'admin') {
-                redirect('controller_admin_landing/AdminLandingPage');
-            } elseif ($role == 'landtax') {
-                redirect('controller_queueing/LandTax');
-            } elseif ($role == 'releasing') {
-                redirect('controller_queueing/Releasing');
-            } else {
-                redirect('controller_login'); // Default redirection
+            // Redirect based on role
+            switch (strtolower($user->role)) {
+                case 'superadmin':
+                    redirect('SuperAdmin'); // Now redirects correctly to Super Admin dashboard
+                    break;
+                case 'admin':
+                    redirect('controller_admin_landing/AdminLandingPage');
+                    break;
+                case 'landtax':
+                    redirect('controller_queueing/LandTax');
+                    break;
+                case 'releasing':
+                    redirect('controller_queueing/Releasing');
+                    break;
+                default:
+                    redirect('controller_login'); // Default redirection
+                    break;
             }
         } else {
             $this->session->set_flashdata('error', 'Invalid username or password.');
@@ -77,15 +95,13 @@ class controller_login extends CI_Controller
         }
     }
 
-
     public function logout()
     {
         $this->session->sess_destroy();
-        setcookie("logged_in", "", time() - 3600, "/"); // Expire the cookie
+        setcookie("logged_in", "", time() - 3600, "/");
         header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
         header("Pragma: no-cache");
         header("Expires: 0");
         redirect('controller_login');
     }
-
 }
