@@ -1,5 +1,5 @@
 <?php
-defined('BASEPATH') or exit('No direct script access allowed');
+defined('BASEPATH') OR exit('No direct script access allowed');
 
 class controller_queueing extends CI_Controller
 {
@@ -57,67 +57,111 @@ class controller_queueing extends CI_Controller
         $this->load->view('userpanel/user_view_releasing', $data);
     }
 
-    // Add to Land Tax Queue
-    public function add_to_queue()
+
+    //
+    public function AdminLandTax()
     {
-        $name = $this->input->post('name');
-        $reason = $this->input->post('reason'); // Get reason from form input
-
-        $this->model_queueing->add_to_queue($name, $reason);
-        $this->session->set_flashdata('success', 'Queue item added successfully to Land Tax.');
-        // Assume the add form includes a hidden input or query parameter "current_view=LandTax"
-        $current_view = $this->input->get('current_view') ? $this->input->get('current_view') : 'LandTax';
-        redirect("controller_admin_landing/loadView/{$current_view}");
+        $data['queue'] = $this->model_queueing->get_queue();
+        $data['first'] = $this->model_queueing->get_first_in_queue();
+        $this->load->view('adminpanel/admin_view_landtax', $data);
     }
 
-    // Add to Backroom Queue
-    public function add_to_backroom() {
-        $name = $this->input->post('name');
-        $reason = $this->input->post('reason');
-
-        $this->model_queueing->add_to_backroom($name, $reason);
-        $this->session->set_flashdata('success', 'Queue item added successfully to Backroom.');
-        $current_view = $this->input->get('current_view') ? $this->input->get('current_view') : 'BackRoom';
-        redirect("controller_admin_landing/loadView/{$current_view}");
+    // Load Backroom View
+    public function AdminBackRoom()
+    {
+        $data['backroom'] = $this->model_queueing->get_backroom();
+        $this->load->view('adminpanel/admin_view_backroom', $data);
     }
+
+    // Load Examiners View
+    public function AdminExaminers()
+    {
+        $data['examiners'] = $this->model_queueing->get_examiners();
+        $this->load->view('adminpanel/admin_view_examiners', $data);
+    }
+
+    public function AdminBusinessTax()
+    {
+        $data['businesstax'] = $this->model_queueing->get_businesstax();
+        $this->load->view('adminpanel/admin_view_businesstax', $data);
+    }
+
+    public function AdminPayment()
+    {
+        $data['payment'] = $this->model_queueing->get_payment();
+        $this->load->view('adminpanel/admin_view_payment', $data);
+    }
+
+    public function Adminfireprotection()
+    {
+        $data['fireprotection'] = $this->model_queueing->get_fireprotection();
+        $this->load->view('adminpanel/admin_view_fireprotection', $data);
+    }
+
+    public function AdminReleasing()
+    {
+        $data['releasing'] = $this->model_queueing->get_releasing();
+        $this->load->view('adminpanel/admin_view_releasing', $data);
+    }
+
+// Add to Land Tax Queue
+public function add_to_queue()
+{
+    $name = $this->input->post('name');
+    $reason = $this->input->post('reason');
     
-    // Add to Examiners Queue
-    public function add_to_examiners() {
-        $name = $this->input->post('name');
-        $reason = $this->input->post('reason');
-
-        $this->model_queueing->add_to_examiners($name, $reason);
-        $this->session->set_flashdata('success', 'Queue item added successfully to Examiners.');
-        $current_view = $this->input->get('current_view') ? $this->input->get('current_view') : 'Examiners';
-        redirect("controller_admin_landing/loadView/{$current_view}");
-    }
+    $this->model_queueing->add_to_queue($name, $reason);
     
-    // Add to Business Tax Queue
-    public function add_to_businesstax() {
-        $name = $this->input->post('name');
-        $reason = $this->input->post('reason');
+    // Send response for AJAX success notification
+    echo json_encode(['status' => 'success', 'message' => 'Queue item added successfully to Land Tax.']);
+}
 
-        $this->model_queueing->add_to_businesstax($name, $reason);
-        $this->session->set_flashdata('success', 'Queue item added successfully to Business Tax.');
-        $current_view = $this->input->get('current_view') ? $this->input->get('current_view') : 'BusinessTax';
-        redirect("controller_admin_landing/loadView/{$current_view}");
-    }
+public function add_to_backroom() {
+    $name = $this->input->post('name');
+    $reason = $this->input->post('reason');
     
-    // Add to Payment Queue
-    public function add_to_payment() {
-        $name = $this->input->post('name');
-        $reason = $this->input->post('reason');
+    $this->model_queueing->add_to_backroom($name, $reason);
+    
+    // Send JSON response
+    echo json_encode(['status' => 'success', 'message' => 'Queue item added successfully to Backroom.']);
+}
 
-        $this->model_queueing->add_to_payment($name, $reason);
-        $this->session->set_flashdata('success', 'Queue item added successfully to Payment.');
-        $current_view = $this->input->get('current_view') ? $this->input->get('current_view') : 'Payment';
-        redirect("controller_admin_landing/loadView/{$current_view}");
-    }
+public function add_to_examiners() {
+    $name = $this->input->post('name');
+    $reason = $this->input->post('reason');
     
-    // Add to Fire Protection Queue
-    public function add_to_fireprotection() {
-        $name = $this->input->post('name');
-        $reason = $this->input->post('reason');
+    $this->model_queueing->add_to_examiners($name, $reason);
+    
+    // Send JSON response
+    echo json_encode(['status' => 'success', 'message' => 'Queue item added successfully to Examiners.']);
+}
+
+// Add to Business Tax Queue (Updated to JSON response)
+public function add_to_businesstax() {
+    $name = $this->input->post('name');
+    $reason = $this->input->post('reason');
+
+    $this->model_queueing->add_to_businesstax($name, $reason);
+    
+    // Send JSON response
+    echo json_encode(['status' => 'success', 'message' => 'Queue item added successfully to Business Tax.']);
+}
+
+// Add to Payment Queue (Updated to JSON response)
+public function add_to_payment() {
+    $name = $this->input->post('name');
+    $reason = $this->input->post('reason');
+
+    $this->model_queueing->add_to_payment($name, $reason);
+    
+    // Send JSON response
+    echo json_encode(['status' => 'success', 'message' => 'Queue item added successfully to Payment.']);
+}
+
+// Add to Fire Protection Queue (Updated to JSON response)
+public function add_to_fireprotection() {
+    $name = $this->input->post('name');
+    $reason = $this->input->post('reason');
 
     $this->model_queueing->add_to_fireprotection($name, $reason);
     
@@ -128,29 +172,30 @@ class controller_queueing extends CI_Controller
     // Proceed functions with flashdata notifications and redirect
 // Proceed functions with AJAX responses
 
-    public function proceed_to_backroom($id)
-    {
-        $this->model_queueing->proceed_queue($id, 'backroom');
-        $this->session->set_flashdata('success', 'Queue item successfully proceeded to Backroom.');
-        $current_view = $this->input->get('current_view') ? $this->input->get('current_view') : 'LandTax';
-        redirect("controller_admin_landing/loadView/{$current_view}");
-    }
+public function proceed_to_backroom($id)
+{
+    $this->model_queueing->proceed_queue($id, 'backroom');
     
-    public function proceed_to_examiners($id)
-    {
-        $this->model_queueing->proceed_queue($id, 'examiner');
-        $this->session->set_flashdata('success', 'Queue item successfully proceeded to Examiners.');
-        $current_view = $this->input->get('current_view') ? $this->input->get('current_view') : 'BackRoom';
-        redirect("controller_admin_landing/loadView/{$current_view}");
-    }
+    // Send JSON response for AJAX success notification
+    echo json_encode(['status' => 'success', 'message' => 'Queue item successfully proceeded to Backroom.']);
+}
+
+
+public function proceed_to_examiners($id)
+{
+    $this->model_queueing->proceed_queue($id, 'examiner');
     
-    public function proceed_to_businesstax($id)
-    {
-        $this->model_queueing->proceed_queue($id, 'businesstax');
-        $this->session->set_flashdata('success', 'Queue item successfully proceeded to Business Tax.');
-        $current_view = $this->input->get('current_view') ? $this->input->get('current_view') : 'Examiners';
-        redirect("controller_admin_landing/loadView/{$current_view}");
-    }
+    // Send JSON response for AJAX success notification
+    echo json_encode(['status' => 'success', 'message' => 'Queue item successfully proceeded to Examiners.']);
+}
+
+public function proceed_to_businesstax($id)
+{
+    $this->model_queueing->proceed_queue($id, 'businesstax');
+    
+    // Send JSON response for AJAX success notification
+    echo json_encode(['status' => 'success', 'message' => 'Queue item successfully proceeded to Business Tax.']);
+}
 
 public function proceed_to_payment($id)
 {
@@ -168,11 +213,12 @@ public function proceed_to_fireprotection($id)
     echo json_encode(['status' => 'success', 'message' => 'Queue item successfully proceeded to Fire Protection.']);
 }
 
-    public function proceed_to_releasing($id)
-    {
-        $this->model_queueing->proceed_queue($id, 'releasing');
-        $this->session->set_flashdata('success', 'Queue item successfully proceeded to Releasing.');
-        $current_view = $this->input->get('current_view') ? $this->input->get('current_view') : 'fireprotection';
-        redirect("controller_admin_landing/loadView/{$current_view}");
-    }
+public function proceed_to_releasing($id)
+{
+    $this->model_queueing->proceed_queue($id, 'releasing');
+    
+    // Send JSON response for AJAX success notification
+    echo json_encode(['status' => 'success', 'message' => 'Queue item successfully proceeded to Releasing.']);
+}
+
 }

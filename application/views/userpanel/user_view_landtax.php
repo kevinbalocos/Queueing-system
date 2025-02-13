@@ -37,10 +37,11 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
                 Status: Waiting
               </p>
               <a href="<?= base_url('controller_queueing/proceed_to_backroom/' . $item->id); ?>"
-                class="mt-3 inline-block bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
+                class="proceed-btn mt-3 inline-block bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
                 <i class="fa-solid fa-user-check text-2xl"></i>
               </a>
             </div>
+            
           <?php endforeach; ?>
         </div>
       <?php else: ?>

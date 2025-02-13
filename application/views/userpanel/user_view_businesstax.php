@@ -55,7 +55,7 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
                 Status: Waiting
               </p>
               <a href="<?= base_url('controller_queueing/proceed_to_payment/' . $item->id); ?>"
-                 class="mt-3 inline-block bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
+                 class="proceed-btn mt-3 inline-block bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
                 <i class="fa-solid fa-user-check text-2xl"></i>
               </a>
             </div>
@@ -115,7 +115,7 @@ document.querySelector('form').addEventListener('submit', function(e) {
                 close: true,
                 gravity: "top",
                 position: "right",
-                backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)"
+                backgroundColor: "linear-gradient(to right, #00b09b,rgba(15, 156, 185, 0.53))"
             }).showToast();
         }
     })
@@ -155,7 +155,7 @@ document.querySelectorAll('.proceed-btn').forEach(button => {
                     close: true,
                     gravity: "top",
                     position: "right",
-                    backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)"
+                    backgroundColor: "linear-gradient(to right, #00b09b,rgb(60, 9, 188))"
                 }).showToast();
 
                 // Optionally, update the UI (like removing the item from the left section)
