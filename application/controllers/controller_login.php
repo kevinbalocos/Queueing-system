@@ -60,7 +60,7 @@ class controller_login extends CI_Controller
             redirect('controller_login');
         }
     }
-
+s
 
     public function logout()
     {
