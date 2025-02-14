@@ -1,10 +1,11 @@
 <?php
-  $left_items = array_slice($businesstax, 0, 20);
-  $right_items = array_slice($businesstax, 20);
-  $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
+$left_items = array_slice($businesstax, 0, 20);
+$right_items = array_slice($businesstax, 20);
+$grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
   <meta charset="UTF-8" />
@@ -15,6 +16,7 @@
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
 </head>
+
 <body class="bg-gray-100">
   <div class="flex min-h-screen p-5">
     <!-- Left Section (Now Serving - Business Tax) -->
@@ -22,30 +24,40 @@
       <h2 class="text-2xl font-bold text-blue-900 text-center">Now Serving - Business Tax</h2>
       <?php if ($businesstax): ?>
         <div class="mt-3 grid gap-3 bg-blue-50 h-full"
-             style="grid-template-columns: repeat(<?= $grid_cols ?>, 1fr); grid-auto-rows: 1fr;">
+          style="grid-template-columns: repeat(<?= $grid_cols ?>, 1fr); grid-auto-rows: 1fr;">
           <?php foreach ($left_items as $item): ?>
             <div class="p-3 bg-white border rounded-lg flex flex-col justify-center items-center my-3 mx-2">
-              <h3 class="font-semibold <?php 
-                      if(count($left_items)==1){ echo 'text-4xl'; }
-                      elseif(count($left_items)<=2){ echo 'text-3xl'; }
-                      elseif(count($left_items)<=4){ echo 'text-2xl'; }
-                      else{ echo 'text-xl'; }
-                    ?>">
+              <h3 class="font-semibold <?php
+              if (count($left_items) == 1) {
+                echo 'text-4xl';
+              } elseif (count($left_items) <= 2) {
+                echo 'text-3xl';
+              } elseif (count($left_items) <= 4) {
+                echo 'text-2xl';
+              } else {
+                echo 'text-xl';
+              }
+              ?>">
                 <?= $item->queue_number; ?> - <?= $item->name; ?>
               </h3>
               <p class="text-gray-500 text-sm">Reason: <?= $item->reason; ?></p>
-              <p class="text-gray-500 <?php 
-                      if(count($left_items)==1){ echo 'text-2xl'; }
-                      elseif(count($left_items)<=2){ echo 'text-xl'; }
-                      elseif(count($left_items)<=4){ echo 'text-lg'; }
-                      else{ echo 'text-sm'; }
-                    ?>">
+              <p class="text-gray-500 <?php
+              if (count($left_items) == 1) {
+                echo 'text-2xl';
+              } elseif (count($left_items) <= 2) {
+                echo 'text-xl';
+              } elseif (count($left_items) <= 4) {
+                echo 'text-lg';
+              } else {
+                echo 'text-sm';
+              }
+              ?>">
                 Status: Waiting
               </p>
               <a href="<?= base_url('controller_queueing/proceed_to_payment/' . $item->id); ?>"
-   class="proceed-btn mt-3 inline-block bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
-    <i class="fa-solid fa-user-check text-2xl"></i>
-</a>
+                 class="proceed-btn mt-3 inline-block bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
+                <i class="fa-solid fa-user-check text-2xl"></i>
+              </a>
             </div>
           <?php endforeach; ?>
         </div>
@@ -70,8 +82,15 @@
           <option value="Income Tax Filing">Income Tax Filing</option>
           <option value="Business Registration">Business Registration</option>
         </select>
-        <button type="submit" class="mt-2 w-full bg-green-500 text-white py-2 rounded">Add to Business Tax Queue</button>
+        <button type="submit" class="mt-2 w-full bg-green-500 text-white py-2 rounded">Add to Business Tax
+          Queue</button>
       </form>
+      <div class="mt-10">
+        <a href="<?= base_url('controller_admin_landing/logout'); ?>"
+          class="flex items-center justify-center bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
+          <i class="fas fa-sign-out-alt mr-2"></i> Logout
+        </a>
+      </div>
     </div>
   </div>
 
@@ -96,7 +115,7 @@ document.querySelector('form').addEventListener('submit', function(e) {
                 close: true,
                 gravity: "top",
                 position: "right",
-                backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)"
+                backgroundColor: "linear-gradient(to right, #00b09b,rgba(15, 156, 185, 0.53))"
             }).showToast();
         }
     })
@@ -136,7 +155,7 @@ document.querySelectorAll('.proceed-btn').forEach(button => {
                     close: true,
                     gravity: "top",
                     position: "right",
-                    backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)"
+                    backgroundColor: "linear-gradient(to right, #00b09b,rgb(60, 9, 188))"
                 }).showToast();
 
                 // Optionally, update the UI (like removing the item from the left section)
@@ -158,4 +177,5 @@ document.querySelectorAll('.proceed-btn').forEach(button => {
 });
 </script>
 </body>
+
 </html>

@@ -28,77 +28,75 @@ class model_queueing extends CI_Model
     }
 
 
-    // Get all queueing people
-    public function get_queue()
+
+    public function add_to_backroom($name, $reason)
     {
-        return $this->db->where('status', 'landtax')
-            ->order_by('created_at', 'ASC')
-            ->get('queue')
-            ->result();
-    }
-    public function add_to_backroom($name, $reason) {
         // Get the last queue number (you may wish to use a common sequence for all statuses)
         $last_queue = $this->db->select_max('queue_number')->get('queue')->row();
         $new_queue_number = $last_queue->queue_number + 1;
-    
+
         $data = array(
             'queue_number' => $new_queue_number,
-            'name'         => $name,
-            'reason'       => $reason,
-            'status'       => 'backroom'  // Set status to backroom
+            'name' => $name,
+            'reason' => $reason,
+            'status' => 'backroom'  // Set status to backroom
         );
-    
+
         return $this->db->insert('queue', $data);
     }
-    
-    public function add_to_examiners($name, $reason) {
+
+    public function add_to_examiners($name, $reason)
+    {
         $last_queue = $this->db->select_max('queue_number')->get('queue')->row();
         $new_queue_number = $last_queue->queue_number + 1;
         $data = array(
             'queue_number' => $new_queue_number,
-            'name'         => $name,
-            'reason'       => $reason,
-            'status'       => 'examiner'
+            'name' => $name,
+            'reason' => $reason,
+            'status' => 'examiner'
         );
         return $this->db->insert('queue', $data);
     }
-    
-    public function add_to_businesstax($name, $reason) {
+
+    public function add_to_businesstax($name, $reason)
+    {
         $last_queue = $this->db->select_max('queue_number')->get('queue')->row();
         $new_queue_number = $last_queue->queue_number + 1;
         $data = array(
             'queue_number' => $new_queue_number,
-            'name'         => $name,
-            'reason'       => $reason,
-            'status'       => 'businesstax'
+            'name' => $name,
+            'reason' => $reason,
+            'status' => 'businesstax'
         );
         return $this->db->insert('queue', $data);
     }
-    
-    public function add_to_payment($name, $reason) {
+
+    public function add_to_payment($name, $reason)
+    {
         $last_queue = $this->db->select_max('queue_number')->get('queue')->row();
         $new_queue_number = $last_queue->queue_number + 1;
         $data = array(
             'queue_number' => $new_queue_number,
-            'name'         => $name,
-            'reason'       => $reason,
-            'status'       => 'payment'
+            'name' => $name,
+            'reason' => $reason,
+            'status' => 'payment'
         );
         return $this->db->insert('queue', $data);
     }
-    
-    public function add_to_fireprotection($name, $reason) {
+
+    public function add_to_fireprotection($name, $reason)
+    {
         $last_queue = $this->db->select_max('queue_number')->get('queue')->row();
         $new_queue_number = $last_queue->queue_number + 1;
         $data = array(
             'queue_number' => $new_queue_number,
-            'name'         => $name,
-            'reason'       => $reason,
-            'status'       => 'fireprotection'
+            'name' => $name,
+            'reason' => $reason,
+            'status' => 'fireprotection'
         );
         return $this->db->insert('queue', $data);
     }
-    
+
 
 
     // Get the first in queue
@@ -112,7 +110,14 @@ class model_queueing extends CI_Model
     {
         $this->db->where('id', $id)->update('queue', ['status' => $new_status]);
     }
-
+    // Get all queueing people
+    public function get_queue()
+    {
+        return $this->db->where('status', 'landtax')
+            ->order_by('created_at', 'ASC')
+            ->get('queue')
+            ->result();
+    }
     // Get people in backroom
     public function get_backroom()
     {

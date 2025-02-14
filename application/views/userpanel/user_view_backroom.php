@@ -1,13 +1,14 @@
 <?php
-  // Limit the left section to a maximum of 20 items (6 rows × 5 columns)
-  $left_items = array_slice($backroom, 0, 20);
-  // Overflow items go to the right section
-  $right_items = array_slice($backroom, 20);
-  // Determine grid columns: if less than 5 items, use that number; otherwise, use 5 columns.
-  $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
+// Limit the left section to a maximum of 20 items (6 rows × 5 columns)
+$left_items = array_slice($backroom, 0, 20);
+// Overflow items go to the right section
+$right_items = array_slice($backroom, 20);
+// Determine grid columns: if less than 5 items, use that number; otherwise, use 5 columns.
+$grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
@@ -20,6 +21,7 @@
 
   
 </head>
+
 <body class="bg-gray-100">
   <div class="flex min-h-screen p-5">
     <!-- Left Section (Now Serving in Backroom) -->
@@ -27,32 +29,41 @@
       <h2 class="text-2xl font-bold text-blue-900 text-center">Now Serving - Backroom</h2>
       <?php if ($backroom): ?>
         <!-- Grid container using inline style for dynamic columns and equal row heights -->
-        <div class="mt-3 grid gap-3 bg-blue-50 h-full" 
-             style="grid-template-columns: repeat(<?= $grid_cols ?>, 1fr); grid-auto-rows: 1fr;">
+        <div class="mt-3 grid gap-3 bg-blue-50 h-full"
+          style="grid-template-columns: repeat(<?= $grid_cols ?>, 1fr); grid-auto-rows: 1fr;">
           <?php foreach ($left_items as $item): ?>
             <div class="p-3 bg-white border rounded-lg flex flex-col justify-center items-center my-3 mx-2">
-              <h3 class="font-semibold <?php 
-                      if(count($left_items) == 1) { echo 'text-4xl'; } 
-                      elseif(count($left_items) <= 2) { echo 'text-3xl'; }
-                      elseif(count($left_items) <= 4) { echo 'text-2xl'; }
-                      else { echo 'text-xl'; }
-                    ?>">
+              <h3 class="font-semibold <?php
+              if (count($left_items) == 1) {
+                echo 'text-4xl';
+              } elseif (count($left_items) <= 2) {
+                echo 'text-3xl';
+              } elseif (count($left_items) <= 4) {
+                echo 'text-2xl';
+              } else {
+                echo 'text-xl';
+              }
+              ?>">
                 <?= $item->queue_number; ?> - <?= $item->name; ?>
               </h3>
               <p class="text-gray-500 text-sm">Reason: <?= $item->reason; ?></p>
-              <p class="text-gray-500 <?php 
-                      if(count($left_items) == 1) { echo 'text-2xl'; } 
-                      elseif(count($left_items) <= 2) { echo 'text-xl'; }
-                      elseif(count($left_items) <= 4) { echo 'text-lg'; }
-                      else { echo 'text-sm'; }
-                    ?>">
+              <p class="text-gray-500 <?php
+              if (count($left_items) == 1) {
+                echo 'text-2xl';
+              } elseif (count($left_items) <= 2) {
+                echo 'text-xl';
+              } elseif (count($left_items) <= 4) {
+                echo 'text-lg';
+              } else {
+                echo 'text-sm';
+              }
+              ?>">
                 Status: Waiting
               </p>
               <a href="<?= base_url('controller_queueing/proceed_to_examiners/' . $item->id); ?>"
-   class="proceed-btn mt-3 inline-block bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
-    <i class="fa-solid fa-user-check text-2xl"></i>
-</a>
-
+                 class="proceed-btn mt-3 inline-block bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
+                <i class="fa-solid fa-user-check text-2xl"></i>
+              </a>
             </div>
           <?php endforeach; ?>
         </div>
@@ -90,9 +101,17 @@
         </select>
         <button type="submit" class="mt-2 w-full bg-green-500 text-white py-2 rounded">Add to Backroom Queue</button>
       </form>
+      <div class="mt-10">
+        <a href="<?= base_url('controller_admin_landing/logout'); ?>"
+          class="flex items-center justify-center bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
+          <i class="fas fa-sign-out-alt mr-2"></i> Logout
+        </a>
+      </div>
     </div>
   </div>
 </body>
+
+
 <script>
 document.querySelector('form').addEventListener('submit', function(e) {
     e.preventDefault(); // Prevent form submission
@@ -113,7 +132,7 @@ document.querySelector('form').addEventListener('submit', function(e) {
                 close: true,
                 gravity: "top",
                 position: "right",
-                backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)"
+                backgroundColor: "linear-gradient(to right, #00b09b,rgb(25, 187, 205))"
             }).showToast();
         }
     })
@@ -129,9 +148,8 @@ document.querySelector('form').addEventListener('submit', function(e) {
         }).showToast();
     });
 });
+
 </script>
-
-
 <script>
 document.querySelectorAll('.proceed-btn').forEach(button => {
     button.addEventListener('click', function(e) {
@@ -153,7 +171,7 @@ document.querySelectorAll('.proceed-btn').forEach(button => {
                     close: true,
                     gravity: "top",
                     position: "right",
-                    backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)"
+                    backgroundColor: "linear-gradient(to right, #00b09b,rgb(17, 69, 183))"
                 }).showToast();
 
                 // Optionally, update the UI (like removing the item from the left section)
