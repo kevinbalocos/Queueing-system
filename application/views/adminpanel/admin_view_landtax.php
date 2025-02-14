@@ -14,9 +14,10 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Land Tax Queue</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="<?= base_url('assets/css/input.css'); ?>" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <script src="http://localhost:3000/socket.io/socket.io.js"></script>
 
 </head>
 
@@ -64,9 +65,9 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
       </ul>
 
       <!-- Add to Queue Form -->
-      <form action="<?= base_url('controller_queueing/add_to_queue'); ?>" method="post" class="mt-5">
-        <input type="text" name="name" placeholder="Enter Name" required class="border p-2 w-full rounded" />
-        <select name="reason" required class="border p-2 w-full rounded mt-2">
+      <form id="queueForm" class="mt-5">
+        <input type="text" name="name" id="name" placeholder="Enter Name" required class="border p-2 w-full rounded" />
+        <select name="reason" id="reason" required class="border p-2 w-full rounded mt-2">
           <option value="Social Security System">Social Security System</option>
           <option value="Business Permit">Business Permit</option>
           <option value="Driver’s License Renewal">Driver’s License Renewal</option>
@@ -103,7 +104,9 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
                   close: true,
                   gravity: "top",
                   position: "right",
-                  backgroundColor: "linear-gradient(to right, #00b09b,rgb(25, 187, 205))"
+                  style: {
+                    background: "linear-gradient(to right, #00b09b, rgb(25, 187, 205))" // ✅ Correct
+                  }
                 }).showToast();
               }
             })
@@ -163,8 +166,42 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
           });
         });
       </script>
+      <script>
+        document.addEventListener("DOMContentLoaded", function () {
+          var socket = io("http://localhost:3000"); // Connect to Socket.io server
 
+          var queueForm = document.getElementById("queueForm");
 
+          if (queueForm) {
+            queueForm.addEventListener("submit", function (e) {
+              e.preventDefault();
+
+              let formData = new FormData(queueForm);
+
+              fetch("<?= base_url('controller_queueing/add_to_queue'); ?>", {
+                method: "POST",
+                body: formData
+              })
+                .then(response => response.json())
+                .then(data => {
+                  if (data.status === "success") {
+                    socket.emit("newQueueItem", data);
+                    queueForm.reset();
+                  }
+                })
+                .catch(error => console.error("Error:", error));
+            });
+          }
+
+          socket.on("updateQueue", function (data) {
+            let queueList = document.getElementById("queueList");
+            let newItem = document.createElement("li");
+            newItem.className = "p-3 bg-gray-50 border rounded-lg";
+            newItem.textContent = data.queue_number + " - " + data.name;
+            queueList.appendChild(newItem);
+          });
+        });
+      </script>
     </div>
   </div>
 

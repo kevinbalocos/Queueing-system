@@ -123,11 +123,34 @@ class controller_queueing extends CI_Controller
         $name = $this->input->post('name');
         $reason = $this->input->post('reason');
 
-        $this->model_queueing->add_to_queue($name, $reason);
+        // Generate queue number (you can adjust this logic)
+        $queue_number = rand(100, 999);
 
-        // Send response for AJAX success notification
-        echo json_encode(['status' => 'success', 'message' => 'Queue item added successfully to Land Tax.']);
+        // Save to database
+        $this->model_queueing->add_to_queue($queue_number, $name, $reason);
+
+        // Prepare data to send
+        $data = [
+            'queue_number' => $queue_number,
+            'name' => $name,
+            'reason' => $reason
+        ];
+
+        // Send data to WebSocket server
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'header' => 'Content-Type: application/json',
+                'content' => json_encode($data),
+                'timeout' => 5
+            ]
+        ]);
+
+        file_get_contents("http://localhost:3000/newQueueItem", false, $context);
+
+        echo json_encode(['status' => 'success', 'message' => 'Queue item added successfully.']);
     }
+
 
     public function add_to_backroom()
     {
