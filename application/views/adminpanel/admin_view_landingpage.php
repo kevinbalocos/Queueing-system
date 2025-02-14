@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
@@ -160,7 +161,50 @@
             toggleIcon.textContent = sidebar.classList.contains('-translate-x-64') ? 'chevron_right' : 'chevron_left';
         });
     </script>
-    
+    <script>
+        $(document).ready(function () {
+            function loadPage(view, updateUrl = true) {
+                $.ajax({
+                    url: "<?= base_url('controller_admin_landing/loadView/'); ?>" + view,
+                    type: "GET",
+                    dataType: "html",
+                    beforeSend: function () {
+                        $("#content").html('<div class="text-center text-gray-600">Loading...</div>');
+                    },
+                    success: function (response) {
+                        $("#content").html(response);
+
+                        // Update the URL without reloading the page
+                        if (updateUrl) {
+                            history.pushState({ view: view }, "", "<?= base_url('admin/'); ?>" + view);
+                        }
+                    },
+                    error: function () {
+                        $("#content").html('<div class="text-red-500">Failed to load content.</div>');
+                    }
+                });
+            }
+
+            // Handle sidebar clicks
+            $(".sidebar-link").click(function () {
+                let view = $(this).data("view");
+                loadPage(view);
+            });
+
+            // Handle browser back/forward navigation
+            window.onpopstate = function (event) {
+                if (event.state && event.state.view) {
+                    loadPage(event.state.view, false);
+                }
+            };
+
+            // Load the correct page on refresh if a state exists
+            let currentView = window.location.pathname.split("/").pop();
+            if (currentView) {
+                loadPage(currentView, false);
+            }
+        });
+    </script>
 
 </body>
 

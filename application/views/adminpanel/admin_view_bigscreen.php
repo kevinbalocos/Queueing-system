@@ -93,7 +93,7 @@
     <script>
         setInterval(() => {
             location.reload();
-        }, 5000);
+        }, 1000);
     </script>
 </body>
 

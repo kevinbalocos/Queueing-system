@@ -16,7 +16,7 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
   <title>Land Tax Queue</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
 </head>
 
@@ -26,14 +26,17 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
     <div class="flex-1 bg-white p-5 rounded-lg shadow-md flex flex-col">
       <h2 class="text-2xl font-bold text-blue-900 text-center">Now Serving</h2>
       <?php if ($queue): ?>
-        <div class="mt-3 grid gap-3 bg-blue-50 h-full" style="grid-template-columns: repeat(<?= $grid_cols ?>, 1fr); grid-auto-rows: 1fr;">
+        <div class="mt-3 grid gap-3 bg-blue-50 h-full"
+          style="grid-template-columns: repeat(<?= $grid_cols ?>, 1fr); grid-auto-rows: 1fr;">
           <?php foreach ($left_items as $item): ?>
             <div class="p-3 bg-white border rounded-lg flex flex-col justify-center my-3 mx-2 items-center">
-              <h3 class="font-semibold <?= count($left_items) == 1 ? 'text-4xl' : (count($left_items) <= 2 ? 'text-3xl' : (count($left_items) <= 4 ? 'text-2xl' : 'text-xl')) ?>">
+              <h3
+                class="font-semibold <?= count($left_items) == 1 ? 'text-4xl' : (count($left_items) <= 2 ? 'text-3xl' : (count($left_items) <= 4 ? 'text-2xl' : 'text-xl')) ?>">
                 <?= $item->queue_number; ?> - <?= $item->name; ?>
               </h3>
               <p class="text-gray-500 text-sm">Reason: <?= $item->reason; ?></p>
-              <p class="text-gray-500 <?= count($left_items) == 1 ? 'text-2xl' : (count($left_items) <= 2 ? 'text-xl' : (count($left_items) <= 4 ? 'text-lg' : 'text-sm')) ?>">
+              <p
+                class="text-gray-500 <?= count($left_items) == 1 ? 'text-2xl' : (count($left_items) <= 2 ? 'text-xl' : (count($left_items) <= 4 ? 'text-lg' : 'text-sm')) ?>">
                 Status: Waiting
               </p>
               <a href="<?= base_url('controller_queueing/proceed_to_backroom/' . $item->id); ?>"
@@ -41,7 +44,7 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
                 <i class="fa-solid fa-user-check text-2xl"></i>
               </a>
             </div>
-            
+
           <?php endforeach; ?>
         </div>
       <?php else: ?>
@@ -88,85 +91,85 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
       </div>
 
       <script>
-document.querySelector('form').addEventListener('submit', function(e) {
-    e.preventDefault(); // Prevent form submission
+        document.querySelector('form').addEventListener('submit', function (e) {
+          e.preventDefault(); // Prevent form submission
 
-    let formData = new FormData(this); // Gather form data
+          let formData = new FormData(this); // Gather form data
 
-    fetch("<?= base_url('controller_queueing/add_to_queue'); ?>", {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
-            // Show success toast
-            Toastify({
-                text: data.message,
-                duration: 3000,
-                close: true,
-                gravity: "top",
-                position: "right",
-                backgroundColor: "linear-gradient(to right, #00b09b,rgb(25, 187, 205))"
-            }).showToast();
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        Toastify({
-            text: 'An error occurred. Please try again.',
-            duration: 3000,
-            close: true,
-            gravity: "top",
-            position: "right",
-            backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)"
-        }).showToast();
-    });
-});
-
-</script>
-<script>
-document.querySelectorAll('.proceed-btn').forEach(button => {
-    button.addEventListener('click', function(e) {
-        e.preventDefault(); // Prevent the default form action
-
-        let url = this.href; // Get the URL from the button link
-        let currentBtn = this; // Store the button reference
-
-        fetch(url, {
-            method: 'GET',
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
+          fetch("<?= base_url('controller_queueing/add_to_queue'); ?>", {
+            method: 'POST',
+            body: formData
+          })
+            .then(response => response.json())
+            .then(data => {
+              if (data.status === 'success') {
                 // Show success toast
                 Toastify({
-                    text: data.message,
-                    duration: 3000,
-                    close: true,
-                    gravity: "top",
-                    position: "right",
-                    backgroundColor: "linear-gradient(to right, #00b09b,rgb(17, 69, 183))"
+                  text: data.message,
+                  duration: 3000,
+                  close: true,
+                  gravity: "top",
+                  position: "right",
+                  backgroundColor: "linear-gradient(to right, #00b09b,rgb(25, 187, 205))"
                 }).showToast();
-
-                // Optionally, update the UI (like removing the item from the left section)
-                currentBtn.closest('div').remove(); // Remove the item after it's processed
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            Toastify({
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              Toastify({
                 text: 'An error occurred. Please try again.',
                 duration: 3000,
                 close: true,
                 gravity: "top",
                 position: "right",
                 backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)"
-            }).showToast();
+              }).showToast();
+            });
         });
-    });
-});
-</script>
+
+      </script>
+      <script>
+        document.querySelectorAll('.proceed-btn').forEach(button => {
+          button.addEventListener('click', function (e) {
+            e.preventDefault(); // Prevent the default form action
+
+            let url = this.href; // Get the URL from the button link
+            let currentBtn = this; // Store the button reference
+
+            fetch(url, {
+              method: 'GET',
+            })
+              .then(response => response.json())
+              .then(data => {
+                if (data.status === 'success') {
+                  // Show success toast
+                  Toastify({
+                    text: data.message,
+                    duration: 3000,
+                    close: true,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "linear-gradient(to right, #00b09b,rgb(17, 69, 183))"
+                  }).showToast();
+
+                  // Optionally, update the UI (like removing the item from the left section)
+                  currentBtn.closest('div').remove(); // Remove the item after it's processed
+                }
+              })
+              .catch(error => {
+                console.error('Error:', error);
+                Toastify({
+                  text: 'An error occurred. Please try again.',
+                  duration: 3000,
+                  close: true,
+                  gravity: "top",
+                  position: "right",
+                  backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)"
+                }).showToast();
+              });
+          });
+        });
+      </script>
 
 
     </div>
