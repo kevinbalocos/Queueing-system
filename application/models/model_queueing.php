@@ -27,6 +27,16 @@ class model_queueing extends CI_Model
         return $this->db->insert('queue', $data);
     }
 
+    public function get_queue_item($queue_id)
+    {
+        return $this->db->get_where('queue', ['id' => $queue_id])->row();
+    }
+
+    public function update_processing_status($queue_id, $user_id)
+    {
+        $this->db->where('id', $queue_id);
+        $this->db->update('queue', ['processing_user_id' => $user_id]);
+    }
 
 
     public function add_to_backroom($name, $reason)

@@ -12,7 +12,9 @@
 	},
 	"require": {
 		"php": ">=5.3.7",
-		"cboden/ratchet": "*"
+		"cboden/ratchet": "*",
+		"mongodb/mongodb": "^1.20",
+		"textalk/websocket": "*"
 	},
 	"suggest": {
 		"paragonie/random_compat": "Provides better randomness in PHP 5.x"
