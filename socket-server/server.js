@@ -12,18 +12,33 @@ const io = socketIo(server, {
     }
 });
 
-io.on("connection", (socket) => {
-    console.log("A user connected");
+app.use(cors());
+app.use(express.json());
 
-    socket.on("newQueueItem", (data) => {
-        io.emit("updateQueue", data); // Broadcast to all clients
-    });
+io.on("connection", (socket) => {
+    console.log("✅ A user connected: " + socket.id);
 
     socket.on("disconnect", () => {
-        console.log("A user disconnected");
+        console.log("❌ A user disconnected: " + socket.id);
+    });
+
+    socket.on("newQueueItem", (data) => {
+        console.log("📤 Received newQueueItem event:", data);
+        io.emit("updateQueue", data); // Broadcast to all clients
     });
 });
 
+// Receive queue item from CodeIgniter
+app.post("/newQueueItem", (req, res) => {
+    const data = req.body;
+    console.log("📢 Received from CodeIgniter:", data);
+    
+    io.emit("updateQueue", data); // Send event to all connected clients
+    console.log("📤 Emitting updateQueue event:", data);
+
+    res.sendStatus(200);
+});
+
 server.listen(3000, () => {
-    console.log("Socket.io server running on port 3000");
+    console.log("🚀 WebSocket server running on port 3000");
 });
