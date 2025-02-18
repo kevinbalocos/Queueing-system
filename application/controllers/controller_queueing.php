@@ -123,35 +123,51 @@ class controller_queueing extends CI_Controller
         $name = $this->input->post('name');
         $reason = $this->input->post('reason');
 
-        // Generate queue number (you can adjust this logic)
-        $queue_number = rand(100, 999);
+        // Add to the queue
+        $new_queue_number = $this->model_queueing->add_to_queue($name, $reason);
 
-        // Save to database
-        $this->model_queueing->add_to_queue($queue_number, $name, $reason);
+        if ($new_queue_number) {
+            // Fetch the updated queue items
+            $queue = $this->model_queueing->get_queue();
+            $left_items = array_slice($queue, 0, 20);
+            $right_items = array_slice($queue, 20);
 
-        // Prepare data to send
-        $data = [
-            'queue_number' => $queue_number,
-            'name' => $name,
-            'reason' => $reason
-        ];
+            // Send the updated data to the WebSocket clients
+            $new_item = [
+                'queue_number' => $new_queue_number,
+                'name' => $name,
+                'reason' => $reason,
+                'left_items' => $left_items,
+                'right_items' => $right_items
+            ];
+            $this->send_to_websocket($new_item);
 
-        // Send data to WebSocket server
-        $context = stream_context_create([
-            'http' => [
-                'method' => 'POST',
-                'header' => 'Content-Type: application/json',
-                'content' => json_encode($data),
-                'timeout' => 5
-            ]
-        ]);
-
-        file_get_contents("http://localhost:3000/newQueueItem", false, $context);
-
-        echo json_encode(['status' => 'success', 'message' => 'Queue item added successfully.']);
+            // Return a JSON response
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Queue item added successfully.',
+                'queue' => [
+                    'left_items' => $left_items,
+                    'right_items' => $right_items
+                ]
+            ]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to add to the queue.']);
+        }
     }
 
 
+
+    // Function to send the new queue item to WebSocket clients
+    private function send_to_websocket($new_item)
+    {
+        // Create a new WebSocket client to send the message
+        $ws_client = new WebSocketClient(); // You may need to implement or use a library to send the message
+        $ws_client->send(json_encode($new_item));
+    }
+
+
+    
     public function add_to_backroom()
     {
         $name = $this->input->post('name');

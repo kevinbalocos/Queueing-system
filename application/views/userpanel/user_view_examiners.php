@@ -15,9 +15,9 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
   <title>Examiners Queue</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
-  
+
 </head>
 
 <body class="bg-gray-100">
@@ -99,87 +99,87 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 
     </div>
   </div>
-  
-<script>
-document.querySelector('form').addEventListener('submit', function(e) {
-    e.preventDefault(); // Prevent form submission
 
-    let formData = new FormData(this); // Gather form data
+  <script>
+    document.querySelector('form').addEventListener('submit', function (e) {
+      e.preventDefault(); // Prevent form submission
 
-    fetch("<?= base_url('controller_queueing/add_to_examiners'); ?>", {
+      let formData = new FormData(this); // Gather form data
+
+      fetch("<?= base_url('controller_queueing/add_to_examiners'); ?>", {
         method: 'POST',
         body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
             // Show success toast
             Toastify({
-                text: data.message,
-                duration: 3000,
-                close: true,
-                gravity: "top",
-                position: "right",
-                backgroundColor: "linear-gradient(to right, #00b09b,rgb(25, 187, 205))"
+              text: data.message,
+              duration: 3000,
+              close: true,
+              gravity: "top",
+              position: "right",
+              backgroundColor: "linear-gradient(to right, #00b09b,rgb(25, 187, 205))"
             }).showToast();
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        Toastify({
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          Toastify({
             text: 'An error occurred. Please try again.',
             duration: 3000,
             close: true,
             gravity: "top",
             position: "right",
             backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)"
-        }).showToast();
+          }).showToast();
+        });
     });
-});
 
-</script>
-<script>
-document.querySelectorAll('.proceed-btn').forEach(button => {
-    button.addEventListener('click', function(e) {
+  </script>
+  <script>
+    document.querySelectorAll('.proceed-btn').forEach(button => {
+      button.addEventListener('click', function (e) {
         e.preventDefault(); // Prevent the default form action
 
         let url = this.href; // Get the URL from the button link
         let currentBtn = this; // Store the button reference
 
         fetch(url, {
-            method: 'GET',
+          method: 'GET',
         })
-        .then(response => response.json())
-        .then(data => {
+          .then(response => response.json())
+          .then(data => {
             if (data.status === 'success') {
-                // Show success toast
-                Toastify({
-                    text: data.message,
-                    duration: 3000,
-                    close: true,
-                    gravity: "top",
-                    position: "right",
-                    backgroundColor: "linear-gradient(to right, #00b09b,rgb(17, 69, 183))"
-                }).showToast();
-
-                // Optionally, update the UI (like removing the item from the left section)
-                currentBtn.closest('div').remove(); // Remove the item after it's processed
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            Toastify({
-                text: 'An error occurred. Please try again.',
+              // Show success toast
+              Toastify({
+                text: data.message,
                 duration: 3000,
                 close: true,
                 gravity: "top",
                 position: "right",
-                backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)"
+                backgroundColor: "linear-gradient(to right, #00b09b,rgb(17, 69, 183))"
+              }).showToast();
+
+              // Optionally, update the UI (like removing the item from the left section)
+              currentBtn.closest('div').remove(); // Remove the item after it's processed
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            Toastify({
+              text: 'An error occurred. Please try again.',
+              duration: 3000,
+              close: true,
+              gravity: "top",
+              position: "right",
+              backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)"
             }).showToast();
-        });
+          });
+      });
     });
-});
-</script>
+  </script>
 </body>
 
 </html>
