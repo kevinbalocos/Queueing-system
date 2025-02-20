@@ -8,93 +8,114 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <style>
+        html, body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f3f4f6;
+        }
+
+        .queue-container {
+            width: 95vw;
+            height: 95vh;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .queue-header {
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            font-weight: bold;
+            text-align: center;
+            color: #1e3a8a;
+            margin-bottom: 1rem;
+        }
+
+        .queue-grid {
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Ensures no empty spaces */
+            grid-auto-rows: 1fr; /* Makes all items equal height */
+            gap: 10px;
+            padding: 1rem;
+            background: #f9fafb;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .queue-item {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-size: clamp(0.8rem, 2vw, 1rem);
+        }
+
+        .queue-item h3 {
+            font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+            font-weight: bold;
+        }
+
+        .queue-item p {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
 </head>
 
-<body class="bg-gray-100">
-    <div class="min-h-screen p-5 flex flex-col items-center">
-        <div class="w-3/4 bg-white p-5 rounded-lg shadow-md">
-            <h2 class="text-3xl font-bold text-blue-900 text-center">Queue Display</h2>
-            <div class="mt-5 grid grid-cols-3 gap-4 bg-gray-50 p-5 rounded-lg shadow-md">
+<body>
 
-                <!-- Now Serving -->
-                <?php if ($first): ?>
-                    <div class="p-4 bg-red-100 border-l-4 border-red-600 rounded-lg text-center shadow-md">
-                        <span class="text-sm font-bold text-red-600 uppercase">Now Serving</span>
-                        <h3 class="text-3xl font-bold text-red-600"><?= $first->queue_number; ?></h3>
-                        <p class="text-lg font-semibold"><?= $first->name; ?></p>
-                        <p class="text-gray-600 text-sm"><?= $first->reason; ?></p>
+    <div class="queue-container">
+        <h2 class="queue-header">Queue Display</h2>
+
+        <div class="queue-grid">
+            <!-- Waiting Queue -->
+            <?php foreach (array_slice($queue, 0, 10) as $item): ?>
+                <div class="queue-item bg-green-100 border-l-4 border-green-600">
+                    <span class="font-bold text-green-600 uppercase">Waiting</span>
+                    <h3><?= $item->queue_number; ?></h3>
+                    <p><?= $item->name; ?></p>
+                </div>
+            <?php endforeach; ?>
+
+            <!-- Other Sectors -->
+            <?php 
+            $sectors = ['backroom' => 'teal', 'examiners' => 'yellow', 'businesstax' => 'purple', 'payment' => 'blue', 'fireprotection' => 'orange'];
+            foreach ($sectors as $sector => $color): 
+                foreach (array_slice($$sector, 0, 10) as $item): ?>
+                    <div class="queue-item bg-<?= $color ?>-100 border-l-4 border-<?= $color ?>-600">
+                        <span class="font-bold text-<?= $color ?>-600 uppercase"><?= ucfirst($sector) ?></span>
+                        <h3><?= $item->queue_number; ?></h3>
+                        <p><?= $item->name; ?></p>
                     </div>
-                <?php endif; ?>
-
-                <!-- Queue List -->
-                <?php foreach (array_slice($queue, 0, 10) as $item): ?>
-                    <div class="p-4 bg-green-100 border-l-4 border-green-600 rounded-lg text-center shadow-md">
-                        <span class="text-sm font-bold text-green-600 uppercase">Waiting</span>
-                        <h3 class="text-3xl font-semibold"><?= $item->queue_number; ?></h3>
-                        <p class="text-lg"><?= $item->name; ?></p>
-                        <p class="text-gray-600 text-sm"><?= $item->reason; ?></p>
-                    </div>
-                <?php endforeach; ?>
-
-                <!-- Backroom Queue -->
-                <?php foreach ($backroom as $item): ?>
-                    <div class="p-4 bg-blue-100 border-l-4 border-blue-600 rounded-lg text-center shadow-md">
-                        <span class="text-sm font-bold text-blue-600 uppercase">Backroom</span>
-                        <h3 class="text-3xl font-semibold"><?= $item->queue_number; ?></h3>
-                        <p class="text-lg"><?= $item->name; ?></p>
-                        <p class="text-gray-600 text-sm"><?= $item->reason; ?></p>
-                    </div>
-                <?php endforeach; ?>
-
-                <!-- Examiners Queue -->
-                <?php foreach (array_slice($examiners, 0, 10) as $item): ?>
-                    <div class="p-4 bg-yellow-100 border-l-4 border-yellow-600 rounded-lg text-center shadow-md">
-                        <span class="text-sm font-bold text-yellow-600 uppercase">Examiners</span>
-                        <h3 class="text-3xl font-semibold"><?= $item->queue_number; ?></h3>
-                        <p class="text-lg"><?= $item->name; ?></p>
-                        <p class="text-gray-600 text-sm"><?= $item->reason; ?></p>
-                    </div>
-                <?php endforeach; ?>
-
-                <!-- Business Tax Queue -->
-                <?php foreach (array_slice($businesstax, 0, 10) as $item): ?>
-                    <div class="p-4 bg-purple-100 border-l-4 border-purple-600 rounded-lg text-center shadow-md">
-                        <span class="text-sm font-bold text-purple-600 uppercase">Business Tax</span>
-                        <h3 class="text-3xl font-semibold"><?= $item->queue_number; ?></h3>
-                        <p class="text-lg"><?= $item->name; ?></p>
-                        <p class="text-gray-600 text-sm"><?= $item->reason; ?></p>
-                    </div>
-                <?php endforeach; ?>
-
-                <!-- Payment Queue -->
-                <?php foreach (array_slice($payment, 0, 10) as $item): ?>
-                    <div class="p-4 bg-blue-100 border-l-4 border-blue-600 rounded-lg text-center shadow-md">
-                        <span class="text-sm font-bold text-blue-600 uppercase">Payment</span>
-                        <h3 class="text-3xl font-semibold"><?= $item->queue_number; ?></h3>
-                        <p class="text-lg"><?= $item->name; ?></p>
-                        <p class="text-gray-600 text-sm"><?= $item->reason; ?></p>
-                    </div>
-                <?php endforeach; ?>
-
-                <!-- Fire Protection Queue -->
-                <?php foreach (array_slice($fireprotection, 0, 10) as $item): ?>
-                    <div class="p-4 bg-orange-100 border-l-4 border-orange-600 rounded-lg text-center shadow-md">
-                        <span class="text-sm font-bold text-orange-600 uppercase">Fire Protection</span>
-                        <h3 class="text-3xl font-semibold"><?= $item->queue_number; ?></h3>
-                        <p class="text-lg"><?= $item->name; ?></p>
-                        <p class="text-gray-600 text-sm"><?= $item->reason; ?></p>
-                    </div>
-                <?php endforeach; ?>
-
-            </div>
+                <?php endforeach; 
+            endforeach; ?>
         </div>
     </div>
 
     <script>
+        // Auto-refresh queue data without full page reload
         setInterval(() => {
-            location.reload();
-        }, 1000);
+            fetch(window.location.href)
+                .then(response => response.text())
+                .then(html => {
+                    document.body.innerHTML = html;
+                });
+        }, 3000);
     </script>
+
 </body>
 
 </html>

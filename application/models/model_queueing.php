@@ -16,16 +16,19 @@ class model_queueing extends CI_Model
         // Get the last queue number
         $last_queue = $this->db->select_max('queue_number')->get('queue')->row();
         $new_queue_number = $last_queue->queue_number + 1;
-
+    
         $data = array(
             'queue_number' => $new_queue_number,
             'name' => $name,
             'reason' => $reason,
             'status' => 'landtax'
         );
-
-        return $this->db->insert('queue', $data);
-    }
+    
+        if ($this->db->insert('queue', $data)) {
+            return $new_queue_number; 
+        }
+        return false; 
+    }    
 
     public function get_queue_item($queue_id)
     {

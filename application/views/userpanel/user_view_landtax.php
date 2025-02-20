@@ -51,8 +51,7 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 
               <!-- Proceed Button -->
               <a href="<?= base_url('controller_queueing/proceed_to_backroom/' . $item->id); ?>"
-                class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg 
-   <?= (!$item->processing_by || $item->processing_by !== $this->session->userdata('username')) ? 'opacity-50 pointer-events-none' : '' ?>">
+                class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
                 <i class="fa-solid fa-user-check text-2xl"></i>
               </a>
 
@@ -106,54 +105,63 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
     </div>
   </div>
   <script>
-    const socket = new WebSocket('ws://localhost:8080'); // Connect to the WebSocket server
+    document.addEventListener("DOMContentLoaded", function () {
+      const socket = new WebSocket('ws://localhost:8080'); // Connect to WebSocket server
 
-    socket.onopen = function () {
-      console.log('Connected to WebSocket server');
-    };
+      socket.onopen = function () {
+        console.log('Connected to WebSocket server (Land Tax)');
+      };
 
-    socket.onmessage = function (event) {
-      // When a message is received from the server (new queue item), update the UI
-      const data = JSON.parse(event.data);
-      updateQueue(data); // Custom function to handle the UI update
-    };
+      socket.onmessage = function (event) {
+        const data = JSON.parse(event.data);
 
-    socket.onerror = function (error) {
-      console.error('WebSocket Error: ', error);
-    };
+        if (data.action === "add_to_queue") {
+          console.log("New queue item added:", data);
+          updateQueue(data);
+        }
+      };
 
-    socket.onclose = function () {
-      console.log('Disconnected from WebSocket server');
-    };
+      socket.onerror = function (error) {
+        console.error('WebSocket Error: ', error);
+      };
 
-    // Function to update the queue display
-    function updateQueue(data) {
-      const leftSection = document.querySelector('.mt-3.grid');
-      const rightSection = document.getElementById('queueList');
+      socket.onclose = function () {
+        console.log('Disconnected from WebSocket server');
+      };
 
-      // Check if there's space in the left section (less than 20 items)
-      const leftItems = leftSection.querySelectorAll('.p-3');
-      if (leftItems.length < 20) {
-        // Add the new item to the left section if there's space
-        const newItem = createQueueItem(data);
-        leftSection.appendChild(newItem);
-      } else {
-        // If left section is full, add to the right section
-        const newItem = createQueueItem(data);
-        rightSection.appendChild(newItem);
+      function updateQueue(data) {
+        const leftSection = document.querySelector('.mt-3.grid');
+        const rightSection = document.getElementById('queueList');
+
+        // Ensure both sections exist before proceeding
+        if (!leftSection || !rightSection) {
+          console.error("Error: One or more target elements are missing in the DOM.");
+          return;
+        }
+
+        let existingItem = document.getElementById(`queue-item-${data.id}`);
+
+        if (!existingItem) {
+          const newItem = createQueueItem(data);
+
+          if (leftSection.children.length < 20) {
+            leftSection.appendChild(newItem);
+          } else {
+            rightSection.appendChild(newItem);
+          }
+        }
       }
-    }
 
-    // Function to create a queue item element
-    function createQueueItem(data) {
-      const item = document.createElement('div');
-      item.className = 'p-3 bg-white border rounded-lg flex flex-col justify-center my-3 mx-2 items-center';
+      function createQueueItem(data) {
+        const item = document.createElement('div');
+        item.id = `queue-item-${data.id}`;
+        item.className = 'p-3 bg-white border rounded-lg flex flex-col justify-center my-3 mx-2 items-center';
 
-      item.innerHTML = `
+        item.innerHTML = `
       <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
       <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
       <p class="text-gray-500 text-sm">
-        Status: <span class="text-green-500 font-semibold">Waiting</span>
+        Status: <span class="status-label text-green-500 font-semibold">Waiting</span>
       </p>
       <button class="processing-btn mt-3 bg-yellow-500 py-2 px-3 text-white hover:bg-yellow-600 rounded-full shadow-lg" data-id="${data.id}">
         <i class="fa-solid fa-hourglass-half"></i> Processing
@@ -163,8 +171,9 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
       </a>
     `;
 
-      return item;
-    }
+        return item;
+      }
+    });
   </script>
 
 

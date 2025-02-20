@@ -17,9 +17,9 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
   <title>Backroom Queue</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
-  
+
 </head>
 
 <body class="bg-gray-100">
@@ -61,7 +61,7 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
                 Status: Waiting
               </p>
               <a href="<?= base_url('controller_queueing/proceed_to_examiners/' . $item->id); ?>"
-                 class="proceed-btn mt-3 inline-block bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
+                class="proceed-btn mt-3 inline-block bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
                 <i class="fa-solid fa-user-check text-2xl"></i>
               </a>
             </div>
@@ -111,86 +111,153 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
   </div>
 </body>
 
+<script>
+  const socket = new WebSocket('ws://localhost:8080'); // Connect to WebSocket server
+
+  socket.onopen = function () {
+    console.log('Connected to WebSocket server (Backroom)');
+  };
+
+  socket.onmessage = function (event) {
+    try {
+      const data = JSON.parse(event.data);
+
+      if (data.action === "proceed_to_backroom") {
+        console.log("New backroom queue item:", data);
+        addToBackroomQueue(data);
+      }
+    } catch (error) {
+      console.error("Error parsing WebSocket data:", error);
+    }
+  };
+
+  socket.onerror = function (error) {
+    console.error('WebSocket Error: ', error);
+  };
+
+  socket.onclose = function () {
+    console.log('Disconnected from WebSocket server');
+  };
+
+  // Function to add new item to Backroom queue dynamically
+  function addToBackroomQueue(data) {
+    const leftSection = document.querySelector('.mt-3.grid');
+    const rightSection = document.querySelector('.overflow-auto');
+
+    let existingItem = document.getElementById(`queue-item-${data.id}`);
+
+    if (!existingItem) {
+      const newItem = createQueueItem(data);
+
+      if (leftSection.children.length < 20) {
+        leftSection.appendChild(newItem);
+      } else {
+        rightSection.appendChild(newItem);
+      }
+    }
+  }
+
+  // Function to create a queue item element
+  function createQueueItem(data) {
+    const item = document.createElement('div');
+    item.id = `queue-item-${data.id}`;
+    item.className = 'p-3 bg-white border rounded-lg flex flex-col justify-center items-center my-3 mx-2';
+
+    item.innerHTML = `
+    <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
+    <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
+    <p class="text-gray-500 text-sm">
+      Status: <span class="text-green-500 font-semibold">Backroom</span>
+    </p>
+    <a href="${data.proceed_url}" class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
+      <i class="fa-solid fa-user-check text-2xl"></i>
+    </a>
+  `;
+
+    return item;
+  }
+</script>
+
 
 <script>
-document.querySelector('form').addEventListener('submit', function(e) {
+  document.querySelector('form').addEventListener('submit', function (e) {
     e.preventDefault(); // Prevent form submission
 
     let formData = new FormData(this); // Gather form data
 
     fetch("<?= base_url('controller_queueing/add_to_backroom'); ?>", {
-        method: 'POST',
-        body: formData
+      method: 'POST',
+      body: formData
     })
-    .then(response => response.json())
-    .then(data => {
+      .then(response => response.json())
+      .then(data => {
         if (data.status === 'success') {
-            // Show success toast
-            Toastify({
-                text: data.message,
-                duration: 3000,
-                close: true,
-                gravity: "top",
-                position: "right",
-                backgroundColor: "linear-gradient(to right, #00b09b,rgb(25, 187, 205))"
-            }).showToast();
+          // Show success toast
+          Toastify({
+            text: data.message,
+            duration: 3000,
+            close: true,
+            gravity: "top",
+            position: "right",
+            backgroundColor: "linear-gradient(to right, #00b09b,rgb(25, 187, 205))"
+          }).showToast();
         }
-    })
-    .catch(error => {
+      })
+      .catch(error => {
         console.error('Error:', error);
         Toastify({
+          text: 'An error occurred. Please try again.',
+          duration: 3000,
+          close: true,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)"
+        }).showToast();
+      });
+  });
+
+</script>
+<script>
+  document.querySelectorAll('.proceed-btn').forEach(button => {
+    button.addEventListener('click', function (e) {
+      e.preventDefault(); // Prevent the default form action
+
+      let url = this.href; // Get the URL from the button link
+      let currentBtn = this; // Store the button reference
+
+      fetch(url, {
+        method: 'GET',
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            // Show success toast
+            Toastify({
+              text: data.message,
+              duration: 3000,
+              close: true,
+              gravity: "top",
+              position: "right",
+              backgroundColor: "linear-gradient(to right, #00b09b,rgb(17, 69, 183))"
+            }).showToast();
+
+            // Optionally, update the UI (like removing the item from the left section)
+            currentBtn.closest('div').remove(); // Remove the item after it's processed
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          Toastify({
             text: 'An error occurred. Please try again.',
             duration: 3000,
             close: true,
             gravity: "top",
             position: "right",
             backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)"
-        }).showToast();
-    });
-});
-
-</script>
-<script>
-document.querySelectorAll('.proceed-btn').forEach(button => {
-    button.addEventListener('click', function(e) {
-        e.preventDefault(); // Prevent the default form action
-
-        let url = this.href; // Get the URL from the button link
-        let currentBtn = this; // Store the button reference
-
-        fetch(url, {
-            method: 'GET',
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                // Show success toast
-                Toastify({
-                    text: data.message,
-                    duration: 3000,
-                    close: true,
-                    gravity: "top",
-                    position: "right",
-                    backgroundColor: "linear-gradient(to right, #00b09b,rgb(17, 69, 183))"
-                }).showToast();
-
-                // Optionally, update the UI (like removing the item from the left section)
-                currentBtn.closest('div').remove(); // Remove the item after it's processed
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            Toastify({
-                text: 'An error occurred. Please try again.',
-                duration: 3000,
-                close: true,
-                gravity: "top",
-                position: "right",
-                backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)"
-            }).showToast();
+          }).showToast();
         });
     });
-});
+  });
 </script>
 
 

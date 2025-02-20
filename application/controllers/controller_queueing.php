@@ -123,29 +123,37 @@ class controller_queueing extends CI_Controller
         $name = $this->input->post('name');
         $reason = $this->input->post('reason');
 
-        // Add to the queue
-        $new_queue_number = $this->model_queueing->add_to_queue($name, $reason);
+        $queue_number = $this->model_queueing->add_to_queue($name, $reason);
 
-        if ($new_queue_number) {
-            // Fetch the updated queue items
+        if ($queue_number) {
+            // Fetch the newly added queue item
+            $new_item = $this->db->where('queue_number', $queue_number)->get('queue')->row();
+
+            if (!$new_item) {
+                echo json_encode(['status' => 'error', 'message' => 'Failed to fetch the new queue item.']);
+                return;
+            }
+
             $queue = $this->model_queueing->get_queue();
             $left_items = array_slice($queue, 0, 20);
             $right_items = array_slice($queue, 20);
 
-            // Send the updated data to the WebSocket clients
-            $new_item = [
-                'queue_number' => $new_queue_number,
+            // Send data to WebSocket clients
+            $queue_data = [
+                'id' => $new_item->id, // Include the ID here!
+                'queue_number' => $queue_number,
                 'name' => $name,
                 'reason' => $reason,
+                'status' => 'landtax', // Default status
                 'left_items' => $left_items,
                 'right_items' => $right_items
             ];
-            $this->send_to_websocket($new_item);
+            $this->send_to_websocket($queue_data, 'add_to_queue');
 
-            // Return a JSON response
             echo json_encode([
                 'status' => 'success',
-                'message' => 'Queue item added successfully.',
+                'message' => "Queue item added successfully. Your queue number is $queue_number.",
+                'queue_number' => $queue_number,
                 'queue' => [
                     'left_items' => $left_items,
                     'right_items' => $right_items
@@ -157,17 +165,20 @@ class controller_queueing extends CI_Controller
     }
 
 
-
     // Function to send the new queue item to WebSocket clients
-    private function send_to_websocket($new_item)
+    private function send_to_websocket($data, $action)
     {
+        // Append the action type to the data
+        $data['action'] = $action;
+
         // Create a new WebSocket client to send the message
-        $ws_client = new WebSocketClient(); // You may need to implement or use a library to send the message
-        $ws_client->send(json_encode($new_item));
+        $ws_client = new WebSocketClient(); // Implement this based on your WebSocket setup
+        $ws_client->send(json_encode($data));
     }
 
 
-    
+
+
     public function add_to_backroom()
     {
         $name = $this->input->post('name');
@@ -231,11 +242,30 @@ class controller_queueing extends CI_Controller
 
     public function proceed_to_backroom($id)
     {
+        // Update queue status to 'backroom'
         $this->model_queueing->proceed_queue($id, 'backroom');
 
-        // Send JSON response for AJAX success notification
-        echo json_encode(['status' => 'success', 'message' => 'Queue item successfully proceeded to Backroom.']);
+        // Fetch the updated queue item
+        $updated_item = $this->db->where('id', $id)->get('queue')->row();
+
+        if ($updated_item) {
+            // Send full queue data to WebSocket clients
+            $this->send_to_websocket([
+                'id' => $updated_item->id,
+                'queue_number' => $updated_item->queue_number,
+                'name' => $updated_item->name,
+                'reason' => $updated_item->reason,
+                'status' => $updated_item->status
+            ], 'proceed_to_backroom');
+
+            // Send JSON response for AJAX success notification
+            echo json_encode(['status' => 'success', 'message' => 'Queue item successfully proceeded to Backroom.']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to proceed queue item.']);
+        }
     }
+
+
 
 
     public function proceed_to_examiners($id)
