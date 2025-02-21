@@ -17,6 +17,7 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </head>
 
@@ -61,7 +62,7 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
           <?php endforeach; ?>
         </div>
       <?php else: ?>
-        <p class="text-gray-500 mt-3">No one in queue</p>
+        <p class="text-gray-500 mt-3 text-center">No one in queue</p>
       <?php endif; ?>
     </div>
 
@@ -104,7 +105,7 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
       </div>
     </div>
   </div>
-  <script>
+  <!-- <script>
     document.addEventListener("DOMContentLoaded", function () {
       const socket = new WebSocket('ws://localhost:8080'); // Connect to WebSocket server
 
@@ -130,51 +131,238 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
       };
 
       function updateQueue(data) {
-        const leftSection = document.querySelector('.mt-3.grid');
-        const rightSection = document.getElementById('queueList');
+        let leftSection = document.querySelector('.mt-3.grid');
+        let rightSection = document.getElementById('queueList');
 
-        // Ensure both sections exist before proceeding
-        if (!leftSection || !rightSection) {
-          console.error("Error: One or more target elements are missing in the DOM.");
+        // If the container exists, update the queue immediately
+        if (leftSection) {
+          insertQueueItem();
           return;
         }
 
-        let existingItem = document.getElementById(`queue-item-${data.id}`);
+        console.warn("Queue sections not found. Observing for changes...");
 
-        if (!existingItem) {
-          const newItem = createQueueItem(data);
+        // Use MutationObserver to wait for the queue container to be added
+        const observer = new MutationObserver((mutations, obs) => {
+          leftSection = document.querySelector('.mt-3.grid');
+          rightSection = document.getElementById('queueList');
 
-          if (leftSection.children.length < 20) {
+          if (leftSection) {
+            console.log("Queue sections found. Updating queue...");
+            obs.disconnect(); // Stop observing once found
+            insertQueueItem();
+          }
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        function insertQueueItem() {
+          let existingItem = document.getElementById(`queue-item-${data.id}`);
+
+          if (!existingItem) {
+            const newItem = createQueueItem(data);
             leftSection.appendChild(newItem);
           } else {
-            rightSection.appendChild(newItem);
+            console.warn(`Queue item ${data.id} already exists. Skipping duplicate.`);
           }
         }
       }
 
+      // Function to create a queue item
       function createQueueItem(data) {
         const item = document.createElement('div');
         item.id = `queue-item-${data.id}`;
         item.className = 'p-3 bg-white border rounded-lg flex flex-col justify-center my-3 mx-2 items-center';
 
         item.innerHTML = `
-      <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
-      <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
-      <p class="text-gray-500 text-sm">
-        Status: <span class="status-label text-green-500 font-semibold">Waiting</span>
-      </p>
-      <button class="processing-btn mt-3 bg-yellow-500 py-2 px-3 text-white hover:bg-yellow-600 rounded-full shadow-lg" data-id="${data.id}">
-        <i class="fa-solid fa-hourglass-half"></i> Processing
-      </button>
-      <a href="${data.proceed_url}" class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
-        <i class="fa-solid fa-user-check text-2xl"></i>
-      </a>
+        <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
+        <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
+        <p class="text-gray-500 text-sm">
+            Status: <span class="status-label text-green-500 font-semibold">Waiting</span>
+        </p>
+        <button class="processing-btn mt-3 bg-yellow-500 py-2 px-3 text-white hover:bg-yellow-600 rounded-full shadow-lg" 
+            data-id="${data.id}">
+            <i class="fa-solid fa-hourglass-half"></i> Processing
+        </button>
+        <a href="${data.proceed_url}" class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
+            <i class="fa-solid fa-user-check text-2xl"></i>
+        </a>
     `;
 
         return item;
       }
     });
+  </script> -->
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const socket = new WebSocket("ws://localhost:8080"); // Connect to WebSocket server
+      let hasRefreshed = false; // Prevent multiple refreshes
+
+      socket.onopen = function () {
+        console.log("Connected to WebSocket server (Land Tax)");
+      };
+
+      socket.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+        const queueList = document.getElementById("queueList");
+
+        if (data.action === "add_to_queue") {
+          console.log("New queue item added:", data);
+
+          if (queueList && queueList.children.length === 0) {
+            if (!hasRefreshed) {
+              console.warn("Queue is empty. Showing loader and refreshing...");
+              hasRefreshed = true;
+
+              Swal.fire({
+                title: "Updating...",
+                text: "Please wait while the page refreshes.",
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                backdrop: false,
+                position: "top",
+                customClass: {
+                  popup: "swal-top-popup",
+                },
+                didOpen: () => {
+                  Swal.showLoading();
+                },
+              });
+
+              setTimeout(() => {
+                location.reload();
+              }, 1000);
+            }
+          } else {
+            // Instead of refreshing, update the DOM dynamically
+            updateQueueDOM(data);
+          }
+        }
+      };
+
+      // Function to update queue list in the DOM
+      function updateQueueDOM(data) {
+        const queueList = document.getElementById("queueList");
+
+        if (queueList) {
+          // Check if the queue item already exists (avoid duplicates)
+          const existingItems = queueList.querySelectorAll("li");
+          for (let item of existingItems) {
+            if (item.dataset.queueId === data.id) {
+              console.warn(`Queue item ${data.id} already exists. Skipping addition.`);
+              return;
+            }
+          }
+
+          // Create new list item
+          const newItem = document.createElement("li");
+          newItem.className = "p-3 bg-gray-50 border rounded-lg";
+          newItem.dataset.queueId = data.id; // Store queue ID to prevent duplicates
+          newItem.textContent = `${data.queue_number} - ${data.name} (${data.reason})`;
+
+          // Append new item
+          queueList.appendChild(newItem);
+        }
+      }
+
+      socket.onerror = function (error) {
+        console.error("WebSocket Error: ", error);
+      };
+
+      socket.onclose = function () {
+        console.log("Disconnected from WebSocket server");
+      };
+
+      function updateQueue(data) {
+        let leftSection = document.querySelector(".mt-3.grid.left");
+        let rightSection = document.querySelector(".mt-3.grid.right");
+
+        // If the sections exist, update the queue immediately
+        if (leftSection && rightSection) {
+          insertQueueItem(data);
+          return;
+        }
+
+        console.warn("Queue sections not found. Observing for changes...");
+
+        // Use MutationObserver to detect when queue sections are available
+        const observer = new MutationObserver((mutations, obs) => {
+          leftSection = document.querySelector(".mt-3.grid.left");
+          rightSection = document.querySelector(".mt-3.grid.right");
+
+          if (leftSection && rightSection) {
+            console.log("Queue sections found. Updating queue...");
+            obs.disconnect(); // Stop observing once found
+            insertQueueItem(data);
+          }
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+      }
+
+      function insertQueueItem(data) {
+        let leftSection = document.querySelector(".mt-3.grid.left");
+        let rightSection = document.querySelector(".mt-3.grid.right");
+
+        if (!leftSection || !rightSection) {
+          console.warn("Queue sections not found. Observing for changes...");
+          return;
+        }
+
+        let leftItems = leftSection.children.length;
+        let rightItems = rightSection.children.length;
+
+        let existingItem = document.getElementById(`queue-item-${data.id}`);
+
+        if (!existingItem) {
+          const newItem = createQueueItem(data);
+
+          if (leftItems < 20) {
+            leftSection.appendChild(newItem); // Add to left section if less than 20
+          } else {
+            rightSection.appendChild(newItem); // Add to right section after 20
+          }
+
+          // Ensure page refresh if new item goes into the right section
+          if (rightItems === 0 && leftItems >= 20) {
+            console.warn("Queue item added to right section. Forcing refresh...");
+            setTimeout(() => {
+              location.reload();
+            }, 3000);
+          }
+        } else {
+          console.warn(`Queue item ${data.id} already exists. Skipping duplicate.`);
+        }
+      }
+
+      function createQueueItem(data) {
+        const item = document.createElement("div");
+        item.id = `queue-item-${data.id}`;
+        item.className =
+          "p-3 bg-white border rounded-lg flex flex-col justify-center my-3 mx-2 items-center";
+
+        item.innerHTML = `
+        <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
+        <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
+        <p class="text-gray-500 text-sm">
+            Status: <span class="status-label text-green-500 font-semibold">Waiting</span>
+        </p>
+        <button class="processing-btn mt-3 bg-yellow-500 py-2 px-3 text-white hover:bg-yellow-600 rounded-full shadow-lg" 
+            data-id="${data.id}">
+            <i class="fa-solid fa-hourglass-half"></i> Processing
+        </button>
+        <a href="${data.proceed_url}" class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
+            <i class="fa-solid fa-user-check text-2xl"></i>
+        </a>
+        `;
+
+        return item;
+      }
+    });
   </script>
+
 
 
 
@@ -311,7 +499,64 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
       });
     });
   </script>
+  <!-- <script>
+    let hasRefreshed = false; // Prevent multiple refreshes
 
+    function handleNewQueueItem(data) {
+      if (!hasRefreshed) {
+        console.warn("First queue item detected. Showing loader...");
+        hasRefreshed = true; // Mark as refreshed to prevent looping
+
+        // Show SweetAlert2 loading screen
+        Swal.fire({
+          title: "Updating...",
+          text: "Please wait while the page refreshes.",
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          showConfirmButton: false,
+          didOpen: () => {
+            Swal.showLoading();
+          }
+        });
+
+        // Delay before refreshing
+        setTimeout(() => {
+          location.reload(); // Refresh after 3 seconds
+        }, 3000);
+      }
+    }
+
+    // Example WebSocket listener for new queue items
+    const socket = new WebSocket('ws://localhost:8080');
+
+    socket.onmessage = function (event) {
+      const data = JSON.parse(event.data);
+
+      if (data && data.id) {
+        handleNewQueueItem(data); // Trigger update only once
+      }
+    };
+  </script> -->
+
+  <style>
+    .mt-3.grid.right {
+      position: absolute;
+      /* or fixed if necessary */
+      right: 10px;
+      /* Adjust positioning */
+    }
+
+    .swal-top-popup {
+      margin-top: 10px !important;
+      /* Adjusts the spacing from the top */
+      width: 300px !important;
+      /* Keeps it small to avoid layout shifts */
+      box-shadow: none !important;
+      /* Removes shadow if needed */
+      background: rgba(255, 255, 255, 0.9) !important;
+      /* Semi-transparent to blend */
+    }
+  </style>
 
 </body>
 

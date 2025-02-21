@@ -140,11 +140,12 @@ class controller_queueing extends CI_Controller
 
             // Send data to WebSocket clients
             $queue_data = [
-                'id' => $new_item->id, // Include the ID here!
+                'id' => $new_item->id,
                 'queue_number' => $queue_number,
                 'name' => $name,
                 'reason' => $reason,
-                'status' => 'landtax', // Default status
+                'status' => 'landtax',
+                'proceed_url' => base_url("index.php/controller_queueing/proceed_to_backroom/{$new_item->id}"), // Ensure correct URL
                 'left_items' => $left_items,
                 'right_items' => $right_items
             ];
@@ -255,7 +256,8 @@ class controller_queueing extends CI_Controller
                 'queue_number' => $updated_item->queue_number,
                 'name' => $updated_item->name,
                 'reason' => $updated_item->reason,
-                'status' => $updated_item->status
+                'status' => $updated_item->status,
+                'proceed_url' => base_url("index.php/controller_queueing/proceed_to_backroom/{$updated_item->id}") // Ensure correct URL
             ], 'proceed_to_backroom');
 
             // Send JSON response for AJAX success notification

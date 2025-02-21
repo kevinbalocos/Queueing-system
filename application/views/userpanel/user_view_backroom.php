@@ -144,6 +144,13 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
     const leftSection = document.querySelector('.mt-3.grid');
     const rightSection = document.querySelector('.overflow-auto');
 
+    // Ensure both sections exist before proceeding
+    if (!leftSection || !rightSection) {
+      console.error("Error: One or more target elements are missing in the DOM. Retrying...");
+      setTimeout(() => addToBackroomQueue(data), 100); // Retry after 100ms
+      return;
+    }
+
     let existingItem = document.getElementById(`queue-item-${data.id}`);
 
     if (!existingItem) {
