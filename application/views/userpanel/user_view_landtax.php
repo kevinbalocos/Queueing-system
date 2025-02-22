@@ -15,8 +15,8 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Land Tax Queue</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script> -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </head>
@@ -51,10 +51,12 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
               </button>
 
               <!-- Proceed Button -->
-              <a href="<?= base_url('controller_queueing/proceed_to_backroom/' . $item->id); ?>"
-                class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
+              <button
+                class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg"
+                data-id="<?= $item->id; ?>">
                 <i class="fa-solid fa-user-check text-2xl"></i>
-              </a>
+              </button>
+
 
             </div>
 
@@ -196,7 +198,7 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-      const socket = new WebSocket("ws://localhost:8080"); // Connect to WebSocket server
+      const socket = new WebSocket("ws://localhost:8080"); // WebSocket connection
       let hasRefreshed = false; // Prevent multiple refreshes
 
       socket.onopen = function () {
@@ -204,50 +206,49 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
       };
 
       socket.onmessage = function (event) {
-        const data = JSON.parse(event.data);
-        const queueList = document.getElementById("queueList");
+        try {
+          const data = JSON.parse(event.data);
+          const queueList = document.getElementById("queueList");
 
-        if (data.action === "add_to_queue") {
-          console.log("New queue item added:", data);
+          if (data.action === "add_to_queue") {
+            console.log("New queue item added:", data);
 
-          if (queueList && queueList.children.length === 0) {
-            if (!hasRefreshed) {
-              console.warn("Queue is empty. Showing loader and refreshing...");
-              hasRefreshed = true;
+            if (queueList && queueList.children.length === 0) {
+              if (!hasRefreshed) {
+                console.warn("Queue is empty. Showing loader and refreshing...");
+                hasRefreshed = true;
 
-              Swal.fire({
-                title: "Updating...",
-                text: "Please wait while the page refreshes.",
-                allowOutsideClick: false,
-                allowEscapeKey: false,
-                showConfirmButton: false,
-                backdrop: false,
-                position: "top",
-                customClass: {
-                  popup: "swal-top-popup",
-                },
-                didOpen: () => {
-                  Swal.showLoading();
-                },
-              });
+                Swal.fire({
+                  title: "Updating...",
+                  text: "Please wait while the page refreshes.",
+                  allowOutsideClick: false,
+                  allowEscapeKey: false,
+                  showConfirmButton: false,
+                  backdrop: false,
+                  position: "top",
+                  customClass: { popup: "swal-top-popup" },
+                  didOpen: () => Swal.showLoading(),
+                });
 
-              setTimeout(() => {
-                location.reload();
-              }, 1000);
+                setTimeout(() => location.reload(), 1000);
+              }
+            } else {
+              updateQueueDOM(data);
             }
-          } else {
-            // Instead of refreshing, update the DOM dynamically
-            updateQueueDOM(data);
           }
+
+          if (data.action === "proceed_to_backroom") {
+            console.log("Queue item moved to Backroom:", data);
+            moveQueueItemToBackroom(data);
+          }
+        } catch (error) {
+          console.error("WebSocket JSON Error:", error);
         }
       };
 
-      // Function to update queue list in the DOM
       function updateQueueDOM(data) {
         const queueList = document.getElementById("queueList");
-
         if (queueList) {
-          // Check if the queue item already exists (avoid duplicates)
           const existingItems = queueList.querySelectorAll("li");
           for (let item of existingItems) {
             if (item.dataset.queueId === data.id) {
@@ -256,45 +257,41 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
             }
           }
 
-          // Create new list item
           const newItem = document.createElement("li");
           newItem.className = "p-3 bg-gray-50 border rounded-lg";
-          newItem.dataset.queueId = data.id; // Store queue ID to prevent duplicates
+          newItem.dataset.queueId = data.id;
           newItem.textContent = `${data.queue_number} - ${data.name} (${data.reason})`;
 
-          // Append new item
           queueList.appendChild(newItem);
         }
       }
 
-      socket.onerror = function (error) {
-        console.error("WebSocket Error: ", error);
-      };
-
-      socket.onclose = function () {
-        console.log("Disconnected from WebSocket server");
-      };
+      function moveQueueItemToBackroom(data) {
+        const queueItem = document.getElementById(`queue-item-${data.id}`);
+        if (queueItem) {
+          queueItem.querySelector(".status-label").textContent = "Backroom";
+          queueItem.querySelector(".status-label").classList.add("text-yellow-500");
+          queueItem.querySelector(".proceed-btn").remove();
+        }
+      }
 
       function updateQueue(data) {
         let leftSection = document.querySelector(".mt-3.grid.left");
         let rightSection = document.querySelector(".mt-3.grid.right");
 
-        // If the sections exist, update the queue immediately
         if (leftSection && rightSection) {
           insertQueueItem(data);
           return;
         }
 
         console.warn("Queue sections not found. Observing for changes...");
-
-        // Use MutationObserver to detect when queue sections are available
         const observer = new MutationObserver((mutations, obs) => {
           leftSection = document.querySelector(".mt-3.grid.left");
           rightSection = document.querySelector(".mt-3.grid.right");
 
           if (leftSection && rightSection) {
             console.log("Queue sections found. Updating queue...");
-            obs.disconnect(); // Stop observing once found
+            obs.disconnect();
             insertQueueItem(data);
           }
         });
@@ -320,17 +317,14 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
           const newItem = createQueueItem(data);
 
           if (leftItems < 20) {
-            leftSection.appendChild(newItem); // Add to left section if less than 20
+            leftSection.appendChild(newItem);
           } else {
-            rightSection.appendChild(newItem); // Add to right section after 20
+            rightSection.appendChild(newItem);
           }
 
-          // Ensure page refresh if new item goes into the right section
           if (rightItems === 0 && leftItems >= 20) {
             console.warn("Queue item added to right section. Forcing refresh...");
-            setTimeout(() => {
-              location.reload();
-            }, 3000);
+            setTimeout(() => location.reload(), 3000);
           }
         } else {
           console.warn(`Queue item ${data.id} already exists. Skipping duplicate.`);
@@ -340,29 +334,114 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
       function createQueueItem(data) {
         const item = document.createElement("div");
         item.id = `queue-item-${data.id}`;
-        item.className =
-          "p-3 bg-white border rounded-lg flex flex-col justify-center my-3 mx-2 items-center";
+        item.className = "p-3 bg-white border rounded-lg flex flex-col justify-center my-3 mx-2 items-center";
 
         item.innerHTML = `
-        <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
-        <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
-        <p class="text-gray-500 text-sm">
-            Status: <span class="status-label text-green-500 font-semibold">Waiting</span>
-        </p>
-        <button class="processing-btn mt-3 bg-yellow-500 py-2 px-3 text-white hover:bg-yellow-600 rounded-full shadow-lg" 
-            data-id="${data.id}">
-            <i class="fa-solid fa-hourglass-half"></i> Processing
-        </button>
-        <a href="${data.proceed_url}" class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
-            <i class="fa-solid fa-user-check text-2xl"></i>
-        </a>
-        `;
+      <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
+      <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
+      <p class="text-gray-500 text-sm">
+          Status: <span class="status-label text-green-500 font-semibold">Waiting</span>
+      </p>
+      <button class="processing-btn mt-3 bg-yellow-500 py-2 px-3 text-white hover:bg-yellow-600 rounded-full shadow-lg" 
+          data-id="${data.id}">
+          <i class="fa-solid fa-hourglass-half"></i> Processing
+      </button>
+      <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg"
+          data-id="${data.id}">
+          <i class="fa-solid fa-user-check text-2xl"></i>
+      </button>
+      `;
 
         return item;
       }
+
+      // Handle Proceed Button Click (AJAX & WebSocket)
+      document.body.addEventListener("click", function (e) {
+        if (e.target.closest(".proceed-btn")) {
+          e.preventDefault();
+          const button = e.target.closest(".proceed-btn");
+          const queueId = button.getAttribute("data-id");
+
+          if (!queueId) {
+            console.error("Queue ID is undefined. Cannot proceed.");
+            Swal.fire({ title: "Error!", text: "Invalid queue ID.", icon: "error" });
+            return;
+          }
+
+          Swal.fire({
+            title: "Proceeding...",
+            text: "Processing queue movement...",
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            backdrop: false,
+            position: "top",
+            customClass: { popup: "swal-top-popup" },
+            didOpen: () => Swal.showLoading(),
+          });
+
+          fetch(`/OJT/queueing-system/index.php/controller_queueing/proceed_to_backroom/${queueId}`, {
+            method: "GET",
+            headers: { "X-Requested-With": "XMLHttpRequest" },
+          })
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error(`HTTP Error! Status: ${response.status}`);
+              }
+              return response.json();
+            })
+            .then((data) => {
+              if (data.status === "success") {
+                console.log("Queue item proceeded successfully:", data);
+                moveQueueItemToBackroom(data);
+
+                // ✅ Ensure Toastify failure doesn’t stop the process
+                try {
+                  Toastify({
+                    text: "Queue moved successfully!",
+                    duration: 3000,
+                    style: { background: "linear-gradient(to right, #00b09b, #96c93d)" }
+                  }).showToast();
+                } catch (toastError) {
+                  console.warn("Toastify failed:", toastError);
+                }
+
+                // ✅ Proceed to WebSocket update, even if Toastify fails
+                socket.send(JSON.stringify({
+                  action: "proceed_to_backroom",
+                  id: queueId,
+                }));
+
+                setTimeout(() => location.reload(), 100);
+              } else {
+                throw new Error(data.message);
+              }
+            })
+            .catch((error) => {
+              console.error("Fetch Error:", error);
+
+              // ✅ Ensure Toastify failure doesn’t block execution
+              try {
+                Toastify({
+                  text: "Error: " + error.message,
+                  duration: 1000,
+                  style: { background: "linear-gradient(to right, #ff5f6d, #ffc371)" }
+                }).showToast();
+              } catch (toastError) {
+                console.warn("Toastify failed:", toastError);
+              }
+            });
+        }
+      });
+
+      socket.onerror = function (error) {
+        console.error("WebSocket Error: ", error);
+      };
+
+      socket.onclose = function () {
+        console.log("Disconnected from WebSocket server");
+      };
     });
   </script>
-
 
 
 
