@@ -47,7 +47,7 @@ class SuperAdmin extends CI_Controller {
         if ($id == $this->session->userdata('user_id')) {
             $this->session->set_flashdata('error', 'You cannot delete your own account.');
         } else {
-            $this->User_model->delete_user($id);
+            $this->model_user->delete_user($id);
             $this->session->set_flashdata('success', 'User deleted successfully!');
         }
         redirect('SuperAdmin');

@@ -112,10 +112,10 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 </body>
 
 <script>
-  const socket = new WebSocket('ws://localhost:8080'); // Connect to WebSocket server
+  const socket = new WebSocket("ws://localhost:8080"); // Connect to WebSocket server
 
   socket.onopen = function () {
-    console.log('Connected to WebSocket server (Backroom)');
+    console.log("Connected to WebSocket server (Backroom)");
   };
 
   socket.onmessage = function (event) {
@@ -125,6 +125,9 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
       if (data.action === "proceed_to_backroom") {
         console.log("New backroom queue item:", data);
         addToBackroomQueue(data);
+
+        // 🔄 Refresh UI dynamically instead of reloading
+        refreshBackroomUI();
       }
     } catch (error) {
       console.error("Error parsing WebSocket data:", error);
@@ -132,21 +135,21 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
   };
 
   socket.onerror = function (error) {
-    console.error('WebSocket Error: ', error);
+    console.error("WebSocket Error: ", error);
   };
 
   socket.onclose = function () {
-    console.log('Disconnected from WebSocket server');
+    console.log("Disconnected from WebSocket server");
   };
 
   // Function to add new item to Backroom queue dynamically
   function addToBackroomQueue(data) {
-    const leftSection = document.querySelector('.mt-3.grid');
-    const rightSection = document.querySelector('.overflow-auto');
+    const leftSection = document.querySelector(".mt-3.grid.left");
+    const rightSection = document.querySelector(".mt-3.grid.right");
 
-    // Ensure both sections exist before proceeding
+    // Ensure sections exist before proceeding
     if (!leftSection || !rightSection) {
-      console.error("Error: One or more target elements are missing in the DOM. Retrying...");
+      console.error("Error: Target elements missing in DOM. Retrying...");
       setTimeout(() => addToBackroomQueue(data), 100); // Retry after 100ms
       return;
     }
@@ -164,11 +167,21 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
     }
   }
 
+  // Function to refresh the Backroom queue UI dynamically
+  function refreshBackroomUI() {
+    console.log("Refreshing Backroom UI...");
+
+    // Force the page to refresh only if there are significant UI updates
+    setTimeout(() => {
+      location.reload();
+    }, 500);
+  }
+
   // Function to create a queue item element
   function createQueueItem(data) {
-    const item = document.createElement('div');
+    const item = document.createElement("div");
     item.id = `queue-item-${data.id}`;
-    item.className = 'p-3 bg-white border rounded-lg flex flex-col justify-center items-center my-3 mx-2';
+    item.className = "p-3 bg-white border rounded-lg flex flex-col justify-center items-center my-3 mx-2";
 
     item.innerHTML = `
     <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
