@@ -16,19 +16,19 @@ class model_queueing extends CI_Model
         // Get the last queue number
         $last_queue = $this->db->select_max('queue_number')->get('queue')->row();
         $new_queue_number = $last_queue->queue_number + 1;
-    
+
         $data = array(
             'queue_number' => $new_queue_number,
             'name' => $name,
             'reason' => $reason,
             'status' => 'landtax'
         );
-    
+
         if ($this->db->insert('queue', $data)) {
-            return $new_queue_number; 
+            return $new_queue_number;
         }
-        return false; 
-    }    
+        return false;
+    }
 
     public function get_queue_item($queue_id)
     {
@@ -134,8 +134,9 @@ class model_queueing extends CI_Model
     // Get people in backroom
     public function get_backroom()
     {
-        return $this->db->where('status', 'backroom')->order_by('created_at', 'ASC')->get('queue')->result();
+        return $this->db->where('status', 'backroom')->order_by('position', 'ASC')->get('queue')->result();
     }
+
 
     // Get people in examiners
     public function get_examiners()
