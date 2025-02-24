@@ -15,8 +15,8 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Land Tax Queue</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script> -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </head>
@@ -536,47 +536,60 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
     });
   </script>
   <script>
-    document.querySelectorAll('.processing-btn').forEach(button => {
-      button.addEventListener('click', function () {
-        let id = this.getAttribute('data-id');
-        let button = this;
+   document.querySelectorAll('.processing-btn').forEach(button => {
+  button.addEventListener('click', function () {
+    let queueId = this.getAttribute('data-id');
+    let button = this;
 
-        fetch(`<?= base_url('controller_queueing/mark_as_processing/'); ?>${id}`, {
-          method: 'GET',
-        })
-          .then(response => response.json())
-          .then(data => {
-            if (data.status === 'success') {
-              Toastify({
-                text: data.message,
-                duration: 3000,
-                close: true,
-                gravity: "top",
-                position: "right",
-                backgroundColor: "linear-gradient(to right, #FF9800, #F57C00)"
-              }).showToast();
+    fetch("<?php echo base_url('controller_queueing/mark_as_processing'); ?>", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `queue_id=${queueId}`
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === "success") {
+          Toastify({
+            text: data.message,
+            duration: 3000,
+            close: true,
+            gravity: "top",
+            position: "right",
+            backgroundColor: "linear-gradient(to right, #FF9800, #F57C00)"
+          }).showToast();
 
-              // Disable button and update status
-              button.classList.add("opacity-50", "cursor-not-allowed");
-              button.disabled = true;
-              button.parentElement.querySelector(".proceed-btn").classList.add("opacity-50", "pointer-events-none");
-              button.parentElement.querySelector("p").innerHTML = `<span class="text-red-500 font-semibold">Processing by You</span>`;
-            } else {
-              Toastify({
-                text: data.message,
-                duration: 3000,
-                close: true,
-                gravity: "top",
-                position: "right",
-                backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)"
-              }).showToast();
+          // Disable button and update UI
+          button.classList.add("opacity-50", "cursor-not-allowed");
+          button.disabled = true;
+
+          let parentContainer = button.closest(".queue-item");
+          console.log("Parent Container:", parentContainer);
+
+          if (parentContainer) {
+            let statusText = parentContainer.querySelector(".status-text"); // Ensure you have a class like <p class="status-text">
+            console.log("Paragraph Element:", statusText);
+
+            if (statusText) {
+              statusText.innerHTML = `<span class="text-red-500 font-semibold">Processing by You</span>`;
             }
-          })
-          .catch(error => {
-            console.error('Error:', error);
-          });
-      });
-    });
+
+            parentContainer.querySelector(".proceed-btn")?.classList.add("opacity-50", "pointer-events-none");
+          }
+        } else {
+          Toastify({
+            text: data.message,
+            duration: 3000,
+            close: true,
+            gravity: "top",
+            position: "right",
+            backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)"
+          }).showToast();
+        }
+      })
+      .catch(error => console.error("Error:", error));
+  });
+});
+
   </script>
   <!-- <script>
     let hasRefreshed = false; // Prevent multiple refreshes

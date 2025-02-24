@@ -166,5 +166,10 @@ class model_queueing extends CI_Model
     {
         return $this->db->where('status', 'releasing')->order_by('created_at', 'ASC')->get('queue')->result();
     }
+    public function mark_as_processing($queue_id, $user_id)
+    {
+        $this->db->where('id', $queue_id);
+        return $this->db->update('queue', ['processing_by' => $user_id]);
+    }
 
 }

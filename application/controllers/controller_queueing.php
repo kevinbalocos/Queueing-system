@@ -241,43 +241,39 @@ class controller_queueing extends CI_Controller
     // Proceed functions with flashdata notifications and redirect
 // Proceed functions with AJAX responses
 
-public function proceed_to_backroom($id)
-{
-    // Get the highest position currently in the backroom
-    $max_position = $this->db->select_max('position')->where('status', 'backroom')->get('queue')->row()->position;
-    $new_position = $max_position ? $max_position + 1 : 1; // Append to the end
+    public function proceed_to_backroom($id)
+    {
+        // Get the highest position currently in the backroom
+        $max_position = $this->db->select_max('position')->where('status', 'backroom')->get('queue')->row()->position;
+        $new_position = $max_position ? $max_position + 1 : 1; // Append to the end
 
-    // Update queue status and assign a position
-    $this->db->where('id', $id)->update('queue', [
-        'status' => 'backroom',
-        'position' => $new_position
-    ]);
+        // Update queue status and assign a position
+        $this->db->where('id', $id)->update('queue', [
+            'status' => 'backroom',
+            'position' => $new_position
+        ]);
 
-    // Fetch the updated queue item
-    $updated_item = $this->db->where('id', $id)->get('queue')->row();
+        // Fetch the updated queue item
+        $updated_item = $this->db->where('id', $id)->get('queue')->row();
 
-    if ($updated_item) {
-        // Send full queue data to WebSocket clients
-        $this->send_to_websocket([
-            'id' => $updated_item->id,
-            'queue_number' => $updated_item->queue_number,
-            'name' => $updated_item->name,
-            'reason' => $updated_item->reason,
-            'status' => $updated_item->status,
-            'position' => $updated_item->position, // Include position in WebSocket
-            'proceed_url' => base_url("index.php/controller_queueing/proceed_to_backroom/{$updated_item->id}")
-        ], 'proceed_to_backroom');
+        if ($updated_item) {
+            // Send full queue data to WebSocket clients
+            $this->send_to_websocket([
+                'id' => $updated_item->id,
+                'queue_number' => $updated_item->queue_number,
+                'name' => $updated_item->name,
+                'reason' => $updated_item->reason,
+                'status' => $updated_item->status,
+                'position' => $updated_item->position, // Include position in WebSocket
+                'proceed_url' => base_url("index.php/controller_queueing/proceed_to_backroom/{$updated_item->id}")
+            ], 'proceed_to_backroom');
 
-        // Send JSON response for AJAX success notification
-        echo json_encode(['status' => 'success', 'message' => 'Queue item successfully proceeded to Backroom.']);
-    } else {
-        echo json_encode(['status' => 'error', 'message' => 'Failed to proceed queue item.']);
+            // Send JSON response for AJAX success notification
+            echo json_encode(['status' => 'success', 'message' => 'Queue item successfully proceeded to Backroom.']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to proceed queue item.']);
+        }
     }
-}
-
-
-
-
 
     public function proceed_to_examiners($id)
     {
@@ -317,6 +313,42 @@ public function proceed_to_backroom($id)
 
         // Send JSON response for AJAX success notification
         echo json_encode(['status' => 'success', 'message' => 'Queue item successfully proceeded to Releasing.']);
+    }
+    public function mark_as_processing()
+    {
+        header('Content-Type: application/json'); // Ensure JSON response
+
+        $queue_id = $this->input->post('queue_id');
+        $user_id = $this->session->userdata('user_id'); // Get logged-in user ID
+
+        if (!$queue_id) {
+            echo json_encode(['status' => 'error', 'message' => 'Queue ID is missing']);
+            return;
+        }
+
+        // Fetch queue info
+        $queue = $this->db->get_where('queue', ['id' => $queue_id])->row();
+
+        if (!$queue) {
+            echo json_encode(['status' => 'error', 'message' => 'Queue not found']);
+            return;
+        }
+
+        // Check if it's already being processed
+        if ($queue->processing_by) {
+            echo json_encode(['status' => 'error', 'message' => 'Already being processed']);
+            return;
+        }
+
+        // Update processing_by field
+        $this->db->where('id', $queue_id);
+        $update = $this->db->update('queue', ['processing_by' => $user_id]);
+
+        if ($update) {
+            echo json_encode(['status' => 'success', 'message' => 'Queue marked as processing']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Database update failed']);
+        }
     }
 
 }
