@@ -15,8 +15,8 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Land Tax Queue</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script> -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </head>
@@ -443,8 +443,6 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
     });
   </script>
 
-
-
   <script>
     document.querySelector('form').addEventListener('submit', function (e) {
       e.preventDefault(); // Prevent form submission
@@ -536,59 +534,123 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
     });
   </script>
   <script>
-   document.querySelectorAll('.processing-btn').forEach(button => {
-  button.addEventListener('click', function () {
-    let queueId = this.getAttribute('data-id');
-    let button = this;
+    document.addEventListener("DOMContentLoaded", function () {
+      const socket = new WebSocket("ws://localhost:8080");
+      let hasRefreshed = false;
 
-    fetch("<?php echo base_url('controller_queueing/mark_as_processing'); ?>", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: `queue_id=${queueId}`
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.status === "success") {
-          Toastify({
-            text: data.message,
-            duration: 3000,
-            close: true,
-            gravity: "top",
-            position: "right",
-            backgroundColor: "linear-gradient(to right, #FF9800, #F57C00)"
-          }).showToast();
+      socket.onopen = function () {
+        console.log("WebSocket connection established");
+      };
 
-          // Disable button and update UI
-          button.classList.add("opacity-50", "cursor-not-allowed");
-          button.disabled = true;
+      socket.onmessage = function (event) {
+        console.log("📥 Received WebSocket Message:", event.data);
 
-          let parentContainer = button.closest(".queue-item");
-          console.log("Parent Container:", parentContainer);
+        try {
+          const data = JSON.parse(event.data);
+          const queueList = document.getElementById("queueList");
 
-          if (parentContainer) {
-            let statusText = parentContainer.querySelector(".status-text"); // Ensure you have a class like <p class="status-text">
-            console.log("Paragraph Element:", statusText);
+          if (data.action === "update_queue") {
+            console.log(`Queue ${data.queue_id} marked as processing`);
 
-            if (statusText) {
-              statusText.innerHTML = `<span class="text-red-500 font-semibold">Processing by You</span>`;
+            let queueRow = document.querySelector(`[data-queue-id="${data.queue_id}"]`);
+            if (queueRow) {
+              queueRow.classList.add("bg-yellow-500");
+              queueRow.querySelector(".status-text").innerText = "Processing";
+
+              let button = queueRow.querySelector(".processing-btn");
+              if (button) {
+                button.classList.add("opacity-50", "cursor-not-allowed");
+                button.setAttribute("disabled", "disabled");
+              }
+            } else {
+              console.warn(`Queue row with ID ${data.queue_id} not found!`);
             }
 
-            parentContainer.querySelector(".proceed-btn")?.classList.add("opacity-50", "pointer-events-none");
+            // 🔄 Auto-refresh if queue is empty
+            if (queueList && queueList.children.length === 0 && !hasRefreshed) {
+              hasRefreshed = true;
+              console.warn("Queue is empty. Refreshing page...");
+
+              Swal.fire({
+                title: "Updating...",
+                text: "Please wait while the page refreshes.",
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                backdrop: false,
+                position: "top",
+                customClass: { popup: "swal-top-popup" },
+                didOpen: () => Swal.showLoading(),
+              });
+
+              setTimeout(() => location.reload(), 1000);
+            }
           }
-        } else {
-          Toastify({
-            text: data.message,
-            duration: 3000,
-            close: true,
-            gravity: "top",
-            position: "right",
-            backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)"
-          }).showToast();
+        } catch (error) {
+          console.error("WebSocket JSON Error:", error);
         }
-      })
-      .catch(error => console.error("Error:", error));
-  });
-});
+      };
+
+      socket.onerror = function (error) {
+        console.error("WebSocket Error:", error);
+      };
+
+      socket.onclose = function () {
+        console.log("🔌 WebSocket connection closed");
+      };
+
+      document.body.addEventListener("click", function (e) {
+        if (e.target.closest(".processing-btn")) {
+          e.preventDefault();
+          const button = e.target.closest(".processing-btn");
+          const queueId = button.getAttribute("data-id");
+
+          if (!queueId) {
+            console.error("Queue ID is undefined.");
+            Swal.fire({ title: "Error!", text: "Invalid queue ID.", icon: "error", position: "top" });
+            return;
+          }
+
+          Swal.fire({
+            title: "Processing...",
+            text: "Updating queue...",
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            backdrop: false,
+            position: "top",
+            customClass: { popup: "swal-top-popup" },
+            didOpen: () => Swal.showLoading(),
+          });
+
+          fetch("<?php echo base_url('controller_queueing/mark_as_processing'); ?>", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({ queue_id: queueId }),
+          })
+            .then(response => response.json())
+            .then(data => {
+              if (data.status === "success") {
+                console.log("Queue marked as processing:", data);
+
+                socket.send(JSON.stringify({
+                  action: "update_queue",
+                  queue_id: queueId,
+                  status: "processing"
+                }));
+
+                setTimeout(() => location.reload(), 1000);
+              } else {
+                throw new Error(data.message);
+              }
+            })
+            .catch(error => {
+              console.error("Fetch Error:", error);
+              Swal.fire({ title: "Error!", text: error.message, icon: "error", position: "top" });
+            });
+        }
+      });
+    });
 
   </script>
   <!-- <script>
@@ -633,20 +695,14 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
   <style>
     .mt-3.grid.right {
       position: absolute;
-      /* or fixed if necessary */
       right: 10px;
-      /* Adjust positioning */
     }
 
     .swal-top-popup {
       margin-top: 10px !important;
-      /* Adjusts the spacing from the top */
       width: 300px !important;
-      /* Keeps it small to avoid layout shifts */
       box-shadow: none !important;
-      /* Removes shadow if needed */
       background: rgba(255, 255, 255, 0.9) !important;
-      /* Semi-transparent to blend */
     }
   </style>
 

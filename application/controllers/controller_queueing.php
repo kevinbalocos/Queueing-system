@@ -316,39 +316,58 @@ class controller_queueing extends CI_Controller
     }
     public function mark_as_processing()
     {
-        header('Content-Type: application/json'); // Ensure JSON response
+        header('Content-Type: application/json');
 
-        $queue_id = $this->input->post('queue_id');
-        $user_id = $this->session->userdata('user_id'); // Get logged-in user ID
+        $queue_id = $this->input->post('queue_id', TRUE);
+        $user_id = $this->session->userdata('user_id');
 
         if (!$queue_id) {
             echo json_encode(['status' => 'error', 'message' => 'Queue ID is missing']);
             return;
         }
 
-        // Fetch queue info
         $queue = $this->db->get_where('queue', ['id' => $queue_id])->row();
-
         if (!$queue) {
             echo json_encode(['status' => 'error', 'message' => 'Queue not found']);
             return;
         }
 
-        // Check if it's already being processed
         if ($queue->processing_by) {
             echo json_encode(['status' => 'error', 'message' => 'Already being processed']);
             return;
         }
 
-        // Update processing_by field
         $this->db->where('id', $queue_id);
         $update = $this->db->update('queue', ['processing_by' => $user_id]);
 
         if ($update) {
+            // WebSocket Message
+            $message = json_encode([
+                'status' => 'success',
+                'action' => 'update_queue',
+                'queue_id' => $queue_id,
+                'processing_by' => $user_id
+            ]);
+
+            // Broadcast WebSocket Message
+            $this->sendWebSocketMessage($message);
+
             echo json_encode(['status' => 'success', 'message' => 'Queue marked as processing']);
+            return;
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Database update failed']);
+            return;
         }
     }
 
+    // Function to send WebSocket message
+    private function sendWebSocketMessage($message)
+    {
+        $sock = fsockopen("localhost", 8080); // Ensure your WebSocket server is running on port 8080
+
+        if ($sock) {
+            fwrite($sock, $message);
+            fclose($sock);
+        }
+    }
 }
