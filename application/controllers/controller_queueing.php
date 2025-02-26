@@ -129,23 +129,26 @@ class controller_queueing extends CI_Controller
             // Fetch the newly added queue item
             $new_item = $this->db->where('queue_number', $queue_number)->get('queue')->row();
 
-            if (!$new_item) {
+            if (!$new_item || empty($new_item->id)) {
                 echo json_encode(['status' => 'error', 'message' => 'Failed to fetch the new queue item.']);
                 return;
             }
+
+            $queue_id = $new_item->id; // Ensure a valid queue_id is assigned
 
             $queue = $this->model_queueing->get_queue();
             $left_items = array_slice($queue, 0, 20);
             $right_items = array_slice($queue, 20);
 
-            // Send data to WebSocket clients
             $queue_data = [
-                'id' => $new_item->id,
+                'queue_id' => (string) $queue_id, // Convert to string to prevent issues
+                'id' => $queue_id, // Keep for consistency
                 'queue_number' => $queue_number,
                 'name' => $name,
                 'reason' => $reason,
                 'status' => 'landtax',
-                'proceed_url' => base_url("index.php/controller_queueing/proceed_to_backroom/{$new_item->id}"), // Ensure correct URL
+                'processing_by' => '', // Add processing_by if needed
+                'proceed_url' => base_url("index.php/controller_queueing/proceed_to_backroom/{$queue_id}"),
                 'left_items' => $left_items,
                 'right_items' => $right_items
             ];
@@ -164,7 +167,6 @@ class controller_queueing extends CI_Controller
             echo json_encode(['status' => 'error', 'message' => 'Failed to add to the queue.']);
         }
     }
-
 
     // Function to send the new queue item to WebSocket clients
     private function send_to_websocket($data, $action)

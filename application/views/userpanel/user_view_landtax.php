@@ -15,8 +15,8 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Land Tax Queue</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script> -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </head>
@@ -26,9 +26,9 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
     <!-- Left Section (Now Serving) -->
     <div class="flex-1 bg-white p-5 rounded-lg shadow-md flex flex-col">
       <h2 class="text-2xl font-bold text-blue-900 text-center">Now Serving</h2>
-      <?php if ($queue): ?>
-        <div class="mt-3 grid gap-3 bg-blue-50 h-full"
-          style="grid-template-columns: repeat(<?= $grid_cols ?>, 1fr); grid-auto-rows: 1fr;">
+      <div id="queue-container" class="mt-3 grid gap-3 bg-blue-50 h-full"
+        style="grid-template-columns: repeat(<?= $grid_cols ?>, 1fr); grid-auto-rows: 1fr;">
+        <?php if ($queue): ?>
           <?php foreach ($left_items as $item): ?>
             <div class="p-3 bg-white border rounded-lg flex flex-col justify-center my-3 mx-2 items-center">
               <h3 class="font-semibold text-xl"><?= $item->queue_number; ?> - <?= $item->name; ?></h3>
@@ -57,15 +57,12 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
                 <i class="fa-solid fa-user-check text-2xl"></i>
               </button>
 
-
             </div>
-
-
           <?php endforeach; ?>
-        </div>
-      <?php else: ?>
-        <p class="text-gray-500 mt-3 text-center">No one in queue</p>
-      <?php endif; ?>
+        <?php else: ?>
+        <?php endif; ?>
+      </div>
+
     </div>
 
     <!-- Right Section (Queue List) -->
@@ -107,99 +104,10 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
       </div>
     </div>
   </div>
-  <!-- <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const socket = new WebSocket('ws://localhost:8080'); // Connect to WebSocket server
-
-      socket.onopen = function () {
-        console.log('Connected to WebSocket server (Land Tax)');
-      };
-
-      socket.onmessage = function (event) {
-        const data = JSON.parse(event.data);
-
-        if (data.action === "add_to_queue") {
-          console.log("New queue item added:", data);
-          updateQueue(data);
-        }
-      };
-
-      socket.onerror = function (error) {
-        console.error('WebSocket Error: ', error);
-      };
-
-      socket.onclose = function () {
-        console.log('Disconnected from WebSocket server');
-      };
-
-      function updateQueue(data) {
-        let leftSection = document.querySelector('.mt-3.grid');
-        let rightSection = document.getElementById('queueList');
-
-        // If the container exists, update the queue immediately
-        if (leftSection) {
-          insertQueueItem();
-          return;
-        }
-
-        console.warn("Queue sections not found. Observing for changes...");
-
-        // Use MutationObserver to wait for the queue container to be added
-        const observer = new MutationObserver((mutations, obs) => {
-          leftSection = document.querySelector('.mt-3.grid');
-          rightSection = document.getElementById('queueList');
-
-          if (leftSection) {
-            console.log("Queue sections found. Updating queue...");
-            obs.disconnect(); // Stop observing once found
-            insertQueueItem();
-          }
-        });
-
-        observer.observe(document.body, { childList: true, subtree: true });
-
-        function insertQueueItem() {
-          let existingItem = document.getElementById(`queue-item-${data.id}`);
-
-          if (!existingItem) {
-            const newItem = createQueueItem(data);
-            leftSection.appendChild(newItem);
-          } else {
-            console.warn(`Queue item ${data.id} already exists. Skipping duplicate.`);
-          }
-        }
-      }
-
-      // Function to create a queue item
-      function createQueueItem(data) {
-        const item = document.createElement('div');
-        item.id = `queue-item-${data.id}`;
-        item.className = 'p-3 bg-white border rounded-lg flex flex-col justify-center my-3 mx-2 items-center';
-
-        item.innerHTML = `
-        <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
-        <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
-        <p class="text-gray-500 text-sm">
-            Status: <span class="status-label text-green-500 font-semibold">Waiting</span>
-        </p>
-        <button class="processing-btn mt-3 bg-yellow-500 py-2 px-3 text-white hover:bg-yellow-600 rounded-full shadow-lg" 
-            data-id="${data.id}">
-            <i class="fa-solid fa-hourglass-half"></i> Processing
-        </button>
-        <a href="${data.proceed_url}" class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
-            <i class="fa-solid fa-user-check text-2xl"></i>
-        </a>
-    `;
-
-        return item;
-      }
-    });
-  </script> -->
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-      const socket = new WebSocket("ws://localhost:8080"); // WebSocket connection
-      let hasRefreshed = false; // Prevent multiple refreshes
+      const socket = new WebSocket("ws://localhost:8080");
 
       socket.onopen = function () {
         console.log("Connected to WebSocket server (Land Tax)");
@@ -208,234 +116,95 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
       socket.onmessage = function (event) {
         try {
           const data = JSON.parse(event.data);
-          const queueList = document.getElementById("queueList");
+          console.log("📥 Received WebSocket Message:", data);
 
-          if (data.action === "add_to_queue") {
-            console.log("New queue item added:", data);
-
-            if (queueList && queueList.children.length === 0) {
-              if (!hasRefreshed) {
-                console.warn("Queue is empty. Showing loader and refreshing...");
-                hasRefreshed = true;
-
-                Swal.fire({
-                  title: "Updating...",
-                  text: "Please wait while the page refreshes.",
-                  allowOutsideClick: false,
-                  allowEscapeKey: false,
-                  showConfirmButton: false,
-                  backdrop: false,
-                  position: "top",
-                  customClass: { popup: "swal-top-popup" },
-                  didOpen: () => Swal.showLoading(),
-                });
-
-                setTimeout(() => location.reload(), 1000);
-              }
-            } else {
-              updateQueueDOM(data);
-            }
+          if (data.status !== "success" || !data.queue_id) {
+            console.warn("Invalid queue data received:", data);
+            return;
           }
 
-          if (data.action === "proceed_to_backroom") {
-            console.log("Queue item moved to Backroom:", data);
-            moveQueueItemToBackroom(data);
+          if (data.action === "add_to_queue") {
+            addQueueItem(data);
+          } else if (data.action === "proceed_to_backroom") {
+            removeQueueItem(data.queue_id);
           }
         } catch (error) {
           console.error("WebSocket JSON Error:", error);
         }
       };
 
-      function updateQueueDOM(data) {
-        const queueList = document.getElementById("queueList");
-        if (queueList) {
-          const existingItems = queueList.querySelectorAll("li");
-          for (let item of existingItems) {
-            if (item.dataset.queueId === data.id) {
-              console.warn(`Queue item ${data.id} already exists. Skipping addition.`);
-              return;
-            }
-          }
+      function addQueueItem(data) {
+        let queueContainer = document.getElementById("queue-container"); // Left section
+        let queueList = document.getElementById("queueList"); // Right section
+        let allQueueItems = document.querySelectorAll(".queue-item");
 
-          const newItem = document.createElement("li");
-          newItem.className = "p-3 bg-gray-50 border rounded-lg";
-          newItem.dataset.queueId = data.id;
-          newItem.textContent = `${data.queue_number} - ${data.name} (${data.reason})`;
-
-          queueList.appendChild(newItem);
-        }
-      }
-
-      function moveQueueItemToBackroom(data) {
-        const queueItem = document.getElementById(`queue-item-${data.id}`);
-        if (queueItem) {
-          queueItem.querySelector(".status-label").textContent = "Backroom";
-          queueItem.querySelector(".status-label").classList.add("text-yellow-500");
-          queueItem.querySelector(".proceed-btn").remove();
-        }
-      }
-
-      function updateQueue(data) {
-        let leftSection = document.querySelector(".mt-3.grid.left");
-        let rightSection = document.querySelector(".mt-3.grid.right");
-
-        if (leftSection && rightSection) {
-          insertQueueItem(data);
+        if (!queueContainer || !queueList) {
+          console.error("Error: Queue containers not found.");
           return;
         }
 
-        console.warn("Queue sections not found. Observing for changes...");
-        const observer = new MutationObserver((mutations, obs) => {
-          leftSection = document.querySelector(".mt-3.grid.left");
-          rightSection = document.querySelector(".mt-3.grid.right");
+        const queueId = `queue-item-${data.queue_id}`;
 
-          if (leftSection && rightSection) {
-            console.log("Queue sections found. Updating queue...");
-            obs.disconnect();
-            insertQueueItem(data);
-          }
-        });
-
-        observer.observe(document.body, { childList: true, subtree: true });
-      }
-
-      function insertQueueItem(data) {
-        let leftSection = document.querySelector(".mt-3.grid.left");
-        let rightSection = document.querySelector(".mt-3.grid.right");
-
-        if (!leftSection || !rightSection) {
-          console.warn("Queue sections not found. Observing for changes...");
+        if (document.getElementById(queueId)) {
+          console.warn(`Queue item ${queueId} already exists.`);
           return;
         }
 
-        let leftItems = leftSection.children.length;
-        let rightItems = rightSection.children.length;
+        const newItem = document.createElement("div");
+        newItem.className = "queue-item p-3 bg-white border rounded-lg flex flex-col justify-center my-3 mx-2 items-center";
+        newItem.id = queueId;
+        newItem.dataset.id = data.queue_id;
 
-        let existingItem = document.getElementById(`queue-item-${data.id}`);
-
-        if (!existingItem) {
-          const newItem = createQueueItem(data);
-
-          if (leftItems < 20) {
-            leftSection.appendChild(newItem);
-          } else {
-            rightSection.appendChild(newItem);
-          }
-
-          if (rightItems === 0 && leftItems >= 20) {
-            console.warn("Queue item added to right section. Forcing refresh...");
-            setTimeout(() => location.reload(), 3000);
-          }
-        } else {
-          console.warn(`Queue item ${data.id} already exists. Skipping duplicate.`);
-        }
-      }
-
-      function createQueueItem(data) {
-        const item = document.createElement("div");
-        item.id = `queue-item-${data.id}`;
-        item.className = "p-3 bg-white border rounded-lg flex flex-col justify-center my-3 mx-2 items-center";
-
-        item.innerHTML = `
-      <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
-      <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
+        newItem.innerHTML = `
+      <h3 class="font-semibold text-xl">${data.queue_number || "Unknown"} - ${data.name || "Unknown"}</h3>
+      <p class="text-gray-500 text-sm">Reason: ${data.reason || "Not provided"}</p>
       <p class="text-gray-500 text-sm">
           Status: <span class="status-label text-green-500 font-semibold">Waiting</span>
       </p>
       <button class="processing-btn mt-3 bg-yellow-500 py-2 px-3 text-white hover:bg-yellow-600 rounded-full shadow-lg" 
-          data-id="${data.id}">
+          data-id="${data.queue_id}">
           <i class="fa-solid fa-hourglass-half"></i> Processing
       </button>
       <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg"
-          data-id="${data.id}">
+          data-id="${data.queue_id}">
           <i class="fa-solid fa-user-check text-2xl"></i>
       </button>
-      `;
+    `;
 
-        return item;
+        if (allQueueItems.length < 20) {
+          queueContainer.appendChild(newItem); // First 20 go to left section
+        } else {
+          queueList.appendChild(newItem); // Remaining go to right section
+        }
+
+        updateGridLayout();
       }
 
-      // Handle Proceed Button Click (AJAX & WebSocket)
-      document.body.addEventListener("click", function (e) {
-        if (e.target.closest(".proceed-btn")) {
-          e.preventDefault();
-          const button = e.target.closest(".proceed-btn");
-          const queueId = button.getAttribute("data-id");
+      function removeQueueItem(queueId) {
+        let queueItem = document.getElementById(`queue-item-${queueId}`);
 
-          if (!queueId) {
-            console.error("Queue ID is undefined. Cannot proceed.");
-            Swal.fire({ title: "Error!", text: "Invalid queue ID.", icon: "error" });
-            return;
-          }
-
-          Swal.fire({
-            title: "Proceeding...",
-            text: "Processing queue movement...",
-            allowOutsideClick: false,
-            showConfirmButton: false,
-            backdrop: false,
-            position: "top",
-            customClass: { popup: "swal-top-popup" },
-            didOpen: () => Swal.showLoading(),
-          });
-
-          fetch(`/OJT/queueing-system/index.php/controller_queueing/proceed_to_backroom/${queueId}`, {
-            method: "GET",
-            headers: { "X-Requested-With": "XMLHttpRequest" },
-          })
-            .then((response) => {
-              if (!response.ok) {
-                throw new Error(`HTTP Error! Status: ${response.status}`);
-              }
-              return response.json();
-            })
-            .then((data) => {
-              if (data.status === "success") {
-                console.log("Queue item proceeded successfully:", data);
-                moveQueueItemToBackroom(data);
-
-                // ✅ Ensure Toastify failure doesn’t stop the process
-                try {
-                  Toastify({
-                    text: "Queue moved successfully!",
-                    duration: 3000,
-                    style: { background: "linear-gradient(to right, #00b09b, #96c93d)" }
-                  }).showToast();
-                } catch (toastError) {
-                  console.warn("Toastify failed:", toastError);
-                }
-
-                // ✅ Proceed to WebSocket update, even if Toastify fails
-                socket.send(JSON.stringify({
-                  action: "proceed_to_backroom",
-                  id: queueId,
-                }));
-
-                setTimeout(() => location.reload(), 100);
-              } else {
-                throw new Error(data.message);
-              }
-            })
-            .catch((error) => {
-              console.error("Fetch Error:", error);
-
-              // ✅ Ensure Toastify failure doesn’t block execution
-              try {
-                Toastify({
-                  text: "Error: " + error.message,
-                  duration: 1000,
-                  style: { background: "linear-gradient(to right, #ff5f6d, #ffc371)" }
-                }).showToast();
-              } catch (toastError) {
-                console.warn("Toastify failed:", toastError);
-              }
-            });
+        if (queueItem) {
+          queueItem.remove();
+          updateGridLayout();
+        } else {
+          console.warn(`Queue item ${queueId} not found.`);
         }
-      });
+      }
 
-      socket.onerror = function (error) {
-        console.error("WebSocket Error: ", error);
-      };
+      function updateGridLayout() {
+        const queueContainer = document.getElementById("queue-container");
+        const queueList = document.getElementById("queueList");
+
+        const leftItems = queueContainer.children.length;
+        const rightItems = queueList.children.length;
+
+        queueContainer.style.gridTemplateColumns = `repeat(${leftItems < 5 ? leftItems : 5}, 1fr)`;
+        queueList.style.gridTemplateColumns = `repeat(${rightItems < 5 ? rightItems : 5}, 1fr)`;
+
+        if (leftItems === 0) {
+          queueContainer.innerHTML = `<p id="empty-queue-message-left" class="text-gray-500 mt-3 text-center">No one in queue</p>`;
+        }
+      }
 
       socket.onclose = function () {
         console.log("Disconnected from WebSocket server");
@@ -566,7 +335,6 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
               console.warn(`Queue row with ID ${data.queue_id} not found!`);
             }
 
-            // 🔄 Auto-refresh if queue is empty
             if (queueList && queueList.children.length === 0 && !hasRefreshed) {
               hasRefreshed = true;
               console.warn("Queue is empty. Refreshing page...");
@@ -651,46 +419,7 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
         }
       });
     });
-
   </script>
-  <!-- <script>
-    let hasRefreshed = false; // Prevent multiple refreshes
-
-    function handleNewQueueItem(data) {
-      if (!hasRefreshed) {
-        console.warn("First queue item detected. Showing loader...");
-        hasRefreshed = true; // Mark as refreshed to prevent looping
-
-        // Show SweetAlert2 loading screen
-        Swal.fire({
-          title: "Updating...",
-          text: "Please wait while the page refreshes.",
-          allowOutsideClick: false,
-          allowEscapeKey: false,
-          showConfirmButton: false,
-          didOpen: () => {
-            Swal.showLoading();
-          }
-        });
-
-        // Delay before refreshing
-        setTimeout(() => {
-          location.reload(); // Refresh after 3 seconds
-        }, 3000);
-      }
-    }
-
-    // Example WebSocket listener for new queue items
-    const socket = new WebSocket('ws://localhost:8080');
-
-    socket.onmessage = function (event) {
-      const data = JSON.parse(event.data);
-
-      if (data && data.id) {
-        handleNewQueueItem(data); // Trigger update only once
-      }
-    };
-  </script> -->
 
   <style>
     .mt-3.grid.right {
