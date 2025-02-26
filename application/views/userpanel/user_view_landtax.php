@@ -30,7 +30,8 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
         style="grid-template-columns: repeat(<?= $grid_cols ?>, 1fr); grid-auto-rows: 1fr;">
         <?php if ($queue): ?>
           <?php foreach ($left_items as $item): ?>
-            <div class="p-3 bg-white border rounded-lg flex flex-col justify-center my-3 mx-2 items-center">
+            <div class="queue-item p-3 bg-white border rounded-lg flex flex-col justify-center my-3 mx-2 items-center"
+              id="queue-item-<?= $item->id; ?>">
               <h3 class="font-semibold text-xl"><?= $item->queue_number; ?> - <?= $item->name; ?></h3>
               <p class="text-gray-500 text-sm">Reason: <?= $item->reason; ?></p>
 
@@ -53,10 +54,10 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
               <!-- Proceed Button -->
               <button
                 class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg"
-                data-id="<?= $item->id; ?>">
+                data-id="<?= $item->id; ?>"
+                data-url="http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_backroom/<?= $item->id; ?>">
                 <i class="fa-solid fa-user-check text-2xl"></i>
               </button>
-
             </div>
           <?php endforeach; ?>
         <?php else: ?>
@@ -112,26 +113,28 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
       socket.onopen = function () {
         console.log("Connected to WebSocket server (Land Tax)");
       };
-
       socket.onmessage = function (event) {
+        console.log("📥 Raw WebSocket Message:", event.data); // Log before parsing
+
         try {
           const data = JSON.parse(event.data);
-          console.log("📥 Received WebSocket Message:", data);
+          console.log("📥 Parsed WebSocket Data:", data);
 
-          if (data.status !== "success" || !data.queue_id) {
+          if (!data.queue_id) {
             console.warn("Invalid queue data received:", data);
             return;
           }
 
-          if (data.action === "add_to_queue") {
-            addQueueItem(data);
-          } else if (data.action === "proceed_to_backroom") {
-            removeQueueItem(data.queue_id);
-          }
+          // Use left_items[0] if available, otherwise use data directly
+          const queueData = data.left_items && data.left_items.length > 0 ? data.left_items[0] : data;
+
+          console.log("🚀 Final Render Data:", queueData);
+          addQueueItem(queueData);
         } catch (error) {
           console.error("WebSocket JSON Error:", error);
         }
       };
+
 
       function addQueueItem(data) {
         let queueContainer = document.getElementById("queue-container"); // Left section
@@ -150,26 +153,33 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
           return;
         }
 
+        // Ensure proper fallback values
+        const queueNumber = data.queue_number ? String(data.queue_number).trim() : "Unknown";
+        const name = data.name ? String(data.name).trim() : "Unknown";
+        const reason = data.reason ? String(data.reason).trim() : "Not provided";
+
+        console.log("✅ Final Render Data:", { queueNumber, name, reason });
+
         const newItem = document.createElement("div");
         newItem.className = "queue-item p-3 bg-white border rounded-lg flex flex-col justify-center my-3 mx-2 items-center";
         newItem.id = queueId;
         newItem.dataset.id = data.queue_id;
 
         newItem.innerHTML = `
-      <h3 class="font-semibold text-xl">${data.queue_number || "Unknown"} - ${data.name || "Unknown"}</h3>
-      <p class="text-gray-500 text-sm">Reason: ${data.reason || "Not provided"}</p>
-      <p class="text-gray-500 text-sm">
-          Status: <span class="status-label text-green-500 font-semibold">Waiting</span>
-      </p>
-      <button class="processing-btn mt-3 bg-yellow-500 py-2 px-3 text-white hover:bg-yellow-600 rounded-full shadow-lg" 
-          data-id="${data.queue_id}">
-          <i class="fa-solid fa-hourglass-half"></i> Processing
-      </button>
-      <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg"
-          data-id="${data.queue_id}">
-          <i class="fa-solid fa-user-check text-2xl"></i>
-      </button>
-    `;
+    <h3 class="font-semibold text-xl">${queueNumber} - ${name}</h3>
+    <p class="text-gray-500 text-sm">Reason: ${reason}</p>
+    <p class="text-gray-500 text-sm">
+        Status: <span class="status-label text-green-500 font-semibold">Waiting</span>
+    </p>
+    <button class="processing-btn mt-3 bg-yellow-500 py-2 px-3 text-white hover:bg-yellow-600 rounded-full shadow-lg" 
+        data-id="${data.queue_id}">
+        <i class="fa-solid fa-hourglass-half"></i> Processing
+    </button>
+    <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg"
+        data-id="${data.queue_id}">
+        <i class="fa-solid fa-user-check text-2xl"></i>
+    </button>
+  `;
 
         if (allQueueItems.length < 20) {
           queueContainer.appendChild(newItem); // First 20 go to left section
@@ -179,6 +189,7 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 
         updateGridLayout();
       }
+
 
       function removeQueueItem(queueId) {
         let queueItem = document.getElementById(`queue-item-${queueId}`);
@@ -261,46 +272,57 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 
   </script>
   <script>
-    document.querySelectorAll('.proceed-btn').forEach(button => {
-      button.addEventListener('click', function (e) {
-        e.preventDefault(); // Prevent the default form action
+   document.addEventListener('click', function (e) {
+  let currentBtn = e.target.closest(".proceed-btn"); // Ensure button is targeted
+  if (!currentBtn) return;
 
-        let url = this.href; // Get the URL from the button link
-        let currentBtn = this; // Store the button reference
+  e.preventDefault();
 
-        fetch(url, {
-          method: 'GET',
-        })
-          .then(response => response.json())
-          .then(data => {
-            if (data.status === 'success') {
-              // Show success toast
-              Toastify({
-                text: data.message,
-                duration: 3000,
-                close: true,
-                gravity: "top",
-                position: "right",
-                backgroundColor: "linear-gradient(to right, #00b09b,rgb(17, 69, 183))"
-              }).showToast();
+  let queueItem = currentBtn.closest('.queue-item'); // Get the entire queue item
+  let url = currentBtn.getAttribute("data-url");
 
-              // Optionally, update the UI (like removing the item from the left section)
-              currentBtn.closest('div').remove(); // Remove the item after it's processed
-            }
-          })
-          .catch(error => {
-            console.error('Error:', error);
-            Toastify({
-              text: 'An error occurred. Please try again.',
-              duration: 3000,
-              close: true,
-              gravity: "top",
-              position: "right",
-              backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)"
-            }).showToast();
-          });
-      });
+  if (!url) {
+    console.error("🚨 Error: No URL found for proceed action.");
+    return;
+  }
+
+  fetch(url, { method: 'GET' })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        // ✅ Show success toast
+        Toastify({
+          text: data.message,
+          duration: 3000,
+          close: true,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "linear-gradient(to right, #00b09b, rgb(17, 69, 183))"
+        }).showToast();
+
+        // ✅ Remove the ENTIRE queue item from UI
+        if (queueItem) {
+          queueItem.remove();
+        } else {
+          console.warn("🚨 Warning: Queue item not found.");
+        }
+      } else {
+        throw new Error(data.message || "Unknown error");
+      }
+    })
+    .catch(error => {
+      console.error('🚨 Fetch Error:', error);
+
+      Toastify({
+        text: 'An error occurred. Please try again.',
+        duration: 3000,
+        close: true,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)"
+      }).showToast();
     });
+});
   </script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {

@@ -171,13 +171,14 @@ class controller_queueing extends CI_Controller
     // Function to send the new queue item to WebSocket clients
     private function send_to_websocket($data, $action)
     {
-        // Append the action type to the data
         $data['action'] = $action;
 
-        // Create a new WebSocket client to send the message
-        $ws_client = new WebSocketClient(); // Implement this based on your WebSocket setup
+        log_message('debug', '📤 Sending WebSocket Data: ' . json_encode($data));
+
+        $ws_client = new WebSocketClient();
         $ws_client->send(json_encode($data));
     }
+
 
 
 
