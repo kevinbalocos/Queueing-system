@@ -175,10 +175,13 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
         data-id="${data.queue_id}">
         <i class="fa-solid fa-hourglass-half"></i> Processing
     </button>
-    <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg"
-        data-id="${data.queue_id}">
-        <i class="fa-solid fa-user-check text-2xl"></i>
-    </button>
+   <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg"
+    data-id="${data.queue_id}"
+    data-url="${data.proceed_url ? data.proceed_url : '#'}">
+    <i class="fa-solid fa-user-check text-2xl"></i>
+</button>
+
+
   `;
 
         if (allQueueItems.length < 20) {
@@ -272,13 +275,14 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 
   </script>
   <script>
-   document.addEventListener('click', function (e) {
-  let currentBtn = e.target.closest(".proceed-btn"); // Ensure button is targeted
+  document.addEventListener("click", function (e) {
+  let currentBtn = e.target.closest(".proceed-btn");
   if (!currentBtn) return;
 
-  e.preventDefault();
+  console.log("Clicked Button:", currentBtn); // 🔍 Debugging: Check if button is detected
+  console.log("Data URL:", currentBtn.getAttribute("data-url")); // 🔍 Check if data-url exists
 
-  let queueItem = currentBtn.closest('.queue-item'); // Get the entire queue item
+  let queueItem = currentBtn.closest(".queue-item");
   let url = currentBtn.getAttribute("data-url");
 
   if (!url) {
@@ -286,21 +290,19 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
     return;
   }
 
-  fetch(url, { method: 'GET' })
-    .then(response => response.json())
-    .then(data => {
-      if (data.status === 'success') {
-        // ✅ Show success toast
+  fetch(url, { method: "GET" })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.status === "success") {
         Toastify({
           text: data.message,
           duration: 3000,
           close: true,
           gravity: "top",
           position: "right",
-          backgroundColor: "linear-gradient(to right, #00b09b, rgb(17, 69, 183))"
+          backgroundColor: "linear-gradient(to right, #00b09b, rgb(17, 69, 183))",
         }).showToast();
 
-        // ✅ Remove the ENTIRE queue item from UI
         if (queueItem) {
           queueItem.remove();
         } else {
@@ -310,19 +312,20 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
         throw new Error(data.message || "Unknown error");
       }
     })
-    .catch(error => {
-      console.error('🚨 Fetch Error:', error);
+    .catch((error) => {
+      console.error("🚨 Fetch Error:", error);
 
       Toastify({
-        text: 'An error occurred. Please try again.',
+        text: "An error occurred. Please try again.",
         duration: 3000,
         close: true,
         gravity: "top",
         position: "right",
-        backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)"
+        backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)",
       }).showToast();
     });
 });
+
   </script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {

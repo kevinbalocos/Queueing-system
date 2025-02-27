@@ -123,7 +123,16 @@ class controller_queueing extends CI_Controller
         $name = $this->input->post('name');
         $reason = $this->input->post('reason');
 
-        $queue_number = $this->model_queueing->add_to_queue($name, $reason);
+        // Get the highest position in the landtax queue
+        $max_position = $this->db->select_max('position')
+            ->where('status', 'landtax')
+            ->get('queue')
+            ->row()->position;
+
+        $new_position = $max_position ? $max_position + 1 : 1; // Append to the end
+
+        // Add the queue item with assigned position
+        $queue_number = $this->model_queueing->add_to_queue($name, $reason, $new_position);
 
         if ($queue_number) {
             // Fetch the newly added queue item
@@ -134,23 +143,20 @@ class controller_queueing extends CI_Controller
                 return;
             }
 
-            $queue_id = $new_item->id; // Ensure a valid queue_id is assigned
+            $queue_id = $new_item->id;
+            $proceed_url = base_url("index.php/controller_queueing/proceed_to_backroom/{$queue_id}");
 
-            $queue = $this->model_queueing->get_queue();
-            $left_items = array_slice($queue, 0, 20);
-            $right_items = array_slice($queue, 20);
-
+            // WebSocket data
             $queue_data = [
-                'queue_id' => (string) $queue_id, // Convert to string to prevent issues
-                'id' => $queue_id, // Keep for consistency
+                'queue_id' => (string) $queue_id,
+                'id' => $queue_id,
                 'queue_number' => $queue_number,
                 'name' => $name,
                 'reason' => $reason,
                 'status' => 'landtax',
-                'processing_by' => '', // Add processing_by if needed
-                'proceed_url' => base_url("index.php/controller_queueing/proceed_to_backroom/{$queue_id}"),
-                'left_items' => $left_items,
-                'right_items' => $right_items
+                'position' => $new_position,
+                'processing_by' => '',
+                'proceed_url' => $proceed_url
             ];
             $this->send_to_websocket($queue_data, 'add_to_queue');
 
@@ -158,10 +164,7 @@ class controller_queueing extends CI_Controller
                 'status' => 'success',
                 'message' => "Queue item added successfully. Your queue number is $queue_number.",
                 'queue_number' => $queue_number,
-                'queue' => [
-                    'left_items' => $left_items,
-                    'right_items' => $right_items
-                ]
+                'proceed_url' => $proceed_url
             ]);
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Failed to add to the queue.']);
@@ -260,16 +263,19 @@ class controller_queueing extends CI_Controller
         $updated_item = $this->db->where('id', $id)->get('queue')->row();
 
         if ($updated_item) {
-            // Send full queue data to WebSocket clients
-            $this->send_to_websocket([
+            // 🟢 Ensure WebSocket receives valid data
+            $queue_data = [
                 'id' => $updated_item->id,
                 'queue_number' => $updated_item->queue_number,
                 'name' => $updated_item->name,
                 'reason' => $updated_item->reason,
-                'status' => $updated_item->status,
-                'position' => $updated_item->position, // Include position in WebSocket
+                'status' => 'backroom',
+                'position' => $updated_item->position, // Include position for order updates
                 'proceed_url' => base_url("index.php/controller_queueing/proceed_to_backroom/{$updated_item->id}")
-            ], 'proceed_to_backroom');
+            ];
+
+            // 🔥 Send event to WebSocket
+            $this->send_to_websocket($queue_data, 'proceed_to_backroom');
 
             // Send JSON response for AJAX success notification
             echo json_encode(['status' => 'success', 'message' => 'Queue item successfully proceeded to Backroom.']);

@@ -15,13 +15,18 @@ class model_queueing extends CI_Model
     {
         // Get the last queue number
         $last_queue = $this->db->select_max('queue_number')->get('queue')->row();
-        $new_queue_number = $last_queue->queue_number + 1;
+        $new_queue_number = $last_queue->queue_number ? $last_queue->queue_number + 1 : 1;
+
+        // Get the highest position in the landtax queue
+        $max_position = $this->db->select_max('position')->where('status', 'landtax')->get('queue')->row()->position;
+        $new_position = $max_position ? $max_position + 1 : 1; // Append to the end
 
         $data = array(
             'queue_number' => $new_queue_number,
             'name' => $name,
             'reason' => $reason,
-            'status' => 'landtax'
+            'status' => 'landtax',
+            'position' => $new_position // ✅ Include position
         );
 
         if ($this->db->insert('queue', $data)) {
@@ -29,7 +34,7 @@ class model_queueing extends CI_Model
         }
         return false;
     }
-
+    
     public function get_queue_item($queue_id)
     {
         return $this->db->get_where('queue', ['id' => $queue_id])->row();
