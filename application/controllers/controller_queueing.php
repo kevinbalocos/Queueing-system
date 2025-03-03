@@ -183,9 +183,6 @@ class controller_queueing extends CI_Controller
     }
 
 
-
-
-
     public function add_to_backroom()
     {
         $name = $this->input->post('name');
@@ -249,11 +246,13 @@ class controller_queueing extends CI_Controller
 
     public function proceed_to_backroom($id)
     {
+        header('Content-Type: application/json'); // Ensure JSON response
+
         // Get the highest position currently in the backroom
         $max_position = $this->db->select_max('position')->where('status', 'backroom')->get('queue')->row()->position;
-        $new_position = $max_position ? $max_position + 1 : 1; // Append to the end
+        $new_position = $max_position ? $max_position + 1 : 1;
 
-        // Update queue status and assign a position
+        // Update queue status
         $this->db->where('id', $id)->update('queue', [
             'status' => 'backroom',
             'position' => $new_position
@@ -262,26 +261,35 @@ class controller_queueing extends CI_Controller
         // Fetch the updated queue item
         $updated_item = $this->db->where('id', $id)->get('queue')->row();
 
-        if ($updated_item) {
-            // 🟢 Ensure WebSocket receives valid data
-            $queue_data = [
-                'id' => $updated_item->id,
-                'queue_number' => $updated_item->queue_number,
-                'name' => $updated_item->name,
-                'reason' => $updated_item->reason,
-                'status' => 'backroom',
-                'position' => $updated_item->position, // Include position for order updates
-                'proceed_url' => base_url("index.php/controller_queueing/proceed_to_backroom/{$updated_item->id}")
-            ];
-
-            // 🔥 Send event to WebSocket
-            $this->send_to_websocket($queue_data, 'proceed_to_backroom');
-
-            // Send JSON response for AJAX success notification
-            echo json_encode(['status' => 'success', 'message' => 'Queue item successfully proceeded to Backroom.']);
-        } else {
-            echo json_encode(['status' => 'error', 'message' => 'Failed to proceed queue item.']);
+        if (!$updated_item) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Queue item not found.']);
+            exit;
         }
+
+        // Ensure site_url() returns a valid URL
+        $proceed_url = base_url("queue/proceed_to_backroom/{$updated_item->id}");
+
+        $queue_data = [
+            'id' => $updated_item->id,
+            'queue_number' => $updated_item->queue_number,
+            'name' => $updated_item->name,
+            'reason' => $updated_item->reason,
+            'status' => 'backroom',
+            'position' => $updated_item->position,
+            'proceed_url' => $proceed_url
+        ];
+
+        // Send event to WebSocket
+        $this->send_to_websocket($queue_data, 'proceed_to_backroom');
+
+        // Ensure JSON response
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Queue item successfully proceeded to Backroom.',
+            'proceed_url' => $proceed_url
+        ]);
+        exit;
     }
 
     public function proceed_to_examiners($id)

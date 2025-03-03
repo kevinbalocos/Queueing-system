@@ -105,6 +105,21 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
       </div>
     </div>
   </div>
+  <template id="queue-item-template">
+  <div class="queue-item p-3 bg-white border rounded-lg flex flex-col justify-center my-3 mx-2 items-center">
+    <h3 class="font-semibold text-xl queue-number-name"></h3>
+    <p class="text-gray-500 text-sm queue-reason"></p>
+    <p class="text-gray-500 text-sm">
+      Status: <span class="status-label text-green-500 font-semibold">Waiting</span>
+    </p>
+    <button class="processing-btn mt-3 bg-yellow-500 py-2 px-3 text-white hover:bg-yellow-600 rounded-full shadow-lg" data-id="">
+      <i class="fa-solid fa-hourglass-half"></i> Processing
+    </button>
+    <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg" data-id="" data-url="">
+      <i class="fa-solid fa-user-check text-2xl"></i>
+    </button>
+  </div>
+</template>
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -137,62 +152,60 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 
 
       function addQueueItem(data) {
-        let queueContainer = document.getElementById("queue-container"); // Left section
-        let queueList = document.getElementById("queueList"); // Right section
-        let allQueueItems = document.querySelectorAll(".queue-item");
+  const queueContainer = document.getElementById("queue-container"); // Left section
+  const queueList = document.getElementById("queueList"); // Right section
+  const allQueueItems = document.querySelectorAll(".queue-item");
 
-        if (!queueContainer || !queueList) {
-          console.error("Error: Queue containers not found.");
-          return;
-        }
+  if (!queueContainer || !queueList) {
+    console.error("Error: Queue containers not found.");
+    return;
+  }
 
-        const queueId = `queue-item-${data.queue_id}`;
+  const queueId = `queue-item-${data.queue_id}`;
+  if (document.getElementById(queueId)) {
+    console.warn(`Queue item ${queueId} already exists.`);
+    return;
+  }
 
-        if (document.getElementById(queueId)) {
-          console.warn(`Queue item ${queueId} already exists.`);
-          return;
-        }
+  // Get the template
+  const template = document.getElementById("queue-item-template");
+  if (!template) {
+    console.error("Queue item template not found.");
+    return;
+  }
+  
+  // Clone the template content
+  const clone = template.content.cloneNode(true);
+  const container = clone.querySelector(".queue-item");
+  container.id = queueId;
+  container.dataset.id = data.queue_id;
 
-        // Ensure proper fallback values
-        const queueNumber = data.queue_number ? String(data.queue_number).trim() : "Unknown";
-        const name = data.name ? String(data.name).trim() : "Unknown";
-        const reason = data.reason ? String(data.reason).trim() : "Not provided";
+  // Populate the cloned template with data
+  const nameHeader = clone.querySelector(".queue-number-name");
+  nameHeader.textContent = `${data.queue_number} - ${data.name}`;
 
-        console.log("✅ Final Render Data:", { queueNumber, name, reason });
+  const reasonText = clone.querySelector(".queue-reason");
+  reasonText.textContent = `Reason: ${data.reason}`;
 
-        const newItem = document.createElement("div");
-        newItem.className = "queue-item p-3 bg-white border rounded-lg flex flex-col justify-center my-3 mx-2 items-center";
-        newItem.id = queueId;
-        newItem.dataset.id = data.queue_id;
+  // Set data attributes on the buttons
+  const processingBtn = clone.querySelector(".processing-btn");
+  processingBtn.setAttribute("data-id", data.queue_id);
+  
+  const proceedBtn = clone.querySelector(".proceed-btn");
+  proceedBtn.setAttribute("data-id", data.queue_id);
+  if (data.proceed_url) {
+    proceedBtn.setAttribute("data-url", data.proceed_url);
+  }
 
-        newItem.innerHTML = `
-    <h3 class="font-semibold text-xl">${queueNumber} - ${name}</h3>
-    <p class="text-gray-500 text-sm">Reason: ${reason}</p>
-    <p class="text-gray-500 text-sm">
-        Status: <span class="status-label text-green-500 font-semibold">Waiting</span>
-    </p>
-    <button class="processing-btn mt-3 bg-yellow-500 py-2 px-3 text-white hover:bg-yellow-600 rounded-full shadow-lg" 
-        data-id="${data.queue_id}">
-        <i class="fa-solid fa-hourglass-half"></i> Processing
-    </button>
-   <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg"
-    data-id="${data.queue_id}"
-    data-url="${data.proceed_url ? data.proceed_url : '#'}">
-    <i class="fa-solid fa-user-check text-2xl"></i>
-</button>
+  // Append the cloned node to the correct container based on the count
+  if (allQueueItems.length < 20) {
+    queueContainer.appendChild(clone);
+  } else {
+    queueList.appendChild(clone);
+  }
 
-
-  `;
-
-        if (allQueueItems.length < 20) {
-          queueContainer.appendChild(newItem); // First 20 go to left section
-        } else {
-          queueList.appendChild(newItem); // Remaining go to right section
-        }
-
-        updateGridLayout();
-      }
-
+  updateGridLayout();
+}
 
       function removeQueueItem(queueId) {
         let queueItem = document.getElementById(`queue-item-${queueId}`);
@@ -275,14 +288,13 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 
   </script>
   <script>
-  document.addEventListener("click", function (e) {
-  let currentBtn = e.target.closest(".proceed-btn");
+   document.addEventListener('click', function (e) {
+  let currentBtn = e.target.closest(".proceed-btn"); // Ensure button is targeted
   if (!currentBtn) return;
 
-  console.log("Clicked Button:", currentBtn); // 🔍 Debugging: Check if button is detected
-  console.log("Data URL:", currentBtn.getAttribute("data-url")); // 🔍 Check if data-url exists
+  e.preventDefault();
 
-  let queueItem = currentBtn.closest(".queue-item");
+  let queueItem = currentBtn.closest('.queue-item'); // Get the entire queue item
   let url = currentBtn.getAttribute("data-url");
 
   if (!url) {
@@ -290,19 +302,21 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
     return;
   }
 
-  fetch(url, { method: "GET" })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.status === "success") {
+  fetch(url, { method: 'GET' })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        // ✅ Show success toast
         Toastify({
           text: data.message,
           duration: 3000,
           close: true,
           gravity: "top",
           position: "right",
-          backgroundColor: "linear-gradient(to right, #00b09b, rgb(17, 69, 183))",
+          backgroundColor: "linear-gradient(to right, #00b09b, rgb(17, 69, 183))"
         }).showToast();
 
+        // ✅ Remove the ENTIRE queue item from UI
         if (queueItem) {
           queueItem.remove();
         } else {
@@ -312,20 +326,19 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
         throw new Error(data.message || "Unknown error");
       }
     })
-    .catch((error) => {
-      console.error("🚨 Fetch Error:", error);
+    .catch(error => {
+      console.error('🚨 Fetch Error:', error);
 
       Toastify({
-        text: "An error occurred. Please try again.",
+        text: 'An error occurred. Please try again.',
         duration: 3000,
         close: true,
         gravity: "top",
         position: "right",
-        backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)",
+        backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)"
       }).showToast();
     });
 });
-
   </script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
