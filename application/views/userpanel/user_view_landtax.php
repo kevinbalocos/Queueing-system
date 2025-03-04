@@ -31,7 +31,7 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
         <?php if ($queue): ?>
           <?php foreach ($left_items as $item): ?>
             <div class="queue-item p-3 bg-white border rounded-lg flex flex-col justify-center my-3 mx-2 items-center"
-              id="queue-item-<?= $item->id; ?>">
+              id="queue-item-<?= $item->id; ?>" data-queue-id="<?= $item->id; ?>"> <!-- ✅ Added data-queue-id -->
               <h3 class="font-semibold text-xl"><?= $item->queue_number; ?> - <?= $item->name; ?></h3>
               <p class="text-gray-500 text-sm">Reason: <?= $item->reason; ?></p>
 
@@ -54,7 +54,7 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
               <!-- Proceed Button -->
               <button
                 class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg"
-                data-id="<?= $item->id; ?>"
+                data-queue-id="<?= $item->id; ?>"
                 data-url="http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_backroom/<?= $item->id; ?>">
                 <i class="fa-solid fa-user-check text-2xl"></i>
               </button>
@@ -106,20 +106,23 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
     </div>
   </div>
   <template id="queue-item-template">
-  <div class="queue-item p-3 bg-white border rounded-lg flex flex-col justify-center my-3 mx-2 items-center">
-    <h3 class="font-semibold text-xl queue-number-name"></h3>
-    <p class="text-gray-500 text-sm queue-reason"></p>
-    <p class="text-gray-500 text-sm">
-      Status: <span class="status-label text-green-500 font-semibold">Waiting</span>
-    </p>
-    <button class="processing-btn mt-3 bg-yellow-500 py-2 px-3 text-white hover:bg-yellow-600 rounded-full shadow-lg" data-id="">
-      <i class="fa-solid fa-hourglass-half"></i> Processing
-    </button>
-    <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg" data-id="" data-url="">
-      <i class="fa-solid fa-user-check text-2xl"></i>
-    </button>
-  </div>
-</template>
+    <div class="queue-item p-3 bg-white border rounded-lg flex flex-col justify-center my-3 mx-2 items-center">
+      <h3 class="font-semibold text-xl queue-number-name"></h3>
+      <p class="text-gray-500 text-sm queue-reason"></p>
+      <p class="text-gray-500 text-sm">
+        Status: <span class="status-label text-green-500 font-semibold">Waiting</span>
+      </p>
+      <button class="processing-btn mt-3 bg-yellow-500 py-2 px-3 text-white hover:bg-yellow-600 rounded-full shadow-lg"
+        data-id="">
+        <i class="fa-solid fa-hourglass-half"></i> Processing
+      </button>
+      <button
+        class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg"
+        data-id="" data-url="">
+        <i class="fa-solid fa-user-check text-2xl"></i>
+      </button>
+    </div>
+  </template>
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -129,83 +132,102 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
         console.log("Connected to WebSocket server (Land Tax)");
       };
       socket.onmessage = function (event) {
-        console.log("📥 Raw WebSocket Message:", event.data); // Log before parsing
+  console.log("📥 Received WebSocket Message:", event.data);
 
-        try {
-          const data = JSON.parse(event.data);
-          console.log("📥 Parsed WebSocket Data:", data);
+  try {
+    const data = JSON.parse(event.data);
+    console.log("📥 Parsed WebSocket Data:", data);
 
-          if (!data.queue_id) {
-            console.warn("Invalid queue data received:", data);
-            return;
-          }
+    if (!data.queue_id || !data.action) {
+      console.warn("⚠️ Invalid queue data received:", data);
+      return;
+    }
 
-          // Use left_items[0] if available, otherwise use data directly
-          const queueData = data.left_items && data.left_items.length > 0 ? data.left_items[0] : data;
+    if (data.action === "add_to_queue") {
+      console.log(`📌 New Queue Item Added: ${data.queue_id}`);
+      addQueueItem(data);
+    } else if (data.action === "proceed_to_backroom") {
+      console.log(`🔄 Queue ID ${data.queue_id} proceeding to Backroom...`);
 
-          console.log("🚀 Final Render Data:", queueData);
-          addQueueItem(queueData);
-        } catch (error) {
-          console.error("WebSocket JSON Error:", error);
-        }
-      };
+      // ✅ Debugging: Log all queue items in the DOM
+      let allQueueItems = document.querySelectorAll(".queue-item");
+      console.log("📋 Current queue items in DOM:", allQueueItems);
+
+      // ✅ Ensure queue item exists before removing it
+      let queueItem = document.querySelector(`[data-queue-id="${data.queue_id}"]`);
+
+      if (queueItem) {
+        queueItem.remove();
+        console.log(`✅ Queue ID ${data.queue_id} removed from UI.`);
+      } else {
+        console.warn(`🚨 Warning: Queue item ${data.queue_id} not found in DOM.`);
+      }
+    }
+  } catch (error) {
+    console.error("❌ WebSocket JSON Error:", error);
+  }
+};
 
 
       function addQueueItem(data) {
-  const queueContainer = document.getElementById("queue-container"); // Left section
-  const queueList = document.getElementById("queueList"); // Right section
-  const allQueueItems = document.querySelectorAll(".queue-item");
+        const queueContainer = document.getElementById("queue-container"); // Left section
+        const queueList = document.getElementById("queueList"); // Right section
+        const allQueueItems = document.querySelectorAll(".queue-item");
 
-  if (!queueContainer || !queueList) {
-    console.error("Error: Queue containers not found.");
-    return;
-  }
+        if (!queueContainer || !queueList) {
+          console.error("Error: Queue containers not found.");
+          return;
+        }
 
-  const queueId = `queue-item-${data.queue_id}`;
-  if (document.getElementById(queueId)) {
-    console.warn(`Queue item ${queueId} already exists.`);
-    return;
-  }
+        const queueId = `queue-item-${data.queue_id}`;
+        if (document.getElementById(queueId)) {
+          console.warn(`Queue item ${queueId} already exists.`);
+          return;
+        }
 
-  // Get the template
-  const template = document.getElementById("queue-item-template");
-  if (!template) {
-    console.error("Queue item template not found.");
-    return;
-  }
-  
-  // Clone the template content
-  const clone = template.content.cloneNode(true);
-  const container = clone.querySelector(".queue-item");
-  container.id = queueId;
-  container.dataset.id = data.queue_id;
+        // Get the template
+        const template = document.getElementById("queue-item-template");
+        if (!template) {
+          console.error("Queue item template not found.");
+          return;
+        }
 
-  // Populate the cloned template with data
-  const nameHeader = clone.querySelector(".queue-number-name");
-  nameHeader.textContent = `${data.queue_number} - ${data.name}`;
+        // Clone the template content
+        const clone = template.content.cloneNode(true);
+        const container = clone.querySelector(".queue-item");
+        container.id = queueId;
+        container.dataset.id = data.queue_id;
 
-  const reasonText = clone.querySelector(".queue-reason");
-  reasonText.textContent = `Reason: ${data.reason}`;
+        // Populate the cloned template with data
+        const nameHeader = clone.querySelector(".queue-number-name");
+        nameHeader.textContent = `${data.queue_number} - ${data.name}`;
 
-  // Set data attributes on the buttons
-  const processingBtn = clone.querySelector(".processing-btn");
-  processingBtn.setAttribute("data-id", data.queue_id);
-  
-  const proceedBtn = clone.querySelector(".proceed-btn");
-  proceedBtn.setAttribute("data-id", data.queue_id);
-  if (data.proceed_url) {
-    proceedBtn.setAttribute("data-url", data.proceed_url);
-  }
+        const reasonText = clone.querySelector(".queue-reason");
+        reasonText.textContent = `Reason: ${data.reason}`;
 
-  // Append the cloned node to the correct container based on the count
-  if (allQueueItems.length < 20) {
-    queueContainer.appendChild(clone);
-  } else {
-    queueList.appendChild(clone);
-  }
+        // Set data attributes on the buttons
+        const processingBtn = clone.querySelector(".processing-btn");
+        processingBtn.setAttribute("data-id", data.queue_id);
 
-  updateGridLayout();
-}
+        const proceedBtn = clone.querySelector(".proceed-btn");
+        proceedBtn.setAttribute("data-id", data.queue_id);
+
+        if (data.proceed_url) {
+          proceedBtn.setAttribute("data-url", data.proceed_url);
+        } else {
+          console.warn(`⚠️ No proceed_url for queue_id ${data.queue_id}, setting fallback URL.`);
+          proceedBtn.setAttribute("data-url", `/default-proceed.php?id=${data.queue_id}`);
+        }
+
+        // Append the cloned node to the correct container based on the count
+        if (allQueueItems.length < 20) {
+          queueContainer.appendChild(clone);
+        } else {
+          queueList.appendChild(clone);
+        }
+
+        updateGridLayout();
+      }
 
       function removeQueueItem(queueId) {
         let queueItem = document.getElementById(`queue-item-${queueId}`);
@@ -288,57 +310,59 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 
   </script>
   <script>
-   document.addEventListener('click', function (e) {
-  let currentBtn = e.target.closest(".proceed-btn"); // Ensure button is targeted
-  if (!currentBtn) return;
+    document.addEventListener('click', function (e) {
+      let currentBtn = e.target.closest(".proceed-btn");
+      if (!currentBtn) return;
 
-  e.preventDefault();
+      e.preventDefault();
 
-  let queueItem = currentBtn.closest('.queue-item'); // Get the entire queue item
-  let url = currentBtn.getAttribute("data-url");
+      let queueItem = currentBtn.closest('.queue-item'); // Get queue item container
+      let url = currentBtn.dataset.url; // URL for proceeding the queue item
 
-  if (!url) {
-    console.error("🚨 Error: No URL found for proceed action.");
-    return;
-  }
-
-  fetch(url, { method: 'GET' })
-    .then(response => response.json())
-    .then(data => {
-      if (data.status === 'success') {
-        // ✅ Show success toast
-        Toastify({
-          text: data.message,
-          duration: 3000,
-          close: true,
-          gravity: "top",
-          position: "right",
-          backgroundColor: "linear-gradient(to right, #00b09b, rgb(17, 69, 183))"
-        }).showToast();
-
-        // ✅ Remove the ENTIRE queue item from UI
-        if (queueItem) {
-          queueItem.remove();
-        } else {
-          console.warn("🚨 Warning: Queue item not found.");
-        }
-      } else {
-        throw new Error(data.message || "Unknown error");
+      if (!url) {
+        console.error("🚨 Error: No URL found for proceed action.");
+        return;
       }
-    })
-    .catch(error => {
-      console.error('🚨 Fetch Error:', error);
 
-      Toastify({
-        text: 'An error occurred. Please try again.',
-        duration: 3000,
-        close: true,
-        gravity: "top",
-        position: "right",
-        backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)"
-      }).showToast();
+      fetch(url, { method: 'GET' })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            // ✅ Show success toast
+            Toastify({
+              text: data.message,
+              duration: 3000,
+              close: true,
+              gravity: "top",
+              position: "right",
+              style: { background: "linear-gradient(to right, #00b09b, rgb(17, 69, 183))" }
+            }).showToast();
+
+            // ✅ Ensure queue item is removed only if found
+            let queueItem = document.querySelector(`[data-queue-id="${data.queue_id}"]`);
+            if (queueItem) {
+              queueItem.remove();
+              console.log(`✅ Queue ID ${data.queue_id} removed from UI.`);
+            } else {
+              console.warn("🚨 Warning: Queue item not found.");
+            }
+          } else {
+            throw new Error(data.message || "Unknown error");
+          }
+        })
+        .catch(error => {
+          console.error('🚨 Fetch Error:', error);
+
+          Toastify({
+            text: 'An error occurred. Please try again.',
+            duration: 3000,
+            close: true,
+            gravity: "top",
+            position: "right",
+            style: { background: "linear-gradient(to right, #FF5F6D, #FFC371)" }
+          }).showToast();
+        });
     });
-});
   </script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
