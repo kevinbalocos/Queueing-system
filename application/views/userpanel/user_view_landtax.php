@@ -19,19 +19,24 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+  <style>
+    #queue-container {
+      height: 100vh;
+    }
+  </style>
 </head>
 
 <body class="bg-gray-100">
   <div class="flex min-h-screen p-5">
     <!-- Left Section (Now Serving) -->
-    <div class="flex-1 bg-white p-5 rounded-lg shadow-md flex flex-col">
+    <div class="flex-1 bg-white p-5 rounded-lg shadow-md ">
       <h2 class="text-2xl font-bold text-blue-900 text-center">Now Serving</h2>
-      <div id="queue-container" class="mt-3 grid gap-3 bg-blue-50 h-full"
-        style="grid-template-columns: repeat(<?= $grid_cols ?>, 1fr); grid-auto-rows: 1fr;">
+      <div id="queue-container" class=" flex flex-wrap gap-1 bg-blue-50  overflow-y-auto">
         <?php if ($queue): ?>
           <?php foreach ($left_items as $item): ?>
-            <div class="queue-item p-3 bg-white border rounded-lg flex flex-col justify-center my-3 mx-2 items-center"
-              id="queue-item-<?= $item->id; ?>" data-queue-id="<?= $item->id; ?>"> <!-- ✅ Added data-queue-id -->
+            <div
+              class="flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1  items-center"
+              id="queue-item-<?= $item->id; ?>">
               <h3 class="font-semibold text-xl"><?= $item->queue_number; ?> - <?= $item->name; ?></h3>
               <p class="text-gray-500 text-sm">Reason: <?= $item->reason; ?></p>
 
@@ -46,15 +51,15 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 
               <!-- Mark as Processing Button -->
               <button
-                class="processing-btn mt-3 bg-yellow-500 py-2 px-3 text-white hover:bg-yellow-600 rounded-full shadow-lg <?= $item->processing_by ? 'opacity-50 cursor-not-allowed' : '' ?>"
+                class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg <?= $item->processing_by ? 'opacity-50 cursor-not-allowed' : '' ?>"
                 data-id="<?= $item->id; ?>" <?= $item->processing_by ? 'disabled' : ''; ?>>
-                <i class="fa-solid fa-hourglass-half"></i> Processing
+                <i class="fa-solid fa-hourglass-half"></i>
               </button>
 
               <!-- Proceed Button -->
               <button
                 class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg"
-                data-queue-id="<?= $item->id; ?>"
+                data-id="<?= $item->id; ?>"
                 data-url="http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_backroom/<?= $item->id; ?>">
                 <i class="fa-solid fa-user-check text-2xl"></i>
               </button>
@@ -71,11 +76,15 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
       <h2 class="text-2xl font-bold text-blue-900 text-center">Queue List</h2>
       <ul id="queueList" class="mt-3 overflow-auto h-[600px] space-y-2">
         <?php foreach ($right_items as $item): ?>
-          <li class="p-3 bg-gray-50 border rounded-lg">
+          <li class="p-3 bg-gray-50 border rounded-lg" data-queue_id="<?= $item->id; ?>"
+            data-queue_number="<?= $item->queue_number; ?>" data-name="<?= $item->name; ?>"
+            data-reason="<?= $item->reason; ?>"
+            data-proceed_url="http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_backroom/<?= $item->id; ?>">
             <?= $item->queue_number; ?> - <?= $item->name; ?> (<?= $item->reason; ?>)
           </li>
         <?php endforeach; ?>
       </ul>
+
 
       <!-- Add to Queue Form -->
       <form action="<?= base_url('controller_queueing/add_to_queue'); ?>" method="post" class="mt-5">
@@ -93,7 +102,9 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
           <option value="Birth Certificate Request">Birth Certificate Request</option>
           <option value="Marriage License">Marriage License</option>
         </select>
-        <button type="submit" class="mt-2 w-full bg-green-500 text-white py-2 rounded">Add to Queue</button>
+        <button type="submit"
+          class="mt-2 w-full bg-blue-500 uppercase tracking-wider font-semibold text-white py-2 rounded">Add to
+          Queue</button>
       </form>
 
       <!-- Logout Button -->
@@ -105,16 +116,17 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
       </div>
     </div>
   </div>
-  <template id="queue-item-template">
-    <div class="queue-item p-3 bg-white border rounded-lg flex flex-col justify-center my-3 mx-2 items-center">
+  <template id="queue-item-template" class="flex flex-wrap gap-1">
+    <div
+      class="flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1  items-center">
       <h3 class="font-semibold text-xl queue-number-name"></h3>
       <p class="text-gray-500 text-sm queue-reason"></p>
       <p class="text-gray-500 text-sm">
         Status: <span class="status-label text-green-500 font-semibold">Waiting</span>
       </p>
-      <button class="processing-btn mt-3 bg-yellow-500 py-2 px-3 text-white hover:bg-yellow-600 rounded-full shadow-lg"
+      <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg"
         data-id="">
-        <i class="fa-solid fa-hourglass-half"></i> Processing
+        <i class="fa-solid fa-hourglass-half"></i>
       </button>
       <button
         class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg"
@@ -124,6 +136,7 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
     </div>
   </template>
 
+
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       const socket = new WebSocket("ws://localhost:8080");
@@ -131,48 +144,35 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
       socket.onopen = function () {
         console.log("Connected to WebSocket server (Land Tax)");
       };
+
       socket.onmessage = function (event) {
-  console.log("📥 Received WebSocket Message:", event.data);
+        console.log("Received WebSocket Message:", event.data);
 
-  try {
-    const data = JSON.parse(event.data);
-    console.log("📥 Parsed WebSocket Data:", data);
+        try {
+          const data = JSON.parse(event.data);
+          console.log("Parsed WebSocket Data:", data);
 
-    if (!data.queue_id || !data.action) {
-      console.warn("⚠️ Invalid queue data received:", data);
-      return;
-    }
+          if (!data.queue_id || !data.action) {
+            console.warn("Invalid queue data received:", data);
+            return;
+          }
 
-    if (data.action === "add_to_queue") {
-      console.log(`📌 New Queue Item Added: ${data.queue_id}`);
-      addQueueItem(data);
-    } else if (data.action === "proceed_to_backroom") {
-      console.log(`🔄 Queue ID ${data.queue_id} proceeding to Backroom...`);
+          if (data.action === "add_to_queue") {
+            console.log(`New Queue Item Added: ${data.queue_id}`);
+            addQueueItem(data);
+          } else if (data.action === "proceed_to_backroom") {
+            console.log(`Queue ID ${data.queue_id} proceeding to Backroom...`);
 
-      // ✅ Debugging: Log all queue items in the DOM
-      let allQueueItems = document.querySelectorAll(".queue-item");
-      console.log("📋 Current queue items in DOM:", allQueueItems);
-
-      // ✅ Ensure queue item exists before removing it
-      let queueItem = document.querySelector(`[data-queue-id="${data.queue_id}"]`);
-
-      if (queueItem) {
-        queueItem.remove();
-        console.log(`✅ Queue ID ${data.queue_id} removed from UI.`);
-      } else {
-        console.warn(`🚨 Warning: Queue item ${data.queue_id} not found in DOM.`);
-      }
-    }
-  } catch (error) {
-    console.error("❌ WebSocket JSON Error:", error);
-  }
-};
-
+            removeQueueItem(data.queue_id);
+          }
+        } catch (error) {
+          console.error("WebSocket JSON Error:", error);
+        }
+      };
 
       function addQueueItem(data) {
-        const queueContainer = document.getElementById("queue-container"); // Left section
-        const queueList = document.getElementById("queueList"); // Right section
-        const allQueueItems = document.querySelectorAll(".queue-item");
+        const queueContainer = document.getElementById("queue-container");
+        const queueList = document.getElementById("queueList");
 
         if (!queueContainer || !queueList) {
           console.error("Error: Queue containers not found.");
@@ -185,27 +185,23 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
           return;
         }
 
-        // Get the template
         const template = document.getElementById("queue-item-template");
         if (!template) {
           console.error("Queue item template not found.");
           return;
         }
 
-        // Clone the template content
         const clone = template.content.cloneNode(true);
         const container = clone.querySelector(".queue-item");
         container.id = queueId;
-        container.dataset.id = data.queue_id;
+        container.dataset.queueId = data.queue_id;
 
-        // Populate the cloned template with data
         const nameHeader = clone.querySelector(".queue-number-name");
         nameHeader.textContent = `${data.queue_number} - ${data.name}`;
 
         const reasonText = clone.querySelector(".queue-reason");
         reasonText.textContent = `Reason: ${data.reason}`;
 
-        // Set data attributes on the buttons
         const processingBtn = clone.querySelector(".processing-btn");
         processingBtn.setAttribute("data-id", data.queue_id);
 
@@ -214,13 +210,14 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 
         if (data.proceed_url) {
           proceedBtn.setAttribute("data-url", data.proceed_url);
+        } else if (data.queue_id) {
+          proceedBtn.setAttribute("data-url", "http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_backroom/" + data.queue_id);
         } else {
-          console.warn(`⚠️ No proceed_url for queue_id ${data.queue_id}, setting fallback URL.`);
-          proceedBtn.setAttribute("data-url", `/default-proceed.php?id=${data.queue_id}`);
+          console.error("Error: queue_id is missing or undefined.");
         }
 
-        // Append the cloned node to the correct container based on the count
-        if (allQueueItems.length < 20) {
+        // Ensure queue-container maintains 20 items, extra ones go to queueList
+        if (queueContainer.children.length < 20) {
           queueContainer.appendChild(clone);
         } else {
           queueList.appendChild(clone);
@@ -234,9 +231,25 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 
         if (queueItem) {
           queueItem.remove();
+          console.log(`Queue ID ${queueId} removed from UI.`);
+
+          // Ensure queue-container remains filled with 20 items
+          moveFirstRightItemToLeft();
+
           updateGridLayout();
         } else {
           console.warn(`Queue item ${queueId} not found.`);
+        }
+      }
+
+      function moveFirstRightItemToLeft() {
+        const queueContainer = document.getElementById("queue-container");
+        const queueList = document.getElementById("queueList");
+
+        if (queueContainer.children.length < 20 && queueList.children.length > 0) {
+          const firstRightItem = queueList.children[0];
+          queueContainer.appendChild(firstRightItem);
+          console.log("Moved first right-side queue item to left.");
         }
       }
 
@@ -249,10 +262,6 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 
         queueContainer.style.gridTemplateColumns = `repeat(${leftItems < 5 ? leftItems : 5}, 1fr)`;
         queueList.style.gridTemplateColumns = `repeat(${rightItems < 5 ? rightItems : 5}, 1fr)`;
-
-        if (leftItems === 0) {
-          queueContainer.innerHTML = `<p id="empty-queue-message-left" class="text-gray-500 mt-3 text-center">No one in queue</p>`;
-        }
       }
 
       socket.onclose = function () {
@@ -263,9 +272,9 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 
   <script>
     document.querySelector('form').addEventListener('submit', function (e) {
-      e.preventDefault(); // Prevent form submission
+      e.preventDefault();
 
-      let formData = new FormData(this); // Gather form data
+      let formData = new FormData(this);
 
       fetch("<?= base_url('controller_queueing/add_to_queue'); ?>", {
         method: 'POST',
@@ -316,11 +325,11 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 
       e.preventDefault();
 
-      let queueItem = currentBtn.closest('.queue-item'); // Get queue item container
-      let url = currentBtn.dataset.url; // URL for proceeding the queue item
+      let queueItem = currentBtn.closest('.queue-item');
+      let url = currentBtn.dataset.url;
 
       if (!url) {
-        console.error("🚨 Error: No URL found for proceed action.");
+        console.error("Error: No URL found for proceed action.");
         return;
       }
 
@@ -328,7 +337,6 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
         .then(response => response.json())
         .then(data => {
           if (data.status === 'success') {
-            // ✅ Show success toast
             Toastify({
               text: data.message,
               duration: 3000,
@@ -338,20 +346,20 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
               style: { background: "linear-gradient(to right, #00b09b, rgb(17, 69, 183))" }
             }).showToast();
 
-            // ✅ Ensure queue item is removed only if found
             let queueItem = document.querySelector(`[data-queue-id="${data.queue_id}"]`);
             if (queueItem) {
               queueItem.remove();
-              console.log(`✅ Queue ID ${data.queue_id} removed from UI.`);
+              console.log(`Queue ID ${data.queue_id} removed from UI.`);
+              updateGridLayout(); // Call function to update layout dynamically
             } else {
-              console.warn("🚨 Warning: Queue item not found.");
+              console.warn(`Warning: Queue item ${data.queue_id} not found.`);
             }
           } else {
             throw new Error(data.message || "Unknown error");
           }
         })
         .catch(error => {
-          console.error('🚨 Fetch Error:', error);
+          console.error('Fetch Error:', error);
 
           Toastify({
             text: 'An error occurred. Please try again.',
@@ -363,6 +371,18 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
           }).showToast();
         });
     });
+
+    // Function to update the queue grid dynamically
+    function updateGridLayout() {
+      const queueContainer = document.getElementById("queue-container");
+      const queueList = document.getElementById("queueList");
+
+      const leftItems = queueContainer.children.length;
+      const rightItems = queueList.children.length;
+
+      queueContainer.style.gridTemplateColumns = `repeat(${leftItems < 5 ? leftItems : 5}, 1fr)`;
+      queueList.style.gridTemplateColumns = `repeat(${rightItems < 5 ? rightItems : 5}, 1fr)`;
+    }
   </script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {

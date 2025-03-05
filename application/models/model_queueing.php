@@ -26,7 +26,7 @@ class model_queueing extends CI_Model
             'name' => $name,
             'reason' => $reason,
             'status' => 'landtax',
-            'position' => $new_position // ✅ Include position
+            'position' => $new_position 
         );
 
         if ($this->db->insert('queue', $data)) {

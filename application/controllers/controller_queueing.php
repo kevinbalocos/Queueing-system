@@ -123,19 +123,16 @@ class controller_queueing extends CI_Controller
         $name = $this->input->post('name');
         $reason = $this->input->post('reason');
 
-        // Get the highest position in the landtax queue
         $max_position = $this->db->select_max('position')
             ->where('status', 'landtax')
             ->get('queue')
             ->row()->position;
 
-        $new_position = $max_position ? $max_position + 1 : 1; // Append to the end
+        $new_position = $max_position ? $max_position + 1 : 1; 
 
-        // Add the queue item with assigned position
         $queue_number = $this->model_queueing->add_to_queue($name, $reason, $new_position);
 
         if ($queue_number) {
-            // Fetch the newly added queue item
             $new_item = $this->db->where('queue_number', $queue_number)->get('queue')->row();
 
             if (!$new_item || empty($new_item->id)) {
@@ -146,7 +143,6 @@ class controller_queueing extends CI_Controller
             $queue_id = $new_item->id;
             $proceed_url = base_url("index.php/controller_queueing/proceed_to_backroom/{$queue_id}");
 
-            // WebSocket data
             $queue_data = [
                 'queue_id' => (string) $queue_id,
                 'id' => $queue_id,
@@ -171,7 +167,6 @@ class controller_queueing extends CI_Controller
         }
     }
 
-    // Function to send the new queue item to WebSocket clients
     private function send_to_websocket($data, $action)
     {
         $data['action'] = $action;
@@ -190,7 +185,6 @@ class controller_queueing extends CI_Controller
 
         $this->model_queueing->add_to_backroom($name, $reason);
 
-        // Send JSON response
         echo json_encode(['status' => 'success', 'message' => 'Queue item added successfully to Backroom.']);
     }
 
@@ -201,11 +195,9 @@ class controller_queueing extends CI_Controller
 
         $this->model_queueing->add_to_examiners($name, $reason);
 
-        // Send JSON response
         echo json_encode(['status' => 'success', 'message' => 'Queue item added successfully to Examiners.']);
     }
 
-    // Add to Business Tax Queue (Updated to JSON response)
     public function add_to_businesstax()
     {
         $name = $this->input->post('name');
@@ -213,11 +205,9 @@ class controller_queueing extends CI_Controller
 
         $this->model_queueing->add_to_businesstax($name, $reason);
 
-        // Send JSON response
         echo json_encode(['status' => 'success', 'message' => 'Queue item added successfully to Business Tax.']);
     }
 
-    // Add to Payment Queue (Updated to JSON response)
     public function add_to_payment()
     {
         $name = $this->input->post('name');
@@ -225,11 +215,9 @@ class controller_queueing extends CI_Controller
 
         $this->model_queueing->add_to_payment($name, $reason);
 
-        // Send JSON response
         echo json_encode(['status' => 'success', 'message' => 'Queue item added successfully to Payment.']);
     }
 
-    // Add to Fire Protection Queue (Updated to JSON response)
     public function add_to_fireprotection()
     {
         $name = $this->input->post('name');
@@ -237,18 +225,14 @@ class controller_queueing extends CI_Controller
 
         $this->model_queueing->add_to_fireprotection($name, $reason);
 
-        // Send JSON response
         echo json_encode(['status' => 'success', 'message' => 'Queue item added successfully to Fire Protection.']);
     }
 
-    // Proceed functions with flashdata notifications and redirect
-// Proceed functions with AJAX responses
 
     public function proceed_to_backroom($id)
     {
-        header('Content-Type: application/json'); // Ensure JSON response
+        header('Content-Type: application/json'); 
 
-        // Check if queue item exists
         $queue_item = $this->db->where('id', $id)->get('queue')->row();
         if (!$queue_item) {
             http_response_code(400);
@@ -256,53 +240,46 @@ class controller_queueing extends CI_Controller
             exit;
         }
 
-        // Get the highest position currently in the backroom
         $max_position = $this->db->select_max('position')->where('status', 'backroom')->get('queue')->row()->position;
         $new_position = $max_position ? $max_position + 1 : 1;
 
-        // Update queue status
         $this->db->where('id', $id)->update('queue', [
             'status' => 'backroom',
             'position' => $new_position
         ]);
 
-        // Fetch the updated queue item
         $updated_item = $this->db->where('id', $id)->get('queue')->row();
 
-        // Ensure $updated_item exists before using it
         if (!$updated_item) {
             http_response_code(400);
             echo json_encode(['status' => 'error', 'message' => 'Queue item not found after update.']);
             exit;
         }
 
-        // ✅ Ensure `proceed_url` is valid
         $proceed_url = base_url("controller_queueing/proceed_to_backroom/{$updated_item->id}");
 
         log_message('debug', "Generated proceed_url: {$proceed_url}");
 
-        // ✅ Send WebSocket event with updated data
         $queue_data = [
             'status' => 'success',
-            'action' => 'proceed_to_backroom',  // ✅ Ensure `action` is included
+            'action' => 'proceed_to_backroom',  
             'queue_id' => $updated_item->id,
             'queue_number' => $updated_item->queue_number,
             'name' => $updated_item->name,
             'reason' => $updated_item->reason,
             'status_text' => 'backroom',
             'processing_by' => '',
-            'proceed_url' => $proceed_url // ✅ Ensure this is always included
+            'proceed_url' => $proceed_url 
         ];
 
-        // ✅ Send the data via WebSocket
         $this->send_to_websocket($queue_data, 'proceed_to_backroom');
 
-        // ✅ Return the correct JSON response
+        
         echo json_encode([
             'status' => 'success',
             'message' => 'Queue item successfully proceeded to Backroom.',
             'proceed_url' => $proceed_url,
-            'queue_id' => $updated_item->id // ✅ Ensure `queue_id` is returned
+            'queue_id' => $updated_item->id 
         ]);
         exit;
     }
@@ -311,7 +288,6 @@ class controller_queueing extends CI_Controller
     {
         $this->model_queueing->proceed_queue($id, 'examiner');
 
-        // Send JSON response for AJAX success notification
         echo json_encode(['status' => 'success', 'message' => 'Queue item successfully proceeded to Examiners.']);
     }
 
@@ -319,7 +295,6 @@ class controller_queueing extends CI_Controller
     {
         $this->model_queueing->proceed_queue($id, 'businesstax');
 
-        // Send JSON response for AJAX success notification
         echo json_encode(['status' => 'success', 'message' => 'Queue item successfully proceeded to Business Tax.']);
     }
 
@@ -327,7 +302,6 @@ class controller_queueing extends CI_Controller
     {
         $this->model_queueing->proceed_queue($id, 'payment');
 
-        // Send JSON response for AJAX success notification
         echo json_encode(['status' => 'success', 'message' => 'Queue item successfully proceeded to Payment.']);
     }
 
@@ -335,7 +309,6 @@ class controller_queueing extends CI_Controller
     {
         $this->model_queueing->proceed_queue($id, 'fireprotection');
 
-        // Send JSON response for AJAX success notification
         echo json_encode(['status' => 'success', 'message' => 'Queue item successfully proceeded to Fire Protection.']);
     }
 
@@ -343,7 +316,6 @@ class controller_queueing extends CI_Controller
     {
         $this->model_queueing->proceed_queue($id, 'releasing');
 
-        // Send JSON response for AJAX success notification
         echo json_encode(['status' => 'success', 'message' => 'Queue item successfully proceeded to Releasing.']);
     }
     public function mark_as_processing()
@@ -373,7 +345,6 @@ class controller_queueing extends CI_Controller
         $update = $this->db->update('queue', ['processing_by' => $user_id]);
 
         if ($update) {
-            // WebSocket Message
             $message = json_encode([
                 'status' => 'success',
                 'action' => 'update_queue',
@@ -381,7 +352,6 @@ class controller_queueing extends CI_Controller
                 'processing_by' => $user_id
             ]);
 
-            // Broadcast WebSocket Message
             $this->sendWebSocketMessage($message);
 
             echo json_encode(['status' => 'success', 'message' => 'Queue marked as processing']);
@@ -392,10 +362,9 @@ class controller_queueing extends CI_Controller
         }
     }
 
-    // Function to send WebSocket message
     private function sendWebSocketMessage($message)
     {
-        $sock = fsockopen("localhost", 8080); // Ensure your WebSocket server is running on port 8080
+        $sock = fsockopen("localhost", 8080); 
 
         if ($sock) {
             fwrite($sock, $message);
