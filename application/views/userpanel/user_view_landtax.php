@@ -1,8 +1,8 @@
 <?php
 // Determine how many items go to the left section (maximum 20)
-$left_items = array_slice($queue, 0, 20);
+$left_items = array_slice($queue, 0, 21);
 // Remaining queue items go to the right section
-$right_items = array_slice($queue, 20);
+$right_items = array_slice($queue, 21);
 // Determine grid columns: if less than 5 items, use that many columns; otherwise, use 5 columns.
 $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 ?>
@@ -185,42 +185,41 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
           return;
         }
 
-        const template = document.getElementById("queue-item-template");
-        if (!template) {
-          console.error("Queue item template not found.");
-          return;
-        }
+        // Create list item dynamically
+        const listItem = document.createElement("div"); // Change to <div> for styling consistency
+        listItem.id = queueId;
+        listItem.dataset.queue_id = data.queue_id;
+        listItem.dataset.queue_number = data.queue_number;
+        listItem.dataset.name = data.name;
+        listItem.dataset.reason = data.reason;
+        listItem.dataset.proceed_url = data.proceed_url
+          ? data.proceed_url
+          : `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_backroom/${data.queue_id}`;
 
-        const clone = template.content.cloneNode(true);
-        const container = clone.querySelector(".queue-item");
-        container.id = queueId;
-        container.dataset.queueId = data.queue_id;
-
-        const nameHeader = clone.querySelector(".queue-number-name");
-        nameHeader.textContent = `${data.queue_number} - ${data.name}`;
-
-        const reasonText = clone.querySelector(".queue-reason");
-        reasonText.textContent = `Reason: ${data.reason}`;
-
-        const processingBtn = clone.querySelector(".processing-btn");
-        processingBtn.setAttribute("data-id", data.queue_id);
-
-        const proceedBtn = clone.querySelector(".proceed-btn");
-        proceedBtn.setAttribute("data-id", data.queue_id);
-
-        if (data.proceed_url) {
-          proceedBtn.setAttribute("data-url", data.proceed_url);
-        } else if (data.queue_id) {
-          proceedBtn.setAttribute("data-url", "http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_backroom/" + data.queue_id);
+        // Check where to place the item and apply the correct styling
+        if (queueContainer.children.length < 21) {
+          listItem.className =
+            "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center";
+          listItem.innerHTML = `
+      <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
+      <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
+      <p class="text-gray-500 text-sm">
+        Status: <span class="text-green-500 font-semibold">Waiting</span>
+      </p>
+      <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg">
+        <i class="fa-solid fa-hourglass-half"></i>
+      </button>
+      <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg"
+        data-id="${data.queue_id}"
+        data-url="${listItem.dataset.proceed_url}">
+        <i class="fa-solid fa-user-check text-2xl"></i>
+      </button>
+    `;
+          queueContainer.appendChild(listItem);
         } else {
-          console.error("Error: queue_id is missing or undefined.");
-        }
-
-        // Ensure queue-container maintains 20 items, extra ones go to queueList
-        if (queueContainer.children.length < 20) {
-          queueContainer.appendChild(clone);
-        } else {
-          queueList.appendChild(clone);
+          listItem.className = "p-3 bg-gray-50 border rounded-lg"; // QueueList simple style
+          listItem.textContent = `${data.queue_number} - ${data.name} (${data.reason})`;
+          queueList.appendChild(listItem);
         }
 
         updateGridLayout();
@@ -246,10 +245,37 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
         const queueContainer = document.getElementById("queue-container");
         const queueList = document.getElementById("queueList");
 
-        if (queueContainer.children.length < 20 && queueList.children.length > 0) {
+        if (queueContainer.children.length < 21 && queueList.children.length > 0) {
           const firstRightItem = queueList.children[0];
-          queueContainer.appendChild(firstRightItem);
-          console.log("Moved first right-side queue item to left.");
+
+          // Create a new div with the proper structure for queue-container
+          const newQueueItem = document.createElement("div");
+          newQueueItem.id = firstRightItem.id;
+          newQueueItem.className = "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center";
+          newQueueItem.dataset.queue_id = firstRightItem.dataset.queue_id;
+
+          newQueueItem.innerHTML = `
+            <h3 class="font-semibold text-xl">${firstRightItem.dataset.queue_number} - ${firstRightItem.dataset.name}</h3>
+            <p class="text-gray-500 text-sm">Reason: ${firstRightItem.dataset.reason}</p>
+            <p class="text-gray-500 text-sm">
+                Status: <span class="text-green-500 font-semibold">Waiting</span>
+            </p>
+            <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg">
+                <i class="fa-solid fa-hourglass-half"></i>
+            </button>
+            <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg"
+                data-id="${firstRightItem.dataset.queue_id}"
+                data-url="${firstRightItem.dataset.proceed_url}">
+                <i class="fa-solid fa-user-check text-2xl"></i>
+            </button>
+        `;
+
+          // Remove the old list item from queueList
+          firstRightItem.remove();
+
+          // Append the new div to queue-container
+          queueContainer.appendChild(newQueueItem);
+          console.log("Moved first right-side queue item to left with updated design.");
         }
       }
 

@@ -30,7 +30,7 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
       <?php if ($backroom): ?>
         <!-- Grid container using inline style for dynamic columns and equal row heights -->
         <div class="mt-3 grid gap-3 bg-blue-50 h-full"
-          style="grid-template-columns: repeat(<?= $grid_cols ?>, 1fr); grid-auto-rows: 1fr;">
+          style="grid-template-columns: repeat(<?= $grid_cols ?>, 1fr); grid-auto-rows: 1fr;" id="queue-container">
           <?php foreach ($left_items as $item): ?>
             <div class="p-3 bg-white border rounded-lg flex flex-col justify-center items-center my-3 mx-2">
               <h3 class="font-semibold <?php
@@ -75,7 +75,7 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
     <!-- Right Section (Overflow Queue List + Add to Backroom Queue Form) -->
     <div class="ml-5 bg-white p-5 w-[400px] rounded-lg shadow-md flex flex-col">
       <h2 class="text-2xl font-bold text-blue-900 text-center">Backroom Queue List</h2>
-      <ul class="mt-3 overflow-auto h-[600px] space-y-2">
+      <ul class="mt-3 overflow-auto h-[600px] space-y-2" id="queueList">
         <?php foreach ($right_items as $item): ?>
           <li class="p-3 bg-gray-50 border rounded-lg">
             <?= $item->queue_number; ?> - <?= $item->name; ?> (<?= $item->reason; ?>)
@@ -125,9 +125,6 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
       if (data.action === "proceed_to_backroom") {
         console.log("New backroom queue item:", data);
         addToBackroomQueue(data);
-
-        // 🔄 Refresh UI dynamically instead of reloading
-        refreshBackroomUI();
       }
     } catch (error) {
       console.error("Error parsing WebSocket data:", error);
@@ -142,21 +139,24 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
     console.log("Disconnected from WebSocket server");
   };
 
-  // Function to add new item to Backroom queue dynamically
+  // Function to add or update a queue item dynamically
   function addToBackroomQueue(data) {
-    const leftSection = document.querySelector(".mt-3.grid.left");
-    const rightSection = document.querySelector(".mt-3.grid.right");
+    const leftSection = document.querySelector("#queue-container");
+    const rightSection = document.querySelector("#queueList");
 
-    // Ensure sections exist before proceeding
     if (!leftSection || !rightSection) {
-      console.error("Error: Target elements missing in DOM. Retrying...");
-      setTimeout(() => addToBackroomQueue(data), 100); // Retry after 100ms
+      console.error("Error: Target elements missing in DOM.");
       return;
     }
 
     let existingItem = document.getElementById(`queue-item-${data.id}`);
 
-    if (!existingItem) {
+    if (existingItem) {
+      // ✅ If item exists, just update it
+      updateQueueItem(existingItem, data);
+    } else {
+      // ✅ Otherwise, create a new queue item
+      console.warn(`Queue item ${data.id} not found. Creating new item.`);
       const newItem = createQueueItem(data);
 
       if (leftSection.children.length < 20) {
@@ -167,37 +167,31 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
     }
   }
 
-  // Function to refresh the Backroom queue UI dynamically
-  function refreshBackroomUI() {
-    console.log("Refreshing Backroom UI...");
-
-    // Force the page to refresh only if there are significant UI updates
-    setTimeout(() => {
-      location.reload();
-    }, 500);
+  // Function to update an existing queue item
+  function updateQueueItem(item, data) {
+    item.innerHTML = `
+      <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
+      <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
+      <p class="text-gray-500 text-sm">
+        Status: <span class="text-green-500 font-semibold">Backroom</span>
+      </p>
+      <a href="${data.proceed_url}" class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
+        <i class="fa-solid fa-user-check text-2xl"></i>
+      </a>
+    `;
   }
 
-  // Function to create a queue item element
+  // Function to create a new queue item
   function createQueueItem(data) {
     const item = document.createElement("div");
     item.id = `queue-item-${data.id}`;
     item.className = "p-3 bg-white border rounded-lg flex flex-col justify-center items-center my-3 mx-2";
 
-    item.innerHTML = `
-    <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
-    <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
-    <p class="text-gray-500 text-sm">
-      Status: <span class="text-green-500 font-semibold">Backroom</span>
-    </p>
-    <a href="${data.proceed_url}" class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
-      <i class="fa-solid fa-user-check text-2xl"></i>
-    </a>
-  `;
+    updateQueueItem(item, data); // Apply content to item
 
     return item;
   }
 </script>
-
 
 <script>
   document.querySelector('form').addEventListener('submit', function (e) {
