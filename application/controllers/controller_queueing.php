@@ -321,46 +321,51 @@ class controller_queueing extends CI_Controller
     public function mark_as_processing()
     {
         header('Content-Type: application/json');
-
+    
         $queue_id = $this->input->post('queue_id', TRUE);
-        $user_id = $this->session->userdata('user_id');
-
+        $user_id = $this->session->userdata('user_id'); // ✅ Get logged-in user ID
+    
         if (!$queue_id) {
             echo json_encode(['status' => 'error', 'message' => 'Queue ID is missing']);
             return;
         }
-
+    
         $queue = $this->db->get_where('queue', ['id' => $queue_id])->row();
         if (!$queue) {
             echo json_encode(['status' => 'error', 'message' => 'Queue not found']);
             return;
         }
-
+    
         if ($queue->processing_by) {
             echo json_encode(['status' => 'error', 'message' => 'Already being processed']);
             return;
         }
-
+    
         $this->db->where('id', $queue_id);
-        $update = $this->db->update('queue', ['processing_by' => $user_id]);
-
+        $update = $this->db->update('queue', ['processing_by' => $user_id]); // ✅ Store processing user ID
+    
         if ($update) {
             $message = json_encode([
                 'status' => 'success',
                 'action' => 'update_queue',
                 'queue_id' => $queue_id,
+                'processing_by' => $user_id // ✅ Include processing user ID
+            ]);
+    
+            $this->sendWebSocketMessage($message);
+    
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Queue marked as processing',
+                'queue_id' => $queue_id,
                 'processing_by' => $user_id
             ]);
-
-            $this->sendWebSocketMessage($message);
-
-            echo json_encode(['status' => 'success', 'message' => 'Queue marked as processing']);
             return;
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Database update failed']);
             return;
         }
-    }
+    }    
 
     private function sendWebSocketMessage($message)
     {

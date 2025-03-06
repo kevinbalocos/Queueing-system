@@ -1,8 +1,8 @@
 <?php
 // Determine how many items go to the left section (maximum 20)
-$left_items = array_slice($queue, 0, 21);
+$left_items = array_slice($queue, 0, 20);
 // Remaining queue items go to the right section
-$right_items = array_slice($queue, 21);
+$right_items = array_slice($queue, 20);
 // Determine grid columns: if less than 5 items, use that many columns; otherwise, use 5 columns.
 $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 ?>
@@ -185,8 +185,7 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
           return;
         }
 
-        // Create list item dynamically
-        const listItem = document.createElement("div"); // Change to <div> for styling consistency
+        const listItem = document.createElement("div");
         listItem.id = queueId;
         listItem.dataset.queue_id = data.queue_id;
         listItem.dataset.queue_number = data.queue_number;
@@ -196,28 +195,36 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
           ? data.proceed_url
           : `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_backroom/${data.queue_id}`;
 
-        // Check where to place the item and apply the correct styling
-        if (queueContainer.children.length < 21) {
-          listItem.className =
-            "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center";
-          listItem.innerHTML = `
-      <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
-      <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
-      <p class="text-gray-500 text-sm">
-        Status: <span class="text-green-500 font-semibold">Waiting</span>
-      </p>
-      <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg">
-        <i class="fa-solid fa-hourglass-half"></i>
-      </button>
-      <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg"
-        data-id="${data.queue_id}"
-        data-url="${listItem.dataset.proceed_url}">
-        <i class="fa-solid fa-user-check text-2xl"></i>
-      </button>
+        const isProcessing = data.processing_by ? true : false;
+        const processingText = isProcessing ? `Processing by ${data.processing_by}` : "Waiting";
+        const statusColor = isProcessing ? "text-red-500" : "text-green-500";
+
+        listItem.className =
+          "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center";
+
+        listItem.innerHTML = `
+        <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
+        <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
+        <p class="text-gray-500 text-sm">
+            Status: <span class="status-text ${statusColor} font-semibold">${processingText}</span>
+        </p>
+        <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}"
+            data-id="${data.queue_id}" ${isProcessing ? 'disabled' : ''}>
+            <i class="fa-solid fa-hourglass-half"></i>
+        </button>
+        <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}"
+            data-id="${data.queue_id}"
+            data-url="${listItem.dataset.proceed_url}"
+            ${isProcessing ? 'disabled' : ''}>
+            <i class="fa-solid fa-user-check text-2xl"></i>
+        </button>
     `;
+
+        // Append item to correct container
+        if (queueContainer.children.length < 20) {
           queueContainer.appendChild(listItem);
         } else {
-          listItem.className = "p-3 bg-gray-50 border rounded-lg"; // QueueList simple style
+          listItem.className = "p-3 bg-gray-50 border rounded-lg";
           listItem.textContent = `${data.queue_number} - ${data.name} (${data.reason})`;
           queueList.appendChild(listItem);
         }
@@ -245,7 +252,7 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
         const queueContainer = document.getElementById("queue-container");
         const queueList = document.getElementById("queueList");
 
-        if (queueContainer.children.length < 21 && queueList.children.length > 0) {
+        if (queueContainer.children.length < 20 && queueList.children.length > 0) {
           const firstRightItem = queueList.children[0];
 
           // Create a new div with the proper structure for queue-container
@@ -412,55 +419,22 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
   </script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
+      // Establish WebSocket connection globally
       const socket = new WebSocket("ws://localhost:8080");
-      let hasRefreshed = false;
 
       socket.onopen = function () {
         console.log("WebSocket connection established");
       };
 
       socket.onmessage = function (event) {
-        console.log("📥 Received WebSocket Message:", event.data);
+        console.log("Received WebSocket Message:", event.data);
 
         try {
           const data = JSON.parse(event.data);
-          const queueList = document.getElementById("queueList");
 
           if (data.action === "update_queue") {
-            console.log(`Queue ${data.queue_id} marked as processing`);
-
-            let queueRow = document.querySelector(`[data-queue-id="${data.queue_id}"]`);
-            if (queueRow) {
-              queueRow.classList.add("bg-yellow-500");
-              queueRow.querySelector(".status-text").innerText = "Processing";
-
-              let button = queueRow.querySelector(".processing-btn");
-              if (button) {
-                button.classList.add("opacity-50", "cursor-not-allowed");
-                button.setAttribute("disabled", "disabled");
-              }
-            } else {
-              console.warn(`Queue row with ID ${data.queue_id} not found!`);
-            }
-
-            if (queueList && queueList.children.length === 0 && !hasRefreshed) {
-              hasRefreshed = true;
-              console.warn("Queue is empty. Refreshing page...");
-
-              Swal.fire({
-                title: "Updating...",
-                text: "Please wait while the page refreshes.",
-                allowOutsideClick: false,
-                allowEscapeKey: false,
-                showConfirmButton: false,
-                backdrop: false,
-                position: "top",
-                customClass: { popup: "swal-top-popup" },
-                didOpen: () => Swal.showLoading(),
-              });
-
-              setTimeout(() => location.reload(), 1000);
-            }
+            console.log(`Queue ${data.queue_id} marked as processing by ${data.processing_by}`);
+            updateQueueStatus(data.queue_id, `Processing by ${data.processing_by}`, "text-red-500", data.processing_by);
           }
         } catch (error) {
           console.error("WebSocket JSON Error:", error);
@@ -472,13 +446,15 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
       };
 
       socket.onclose = function () {
-        console.log("🔌 WebSocket connection closed");
+        console.log("WebSocket connection closed");
       };
 
+      // Event listener for processing button clicks
       document.body.addEventListener("click", function (e) {
-        if (e.target.closest(".processing-btn")) {
+        const button = e.target.closest(".processing-btn");
+
+        if (button) {
           e.preventDefault();
-          const button = e.target.closest(".processing-btn");
           const queueId = button.getAttribute("data-id");
 
           if (!queueId) {
@@ -486,18 +462,6 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
             Swal.fire({ title: "Error!", text: "Invalid queue ID.", icon: "error", position: "top" });
             return;
           }
-
-          Swal.fire({
-            title: "Processing...",
-            text: "Updating queue...",
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            showConfirmButton: false,
-            backdrop: false,
-            position: "top",
-            customClass: { popup: "swal-top-popup" },
-            didOpen: () => Swal.showLoading(),
-          });
 
           fetch("<?php echo base_url('controller_queueing/mark_as_processing'); ?>", {
             method: "POST",
@@ -509,13 +473,18 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
               if (data.status === "success") {
                 console.log("Queue marked as processing:", data);
 
+                // Update UI with "Processing by [User]"
+                updateQueueStatus(queueId, `Processing by ${data.processing_by}`, "text-red-500");
+
+                // Send WebSocket message for real-time update
                 socket.send(JSON.stringify({
                   action: "update_queue",
                   queue_id: queueId,
-                  status: "processing"
+                  status: "processing",
+                  processing_by: data.processing_by
                 }));
 
-                setTimeout(() => location.reload(), 1000);
+                Swal.close();
               } else {
                 throw new Error(data.message);
               }
@@ -526,8 +495,59 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
             });
         }
       });
+
+      function updateQueueStatus(queueId, statusText, textColor, processingBy) {
+        let queueRow = document.querySelector(`[id="queue-item-${queueId}"]`);
+        if (!queueRow) {
+          console.warn(`Queue row with ID ${queueId} not found!`);
+          return;
+        }
+
+        let statusTextElement = queueRow.querySelector(".status-text");
+        let proceedBtn = queueRow.querySelector(".proceed-btn");
+        let processingBtn = queueRow.querySelector(".processing-btn");
+
+        if (statusTextElement) {
+          statusTextElement.innerText = statusText;
+          statusTextElement.classList.remove("text-green-500", "text-yellow-500", "text-red-500");
+          statusTextElement.classList.add(textColor);
+        }
+
+        // ✅ Always disable the "Processing" button after it's clicked
+        if (processingBtn) {
+          processingBtn.classList.add("opacity-50", "cursor-not-allowed");
+          processingBtn.setAttribute("disabled", "disabled");
+        }
+
+        console.log(`Current User: ${currentUser}, Processing By: ${processingBy}`);
+
+        // ✅ Ensure only the processing user can proceed
+        if (proceedBtn) {
+          if (String(processingBy) === String(currentUser)) {
+            // ✅ User is the one processing, so ENABLE "Proceed" button
+            console.log(`✅ User ${currentUser} is processing Queue ${queueId}, enabling proceed button.`);
+            proceedBtn.classList.remove("opacity-50", "cursor-not-allowed");
+            proceedBtn.removeAttribute("disabled");
+          } else {
+            // ❌ Disable for other users
+            console.log(`❌ Queue ${queueId} is being processed by another user (${processingBy}). Disabling proceed button.`);
+            proceedBtn.classList.add("opacity-50", "cursor-not-allowed");
+            proceedBtn.setAttribute("disabled", "disabled");
+          }
+        }
+      }
     });
   </script>
+  <script>
+    // ✅ Ensure PHP session variable is correctly echoed in JavaScript
+    let currentUser = "<?php echo isset($_SESSION['user_id']) ? $_SESSION['user_id'] : ''; ?>";
+
+    // ✅ Debugging: Check if `currentUser` is set properly
+    console.log("Current User (JavaScript):", currentUser);
+  </script>
+
+
+
 
   <style>
     .mt-3.grid.right {

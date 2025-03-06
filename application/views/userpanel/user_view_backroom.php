@@ -19,57 +19,54 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
+  <style>
+    #queue-container {
+      height: 100vh;
+    }
+  </style>
 
 </head>
 
 <body class="bg-gray-100">
   <div class="flex min-h-screen p-5">
     <!-- Left Section (Now Serving in Backroom) -->
-    <div class="flex-1 bg-white p-5 rounded-lg shadow-md flex flex-col">
+    <div class="flex-1 bg-white p-5 rounded-lg shadow-md">
       <h2 class="text-2xl font-bold text-blue-900 text-center">Now Serving - Backroom</h2>
-      <?php if ($backroom): ?>
-        <!-- Grid container using inline style for dynamic columns and equal row heights -->
-        <div class="mt-3 grid gap-3 bg-blue-50 h-full"
-          style="grid-template-columns: repeat(<?= $grid_cols ?>, 1fr); grid-auto-rows: 1fr;" id="queue-container">
+      <div id="queue-container" class="flex flex-wrap gap-1 bg-blue-50 overflow-y-auto">
+        <?php if ($backroom): ?>
           <?php foreach ($left_items as $item): ?>
-            <div class="p-3 bg-white border rounded-lg flex flex-col justify-center items-center my-3 mx-2">
-              <h3 class="font-semibold <?php
-              if (count($left_items) == 1) {
-                echo 'text-4xl';
-              } elseif (count($left_items) <= 2) {
-                echo 'text-3xl';
-              } elseif (count($left_items) <= 4) {
-                echo 'text-2xl';
-              } else {
-                echo 'text-xl';
-              }
-              ?>">
-                <?= $item->queue_number; ?> - <?= $item->name; ?>
-              </h3>
+            <div
+              class="flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center"
+              id="queue-item-<?= $item->id; ?>">
+              <h3 class="font-semibold text-xl"><?= $item->queue_number; ?> - <?= $item->name; ?></h3>
               <p class="text-gray-500 text-sm">Reason: <?= $item->reason; ?></p>
-              <p class="text-gray-500 <?php
-              if (count($left_items) == 1) {
-                echo 'text-2xl';
-              } elseif (count($left_items) <= 2) {
-                echo 'text-xl';
-              } elseif (count($left_items) <= 4) {
-                echo 'text-lg';
-              } else {
-                echo 'text-sm';
-              }
-              ?>">
-                Status: Waiting
+
+              <p class="text-gray-500 text-sm">
+                Status:
+                <?php if ($item->processing_by): ?>
+                  <span class="text-red-500 font-semibold">Processing by <?= $item->processing_by; ?></span>
+                <?php else: ?>
+                  <span class="text-green-500 font-semibold">Waiting</span>
+                <?php endif; ?>
               </p>
+
+              <!-- Mark as Processing Button -->
+              <button
+                class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg <?= $item->processing_by ? 'opacity-50 cursor-not-allowed' : '' ?>"
+                data-id="<?= $item->id; ?>" <?= $item->processing_by ? 'disabled' : ''; ?>>
+                <i class="fa-solid fa-hourglass-half"></i>
+              </button>
+
+              <!-- Proceed to Examiners Button -->
               <a href="<?= base_url('controller_queueing/proceed_to_examiners/' . $item->id); ?>"
-                class="proceed-btn mt-3 inline-block bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
+                class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
                 <i class="fa-solid fa-user-check text-2xl"></i>
               </a>
             </div>
           <?php endforeach; ?>
-        </div>
-      <?php else: ?>
-        <p class="text-gray-500 mt-3 text-center">No one in backroom queue</p>
-      <?php endif; ?>
+        <?php else: ?>
+        <?php endif; ?>
+      </div>
     </div>
 
     <!-- Right Section (Overflow Queue List + Add to Backroom Queue Form) -->
@@ -77,7 +74,10 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
       <h2 class="text-2xl font-bold text-blue-900 text-center">Backroom Queue List</h2>
       <ul class="mt-3 overflow-auto h-[600px] space-y-2" id="queueList">
         <?php foreach ($right_items as $item): ?>
-          <li class="p-3 bg-gray-50 border rounded-lg">
+          <li class="p-3 bg-gray-50 border rounded-lg" data-queue_id="<?= $item->id; ?>"
+            data-queue_number="<?= $item->queue_number; ?>" data-name="<?= $item->name; ?>"
+            data-reason="<?= $item->reason; ?>"
+            data-proceed_url="<?= base_url('controller_queueing/proceed_to_examiners/' . $item->id); ?>">
             <?= $item->queue_number; ?> - <?= $item->name; ?> (<?= $item->reason; ?>)
           </li>
         <?php endforeach; ?>
@@ -99,8 +99,11 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
           <option value="Birth Certificate Request">Birth Certificate Request</option>
           <option value="Marriage License">Marriage License</option>
         </select>
-        <button type="submit" class="mt-2 w-full bg-green-500 text-white py-2 rounded">Add to Backroom Queue</button>
+        <button type="submit"
+          class="mt-2 w-full bg-blue-500 uppercase tracking-wider font-semibold text-white py-2 rounded">Add to Backroom
+          Queue</button>
       </form>
+
       <div class="mt-10">
         <a href="<?= base_url('controller_admin_landing/logout'); ?>"
           class="flex items-center justify-center bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
@@ -112,7 +115,7 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 </body>
 
 <script>
-  const socket = new WebSocket("ws://localhost:8080"); // Connect to WebSocket server
+  const socket = new WebSocket("ws://localhost:8080");
 
   socket.onopen = function () {
     console.log("Connected to WebSocket server (Backroom)");
@@ -123,8 +126,8 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
       const data = JSON.parse(event.data);
 
       if (data.action === "proceed_to_backroom") {
-        console.log("New backroom queue item:", data);
-        addToBackroomQueue(data);
+        console.log("New backroom queue item received:", data);
+        addNewBackroomQueue(data);
       }
     } catch (error) {
       console.error("Error parsing WebSocket data:", error);
@@ -139,56 +142,83 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
     console.log("Disconnected from WebSocket server");
   };
 
-  // Function to add or update a queue item dynamically
-  function addToBackroomQueue(data) {
-    const leftSection = document.querySelector("#queue-container");
-    const rightSection = document.querySelector("#queueList");
+  function addNewBackroomQueue(data) {
+    const queueContainer = document.getElementById("queue-container");
+    const queueList = document.getElementById("queueList");
 
-    if (!leftSection || !rightSection) {
-      console.error("Error: Target elements missing in DOM.");
+    if (!queueContainer || !queueList) {
+      console.error("Error: Queue containers not found.");
       return;
     }
 
-    let existingItem = document.getElementById(`queue-item-${data.id}`);
-
-    if (existingItem) {
-      // ✅ If item exists, just update it
-      updateQueueItem(existingItem, data);
-    } else {
-      // ✅ Otherwise, create a new queue item
-      console.warn(`Queue item ${data.id} not found. Creating new item.`);
-      const newItem = createQueueItem(data);
-
-      if (leftSection.children.length < 20) {
-        leftSection.appendChild(newItem);
-      } else {
-        rightSection.appendChild(newItem);
-      }
+    const queueId = `queue-item-${data.queue_id}`;
+    if (document.getElementById(queueId)) {
+      console.warn(`Queue item ${queueId} already exists.`);
+      return;
     }
+
+    // Create a new queue item
+    const listItem = document.createElement("li"); // Change to <li> for consistency with PHP
+    listItem.id = queueId;
+    listItem.dataset.queue_id = data.queue_id;
+    listItem.dataset.queue_number = data.queue_number;
+    listItem.dataset.name = data.name;
+    listItem.dataset.reason = data.reason;
+    listItem.dataset.proceed_url = data.proceed_url
+      ? data.proceed_url
+      : `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_backroom/${data.queue_id}`;
+
+    if (queueContainer.children.length < 20) {
+      // Styled full card design for the first 20 items
+      listItem.className =
+        "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center shadow-md";
+      listItem.innerHTML = `
+            <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
+            <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
+            <p class="text-gray-500 text-sm">
+                Status: <span class="text-green-500 font-semibold"> Waiting</span>
+            </p>
+            <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg">
+                <i class="fa-solid fa-hourglass-half"></i>
+            </button>
+            <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg"
+                data-id="${data.queue_id}"
+                data-url="${listItem.dataset.proceed_url}">
+                <i class="fa-solid fa-user-check text-2xl"></i>
+            </button>
+        `;
+      queueContainer.appendChild(listItem);
+    } else {
+      // **Match PHP list structure (for overflow items)**
+      listItem.className =
+        "p-3 bg-gray-50 border rounded-lg flex justify-between items-center shadow-sm";
+      listItem.innerHTML = `
+            <span>${data.queue_number} - ${data.name} (${data.reason})</span>
+       
+        `;
+      queueList.appendChild(listItem);
+    }
+
+    updateGridLayout();
   }
 
-  // Function to update an existing queue item
-  function updateQueueItem(item, data) {
-    item.innerHTML = `
-      <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
-      <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
-      <p class="text-gray-500 text-sm">
-        Status: <span class="text-green-500 font-semibold">Backroom</span>
-      </p>
-      <a href="${data.proceed_url}" class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
-        <i class="fa-solid fa-user-check text-2xl"></i>
-      </a>
-    `;
-  }
-
-  // Function to create a new queue item
   function createQueueItem(data) {
     const item = document.createElement("div");
-    item.id = `queue-item-${data.id}`;
-    item.className = "p-3 bg-white border rounded-lg flex flex-col justify-center items-center my-3 mx-2";
-
-    updateQueueItem(item, data); // Apply content to item
-
+    item.className =
+      "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center";
+    item.innerHTML = `
+        <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
+        <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
+        <p class="text-gray-500 text-sm">
+            Status: <span class="text-green-500 font-semibold">Backroom</span>
+        </p>
+        <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg" data-id="${data.id}">
+            <i class="fa-solid fa-hourglass-half"></i>
+        </button>
+        <a href="${data.proceed_url}" class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
+            <i class="fa-solid fa-user-check text-2xl"></i>
+        </a>
+    `;
     return item;
   }
 </script>
