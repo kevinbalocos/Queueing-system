@@ -434,7 +434,14 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 
           if (data.action === "update_queue") {
             console.log(`Queue ${data.queue_id} marked as processing by ${data.processing_by}`);
-            updateQueueStatus(data.queue_id, `Processing by ${data.processing_by}`, "text-red-500", data.processing_by);
+
+            // Update the UI for all clients
+            updateQueueStatus(
+              data.queue_id,
+              `Processing by ${data.processing_by}`,
+              "text-red-500",
+              data.processing_by
+            );
           }
         } catch (error) {
           console.error("WebSocket JSON Error:", error);
@@ -473,10 +480,10 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
               if (data.status === "success") {
                 console.log("Queue marked as processing:", data);
 
-                // Update UI with "Processing by [User]"
-                updateQueueStatus(queueId, `Processing by ${data.processing_by}`, "text-red-500");
+                // Update UI for the current user
+                updateQueueStatus(queueId, `Processing by ${data.processing_by}`, "text-red-500", data.processing_by);
 
-                // Send WebSocket message for real-time update
+                // Send WebSocket message for real-time update to other users
                 socket.send(JSON.stringify({
                   action: "update_queue",
                   queue_id: queueId,
@@ -537,6 +544,7 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
         }
       }
     });
+
   </script>
   <script>
     // ✅ Ensure PHP session variable is correctly echoed in JavaScript
