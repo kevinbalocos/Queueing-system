@@ -5,6 +5,8 @@ $left_items = array_slice($queue, 0, 20);
 $right_items = array_slice($queue, 20);
 // Determine grid columns: if less than 5 items, use that many columns; otherwise, use 5 columns.
 $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
+
+$currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; // Ensure it's a string
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -31,44 +33,45 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
     <!-- Left Section (Now Serving) -->
     <div class="flex-1 bg-white p-5 rounded-lg shadow-md ">
       <h2 class="text-2xl font-bold text-blue-900 text-center">Now Serving</h2>
-      <div id="queue-container" class=" flex flex-wrap gap-1 bg-blue-50  overflow-y-auto">
+      <div id="queue-container" class="flex flex-wrap gap-1 bg-blue-50 overflow-y-auto">
         <?php if ($queue): ?>
           <?php foreach ($left_items as $item): ?>
+            <?php
+            $isProcessingByCurrentUser = ($item->processing_by && strval($item->processing_by) === $currentUser);
+            ?>
             <div
-              class="flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1  items-center"
+              class="flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center"
               id="queue-item-<?= $item->id; ?>">
+
               <h3 class="font-semibold text-xl"><?= $item->queue_number; ?> - <?= $item->name; ?></h3>
               <p class="text-gray-500 text-sm">Reason: <?= $item->reason; ?></p>
 
               <p class="text-gray-500 text-sm">
                 Status:
-                <?php if ($item->processing_by): ?>
-                  <span class="text-red-500 font-semibold">Processing by <?= $item->processing_by; ?></span>
-                <?php else: ?>
-                  <span class="text-green-500 font-semibold">Waiting</span>
-                <?php endif; ?>
+                <span class="status-text <?= $item->processing_by ? 'text-red-500' : 'text-green-500'; ?> font-semibold">
+                  <?= $item->processing_by ? "Processing by {$item->processing_by}" : "Waiting"; ?>
+                </span>
               </p>
 
               <!-- Mark as Processing Button -->
-              <button
-                class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg <?= $item->processing_by ? 'opacity-50 cursor-not-allowed' : '' ?>"
-                data-id="<?= $item->id; ?>" <?= $item->processing_by ? 'disabled' : ''; ?>>
+              <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg
+                    <?= $item->processing_by ? 'opacity-50 cursor-not-allowed' : '' ?>" data-id="<?= $item->id; ?>"
+                <?= $item->processing_by ? 'disabled' : ''; ?>>
                 <i class="fa-solid fa-hourglass-half"></i>
               </button>
 
               <!-- Proceed Button -->
-              <button
-                class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg"
+              <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg
+                    <?= $isProcessingByCurrentUser ? '' : 'opacity-50 cursor-not-allowed' ?>"
                 data-id="<?= $item->id; ?>"
-                data-url="http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_backroom/<?= $item->id; ?>">
+                data-url="<?= base_url("controller_queueing/proceed_to_backroom/{$item->id}") ?>"
+                <?= $isProcessingByCurrentUser ? '' : 'disabled'; ?>>
                 <i class="fa-solid fa-user-check text-2xl"></i>
               </button>
             </div>
           <?php endforeach; ?>
-        <?php else: ?>
         <?php endif; ?>
       </div>
-
     </div>
 
     <!-- Right Section (Queue List) -->
@@ -169,7 +172,6 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
           console.error("WebSocket JSON Error:", error);
         }
       };
-
       function addQueueItem(data) {
         const queueContainer = document.getElementById("queue-container");
         const queueList = document.getElementById("queueList");
@@ -212,13 +214,13 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
             data-id="${data.queue_id}" ${isProcessing ? 'disabled' : ''}>
             <i class="fa-solid fa-hourglass-half"></i>
         </button>
-        <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}"
+        <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 rounded-full border border-blue-50 shadow-lg opacity-50 cursor-not-allowed"
             data-id="${data.queue_id}"
             data-url="${listItem.dataset.proceed_url}"
-            ${isProcessing ? 'disabled' : ''}>
+            disabled>
             <i class="fa-solid fa-user-check text-2xl"></i>
         </button>
-    `;
+        `;
 
         // Append item to correct container
         if (queueContainer.children.length < 20) {
@@ -419,15 +421,14 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
   </script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-      // Establish WebSocket connection globally
       const socket = new WebSocket("ws://localhost:8080");
 
       socket.onopen = function () {
-        console.log("WebSocket connection established");
+        console.log("✅ WebSocket connection established");
       };
 
       socket.onmessage = function (event) {
-        console.log("Received WebSocket Message:", event.data);
+        console.log("📩 Received WebSocket Message:", event.data);
 
         try {
           const data = JSON.parse(event.data);
@@ -435,7 +436,6 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
           if (data.action === "update_queue") {
             console.log(`Queue ${data.queue_id} marked as processing by ${data.processing_by}`);
 
-            // Update the UI for all clients
             updateQueueStatus(
               data.queue_id,
               `Processing by ${data.processing_by}`,
@@ -444,19 +444,18 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
             );
           }
         } catch (error) {
-          console.error("WebSocket JSON Error:", error);
+          console.error("❌ WebSocket JSON Error:", error);
         }
       };
 
       socket.onerror = function (error) {
-        console.error("WebSocket Error:", error);
+        console.error("❌ WebSocket Error:", error);
       };
 
       socket.onclose = function () {
-        console.log("WebSocket connection closed");
+        console.log("⚠️ WebSocket connection closed");
       };
 
-      // Event listener for processing button clicks
       document.body.addEventListener("click", function (e) {
         const button = e.target.closest(".processing-btn");
 
@@ -465,12 +464,12 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
           const queueId = button.getAttribute("data-id");
 
           if (!queueId) {
-            console.error("Queue ID is undefined.");
+            console.error("❌ Queue ID is undefined.");
             Swal.fire({ title: "Error!", text: "Invalid queue ID.", icon: "error", position: "top" });
             return;
           }
 
-          fetch("<?php echo base_url('controller_queueing/mark_as_processing'); ?>", {
+          fetch("<?= base_url('controller_queueing/mark_as_processing'); ?>", {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: new URLSearchParams({ queue_id: queueId }),
@@ -478,12 +477,10 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
             .then(response => response.json())
             .then(data => {
               if (data.status === "success") {
-                console.log("Queue marked as processing:", data);
+                console.log("✅ Queue marked as processing:", data);
 
-                // Update UI for the current user
                 updateQueueStatus(queueId, `Processing by ${data.processing_by}`, "text-red-500", data.processing_by);
 
-                // Send WebSocket message for real-time update to other users
                 socket.send(JSON.stringify({
                   action: "update_queue",
                   queue_id: queueId,
@@ -497,16 +494,16 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
               }
             })
             .catch(error => {
-              console.error("Fetch Error:", error);
+              console.error("❌ Fetch Error:", error);
               Swal.fire({ title: "Error!", text: error.message, icon: "error", position: "top" });
             });
         }
       });
 
       function updateQueueStatus(queueId, statusText, textColor, processingBy) {
-        let queueRow = document.querySelector(`[id="queue-item-${queueId}"]`);
+        let queueRow = document.querySelector(`#queue-item-${queueId}`);
         if (!queueRow) {
-          console.warn(`Queue row with ID ${queueId} not found!`);
+          console.warn(`⚠️ Queue row with ID ${queueId} not found!`);
           return;
         }
 
@@ -520,23 +517,19 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
           statusTextElement.classList.add(textColor);
         }
 
-        // ✅ Always disable the "Processing" button after it's clicked
         if (processingBtn) {
           processingBtn.classList.add("opacity-50", "cursor-not-allowed");
           processingBtn.setAttribute("disabled", "disabled");
         }
 
-        console.log(`Current User: ${currentUser}, Processing By: ${processingBy}`);
+        console.log(`👤 Current User: ${currentUser}, Processing By: ${processingBy}`);
 
-        // ✅ Ensure only the processing user can proceed
         if (proceedBtn) {
           if (String(processingBy) === String(currentUser)) {
-            // ✅ User is the one processing, so ENABLE "Proceed" button
             console.log(`✅ User ${currentUser} is processing Queue ${queueId}, enabling proceed button.`);
             proceedBtn.classList.remove("opacity-50", "cursor-not-allowed");
             proceedBtn.removeAttribute("disabled");
           } else {
-            // ❌ Disable for other users
             console.log(`❌ Queue ${queueId} is being processed by another user (${processingBy}). Disabling proceed button.`);
             proceedBtn.classList.add("opacity-50", "cursor-not-allowed");
             proceedBtn.setAttribute("disabled", "disabled");
@@ -545,13 +538,8 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
       }
     });
 
-  </script>
-  <script>
-    // ✅ Ensure PHP session variable is correctly echoed in JavaScript
-    let currentUser = "<?php echo isset($_SESSION['user_id']) ? $_SESSION['user_id'] : ''; ?>";
-
-    // ✅ Debugging: Check if `currentUser` is set properly
-    console.log("Current User (JavaScript):", currentUser);
+    let currentUser = "<?= $currentUser; ?>";
+    console.log("📌 Current User (JavaScript):", currentUser);
   </script>
 
 
