@@ -257,24 +257,39 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
         if (queueContainer.children.length < 20 && queueList.children.length > 0) {
           const firstRightItem = queueList.children[0];
 
+          // Ensure queue_id is retrieved properly
+          const queueId = firstRightItem.dataset.queue_id || null;
+          if (!queueId) {
+            console.error("❌ Queue ID is undefined. Cannot move item.");
+            return;
+          }
+
+          // Extract processing information
+          const processingBy = firstRightItem.dataset.processing_by || "";
+          const isProcessing = processingBy ? true : false;
+          const processingText = isProcessing ? `Processing by ${processingBy}` : "Waiting";
+          const statusColor = isProcessing ? "text-red-500" : "text-green-500";
+
           // Create a new div with the proper structure for queue-container
           const newQueueItem = document.createElement("div");
           newQueueItem.id = firstRightItem.id;
           newQueueItem.className = "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center";
-          newQueueItem.dataset.queue_id = firstRightItem.dataset.queue_id;
+          newQueueItem.dataset.queue_id = queueId;
 
           newQueueItem.innerHTML = `
             <h3 class="font-semibold text-xl">${firstRightItem.dataset.queue_number} - ${firstRightItem.dataset.name}</h3>
             <p class="text-gray-500 text-sm">Reason: ${firstRightItem.dataset.reason}</p>
             <p class="text-gray-500 text-sm">
-                Status: <span class="text-green-500 font-semibold">Waiting</span>
+                Status: <span class="status-text ${statusColor} font-semibold">${processingText}</span>
             </p>
-            <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg">
+            <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}"
+                data-id="${queueId}" ${isProcessing ? 'disabled' : ''}>
                 <i class="fa-solid fa-hourglass-half"></i>
             </button>
-            <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg"
-                data-id="${firstRightItem.dataset.queue_id}"
-                data-url="${firstRightItem.dataset.proceed_url}">
+            <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 rounded-full border border-blue-50 shadow-lg opacity-50 cursor-not-allowed"
+                data-id="${queueId}"
+                data-url="${firstRightItem.dataset.proceed_url}"
+                disabled>
                 <i class="fa-solid fa-user-check text-2xl"></i>
             </button>
         `;
@@ -284,7 +299,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
 
           // Append the new div to queue-container
           queueContainer.appendChild(newQueueItem);
-          console.log("Moved first right-side queue item to left with updated design.");
+          console.log(`✅ Moved queue item (ID: ${queueId}) to the left with updated status.`);
         }
       }
 
