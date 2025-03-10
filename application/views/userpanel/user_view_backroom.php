@@ -36,35 +36,31 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
         <?php if ($backroom): ?>
           <?php foreach ($left_items as $item): ?>
             <div
-              class="flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center"
-              id="queue-item-<?= $item->id; ?>">
+              class="flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center shadow-md"
+              id="queue-item-<?= $item->id; ?>" data-id="<?= $item->id; ?>">
+
               <h3 class="font-semibold text-xl"><?= $item->queue_number; ?> - <?= $item->name; ?></h3>
               <p class="text-gray-500 text-sm">Reason: <?= $item->reason; ?></p>
 
               <p class="text-gray-500 text-sm">
-                Status:
-                <?php if ($item->processing_by): ?>
-                  <span class="text-red-500 font-semibold">Processing by <?= $item->processing_by; ?></span>
-                <?php else: ?>
-                  <span class="text-green-500 font-semibold">Waiting</span>
-                <?php endif; ?>
+                Status: <span class="text-green-500 font-semibold">Backroom</span>
               </p>
 
               <!-- Mark as Processing Button -->
-              <button
-                class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg <?= $item->processing_by ? 'opacity-50 cursor-not-allowed' : '' ?>"
-                data-id="<?= $item->id; ?>" <?= $item->processing_by ? 'disabled' : ''; ?>>
+              <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg"
+                data-id="<?= $item->id; ?>">
                 <i class="fa-solid fa-hourglass-half"></i>
               </button>
 
-              <!-- Proceed to Examiners Button -->
-              <a href="<?= base_url('controller_queueing/proceed_to_examiners/' . $item->id); ?>"
-                class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
+              <!-- Proceed Button (Disabled by Default) -->
+              <button
+                class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 rounded-full border border-blue-50 shadow-lg opacity-50 cursor-not-allowed"
+                data-id="<?= $item->id; ?>" disabled>
                 <i class="fa-solid fa-user-check text-2xl"></i>
-              </a>
+              </button>
+
             </div>
           <?php endforeach; ?>
-        <?php else: ?>
         <?php endif; ?>
       </div>
     </div>
@@ -176,14 +172,14 @@ $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
             <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
             <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
             <p class="text-gray-500 text-sm">
-                Status: <span class="text-green-500 font-semibold"> Waiting</span>
+                Status: <span class="text-green-500 font-semibold"> Backroom</span>
             </p>
             <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg">
                 <i class="fa-solid fa-hourglass-half"></i>
             </button>
-            <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg"
+            <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 rounded-full border border-blue-50 shadow-lg opacity-50 cursor-not-allowed"
                 data-id="${data.queue_id}"
-                data-url="${listItem.dataset.proceed_url}">
+                data-url="${listItem.dataset.proceed_url}" disabled>
                 <i class="fa-solid fa-user-check text-2xl"></i>
             </button>
         `;
