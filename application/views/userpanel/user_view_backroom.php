@@ -5,6 +5,8 @@ $left_items = array_slice($backroom, 0, 20);
 $right_items = array_slice($backroom, 20);
 // Determine grid columns: if less than 5 items, use that number; otherwise, use 5 columns.
 $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
+
+$currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
