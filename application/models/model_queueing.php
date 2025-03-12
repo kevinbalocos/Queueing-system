@@ -26,7 +26,7 @@ class model_queueing extends CI_Model
             'name' => $name,
             'reason' => $reason,
             'status' => 'landtax',
-            'position' => $new_position 
+            'position' => $new_position
         );
 
         if ($this->db->insert('queue', $data)) {
@@ -34,7 +34,7 @@ class model_queueing extends CI_Model
         }
         return false;
     }
-    
+
     public function get_queue_item($queue_id)
     {
         return $this->db->get_where('queue', ['id' => $queue_id])->row();
@@ -49,19 +49,28 @@ class model_queueing extends CI_Model
 
     public function add_to_backroom($name, $reason)
     {
-        // Get the last queue number (you may wish to use a common sequence for all statuses)
+        // Get the last queue number (ensuring sequence consistency)
         $last_queue = $this->db->select_max('queue_number')->get('queue')->row();
-        $new_queue_number = $last_queue->queue_number + 1;
+        $new_queue_number = $last_queue->queue_number ? $last_queue->queue_number + 1 : 1;
+
+        // Get the highest position in the backroom queue
+        $max_position = $this->db->select_max('position')->where('status', 'backroom')->get('queue')->row()->position;
+        $new_position = $max_position ? $max_position + 1 : 1; // Append to the end
 
         $data = array(
             'queue_number' => $new_queue_number,
             'name' => $name,
             'reason' => $reason,
-            'status' => 'backroom'  // Set status to backroom
+            'status' => 'backroom',  // Set status to backroom
+            'position' => $new_position  // Maintain correct queue order in backroom
         );
 
-        return $this->db->insert('queue', $data);
+        if ($this->db->insert('queue', $data)) {
+            return $new_queue_number;
+        }
+        return false;
     }
+
 
     public function add_to_examiners($name, $reason)
     {

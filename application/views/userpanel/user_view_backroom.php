@@ -113,112 +113,79 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
 </body>
 
 <script>
-  const socket = new WebSocket("ws://localhost:8080");
+ const socket = new WebSocket("ws://localhost:8080");
 
-  socket.onopen = function () {
-    console.log("Connected to WebSocket server (Backroom)");
-  };
+socket.onopen = function () {
+  console.log("Connected to WebSocket server (Backroom)");
+};
 
-  socket.onmessage = function (event) {
-    try {
-      const data = JSON.parse(event.data);
+socket.onmessage = function (event) {
+  try {
+    const data = JSON.parse(event.data);
 
-      if (data.action === "proceed_to_backroom") {
-        console.log("New backroom queue item received:", data);
-        addNewBackroomQueue(data);
-      }
-    } catch (error) {
-      console.error("Error parsing WebSocket data:", error);
+    if (data.action === "proceed_to_backroom") {  // ✅ Updated to listen for correct event
+      console.log("New backroom queue item received:", data);
+      addNewBackroomQueue(data);  // Now correctly updates Backroom UI
     }
-  };
+  } catch (error) {
+    console.error("Error parsing WebSocket data:", error);
+  }
+};
 
-  socket.onerror = function (error) {
-    console.error("WebSocket Error: ", error);
-  };
+socket.onerror = function (error) {
+  console.error("WebSocket Error: ", error);
+};
 
-  socket.onclose = function () {
-    console.log("Disconnected from WebSocket server");
-  };
+socket.onclose = function () {
+  console.log("Disconnected from WebSocket server");
+};
 
-  function addNewBackroomQueue(data) {
-    const queueContainer = document.getElementById("queue-container");
-    const queueList = document.getElementById("queueList");
+function addNewBackroomQueue(data) {
+  const queueContainer = document.getElementById("queue-container");
+  const queueList = document.getElementById("queueList");
 
-    if (!queueContainer || !queueList) {
-      console.error("Error: Queue containers not found.");
-      return;
-    }
-
-    const queueId = `queue-item-${data.queue_id}`;
-    if (document.getElementById(queueId)) {
-      console.warn(`Queue item ${queueId} already exists.`);
-      return;
-    }
-
-    // Create a new queue item
-    const listItem = document.createElement("li"); // Change to <li> for consistency with PHP
-    listItem.id = queueId;
-    listItem.dataset.queue_id = data.queue_id;
-    listItem.dataset.queue_number = data.queue_number;
-    listItem.dataset.name = data.name;
-    listItem.dataset.reason = data.reason;
-    listItem.dataset.proceed_url = data.proceed_url
-      ? data.proceed_url
-      : `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_backroom/${data.queue_id}`;
-
-    if (queueContainer.children.length < 20) {
-      // Styled full card design for the first 20 items
-      listItem.className =
-        "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center shadow-md";
-      listItem.innerHTML = `
-            <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
-            <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
-            <p class="text-gray-500 text-sm">
-                Status: <span class="text-green-500 font-semibold"> Backroom</span>
-            </p>
-            <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg">
-                <i class="fa-solid fa-hourglass-half"></i>
-            </button>
-            <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 rounded-full border border-blue-50 shadow-lg opacity-50 cursor-not-allowed"
-                data-id="${data.queue_id}"
-                data-url="${listItem.dataset.proceed_url}" disabled>
-                <i class="fa-solid fa-user-check text-2xl"></i>
-            </button>
-        `;
-      queueContainer.appendChild(listItem);
-    } else {
-      // **Match PHP list structure (for overflow items)**
-      listItem.className =
-        "p-3 bg-gray-50 border rounded-lg flex justify-between items-center shadow-sm";
-      listItem.innerHTML = `
-            <span>${data.queue_number} - ${data.name} (${data.reason})</span>
-       
-        `;
-      queueList.appendChild(listItem);
-    }
-
-    updateGridLayout();
+  if (!queueContainer || !queueList) {
+    console.error("Error: Queue containers not found.");
+    return;
   }
 
-  function createQueueItem(data) {
-    const item = document.createElement("div");
-    item.className =
-      "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center";
-    item.innerHTML = `
+  const queueId = `queue-item-${data.queue_id}`;
+  if (document.getElementById(queueId)) {
+    console.warn(`Queue item ${queueId} already exists.`);
+    return;
+  }
+
+  const listItem = document.createElement("li");
+  listItem.id = queueId;
+  listItem.dataset.queue_id = data.queue_id;
+  listItem.dataset.queue_number = data.queue_number;
+  listItem.dataset.name = data.name;
+  listItem.dataset.reason = data.reason;
+  listItem.dataset.proceed_url = data.proceed_url
+    ? data.proceed_url
+    : `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_backroom/${data.queue_id}`;
+
+  listItem.className =
+    "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center shadow-md";
+  listItem.innerHTML = `
         <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
         <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
         <p class="text-gray-500 text-sm">
             Status: <span class="text-green-500 font-semibold">Backroom</span>
         </p>
-        <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg" data-id="${data.id}">
+        <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg">
             <i class="fa-solid fa-hourglass-half"></i>
         </button>
-        <a href="${data.proceed_url}" class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg">
+        <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 rounded-full border border-blue-50 shadow-lg opacity-50 cursor-not-allowed"
+            data-id="${data.queue_id}"
+            data-url="${listItem.dataset.proceed_url}" disabled>
             <i class="fa-solid fa-user-check text-2xl"></i>
-        </a>
+        </button>
     `;
-    return item;
-  }
+  queueContainer.appendChild(listItem);
+
+  updateGridLayout();
+}
 </script>
 
 <script>

@@ -182,11 +182,54 @@ class controller_queueing extends CI_Controller
     {
         $name = $this->input->post('name');
         $reason = $this->input->post('reason');
-
-        $this->model_queueing->add_to_backroom($name, $reason);
-
-        echo json_encode(['status' => 'success', 'message' => 'Queue item added successfully to Backroom.']);
-    }
+    
+        // Ensure correct queue numbering
+        $max_position = $this->db->select_max('position')
+            ->where('status', 'backroom')
+            ->get('queue')
+            ->row()->position;
+    
+        $new_position = $max_position ? $max_position + 1 : 1;
+    
+        // Insert into the Backroom queue
+        $queue_number = $this->model_queueing->add_to_backroom($name, $reason);
+    
+        if ($queue_number) {
+            $new_item = $this->db->where('queue_number', $queue_number)->get('queue')->row();
+    
+            if (!$new_item || empty($new_item->id)) {
+                echo json_encode(['status' => 'error', 'message' => 'Failed to fetch the new queue item.']);
+                return;
+            }
+    
+            $queue_id = $new_item->id;
+            $proceed_url = base_url("index.php/controller_queueing/proceed_to_examiners/{$queue_id}");
+    
+            $queue_data = [
+                'queue_id' => (string) $queue_id,
+                'id' => $queue_id,
+                'queue_number' => $queue_number,
+                'name' => $name,
+                'reason' => $reason,
+                'status' => 'backroom',  // Set status correctly
+                'position' => $new_position,
+                'processing_by' => '',
+                'proceed_url' => $proceed_url
+            ];
+    
+            // 🔥 Send to WebSocket with the correct event name!
+            $this->send_to_websocket($queue_data, 'proceed_to_backroom');
+    
+            echo json_encode([
+                'status' => 'success',
+                'message' => "Queue item added successfully to Backroom. Your queue number is $queue_number.",
+                'queue_number' => $queue_number,
+                'proceed_url' => $proceed_url
+            ]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to add to the Backroom queue.']);
+        }
+    }    
 
     public function add_to_examiners()
     {
