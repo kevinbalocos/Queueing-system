@@ -45,6 +45,9 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
 
               <h3 class="font-semibold text-xl"><?= $item->queue_number; ?> - <?= $item->name; ?></h3>
               <p class="text-gray-500 text-sm">Reason: <?= $item->reason; ?></p>
+              <p class="text-gray-500 text-sm">Time Added: <span
+                  class="font-semibold"><?= date('M d, Y, h:i A', strtotime($item->created_at)); ?></span>
+              </p>
 
               <p class="text-gray-500 text-sm">
                 Status:
@@ -81,10 +84,14 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
         <?php foreach ($right_items as $item): ?>
           <li class="p-3 bg-gray-50 border rounded-lg" data-queue_id="<?= $item->id; ?>"
             data-queue_number="<?= $item->queue_number; ?>" data-name="<?= $item->name; ?>"
-            data-reason="<?= $item->reason; ?>"
-            data-proceed_url="http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_backroom/<?= $item->id; ?>">
+            data-reason="<?= $item->reason; ?>">
             <?= $item->queue_number; ?> - <?= $item->name; ?> (<?= $item->reason; ?>)
+            <br>
+            <span class="text-gray-500 text-xs">Added on:
+              <?= date('M d, Y, h:i A', strtotime($item->created_at)); ?>
+            </span>
           </li>
+
         <?php endforeach; ?>
       </ul>
 
@@ -119,25 +126,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
       </div>
     </div>
   </div>
-  <template id="queue-item-template" class="flex flex-wrap gap-1">
-    <div
-      class="flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1  items-center">
-      <h3 class="font-semibold text-xl queue-number-name"></h3>
-      <p class="text-gray-500 text-sm queue-reason"></p>
-      <p class="text-gray-500 text-sm">
-        Status: <span class="status-label text-green-500 font-semibold">Waiting</span>
-      </p>
-      <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg"
-        data-id="">
-        <i class="fa-solid fa-hourglass-half"></i>
-      </button>
-      <button
-        class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg"
-        data-id="" data-url="">
-        <i class="fa-solid fa-user-check text-2xl"></i>
-      </button>
-    </div>
-  </template>
+
 
 
   <script>
@@ -207,6 +196,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
         listItem.innerHTML = `
         <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
         <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
+          <p class="text-gray-500 text-sm">Time Added: <span class="font-semibold">${data.created_at}</span></p>
         <p class="text-gray-500 text-sm">
             Status: <span class="status-text ${statusColor} font-semibold">${processingText}</span>
         </p>
@@ -223,13 +213,30 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
         `;
 
         // Append item to correct container
+        // Append item to correct container
         if (queueContainer.children.length < 20) {
           queueContainer.appendChild(listItem);
         } else {
           listItem.className = "p-3 bg-gray-50 border rounded-lg";
-          listItem.textContent = `${data.queue_number} - ${data.name} (${data.reason})`;
+
+          // Get current timestamp
+          let timestamp = new Date().toLocaleString("en-US", {
+            month: "short",
+            day: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true
+          });
+
+          listItem.innerHTML = `
+    ${data.queue_number} - ${data.name} (${data.reason})<br>
+    <span class="text-gray-500 text-xs">Added on: ${timestamp}</span>
+  `;
+
           queueList.appendChild(listItem);
         }
+
 
         updateGridLayout();
       }
@@ -264,6 +271,16 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
             return;
           }
 
+          // Get current timestamp
+          let movedTimestamp = new Date().toLocaleString("en-US", {
+            month: "short",
+            day: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true
+          });
+
           // Extract processing information
           const processingBy = firstRightItem.dataset.processing_by || "";
           const isProcessing = processingBy ? true : false;
@@ -279,6 +296,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
           newQueueItem.innerHTML = `
             <h3 class="font-semibold text-xl">${firstRightItem.dataset.queue_number} - ${firstRightItem.dataset.name}</h3>
             <p class="text-gray-500 text-sm">Reason: ${firstRightItem.dataset.reason}</p>
+            <p class="text-gray-500 text-sm">Time Added: <span class="font-semibold">${movedTimestamp}</span></p>
             <p class="text-gray-500 text-sm">
                 Status: <span class="status-text ${statusColor} font-semibold">${processingText}</span>
             </p>
@@ -299,9 +317,11 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
 
           // Append the new div to queue-container
           queueContainer.appendChild(newQueueItem);
-          console.log(`✅ Moved queue item (ID: ${queueId}) to the left with updated status.`);
+          console.log(`✅ Moved queue item (ID: ${queueId}) to the left with timestamp: ${movedTimestamp}`);
         }
       }
+
+
 
       function updateGridLayout() {
         const queueContainer = document.getElementById("queue-container");
