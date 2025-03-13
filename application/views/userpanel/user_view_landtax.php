@@ -45,8 +45,10 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
 
               <h3 class="font-semibold text-xl"><?= $item->queue_number; ?> - <?= $item->name; ?></h3>
               <p class="text-gray-500 text-sm">Reason: <?= $item->reason; ?></p>
-              <p class="text-gray-500 text-sm">Time Added: <span
-                  class="font-semibold"><?= date('M d, Y, h:i A', strtotime($item->created_at)); ?></span>
+              <p class="text-gray-500 text-xs">
+                Time Added: <span class="font-semibold">
+                  <?= date("M d, Y h:i A", strtotime($item->created_at)); ?>
+                </span>
               </p>
 
               <p class="text-gray-500 text-sm">
@@ -176,6 +178,24 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
           return;
         }
 
+        // Format the timestamp
+        let timestamp = "Invalid Date"; // Default fallback
+        if (data.created_at) {
+          let createdAt = new Date(data.created_at);
+          if (!isNaN(createdAt.getTime())) {
+            timestamp = createdAt.toLocaleString("en-US", {
+              month: "short",
+              day: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true
+            });
+          } else {
+            console.error("⚠️ Invalid Date format received:", data.created_at);
+          }
+        }
+
         const listItem = document.createElement("div");
         listItem.id = queueId;
         listItem.dataset.queue_id = data.queue_id;
@@ -196,7 +216,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
         listItem.innerHTML = `
         <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
         <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
-          <p class="text-gray-500 text-sm">Time Added: <span class="font-semibold">${data.created_at}</span></p>
+        <p class="text-gray-500 text-xs">Time Added: <span class="font-semibold">${timestamp}</span></p>
         <p class="text-gray-500 text-sm">
             Status: <span class="status-text ${statusColor} font-semibold">${processingText}</span>
         </p>
@@ -210,33 +230,21 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
             disabled>
             <i class="fa-solid fa-user-check text-2xl"></i>
         </button>
-        `;
+    `;
 
-        // Append item to correct container
         // Append item to correct container
         if (queueContainer.children.length < 20) {
           queueContainer.appendChild(listItem);
         } else {
           listItem.className = "p-3 bg-gray-50 border rounded-lg";
 
-          // Get current timestamp
-          let timestamp = new Date().toLocaleString("en-US", {
-            month: "short",
-            day: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true
-          });
-
           listItem.innerHTML = `
-    ${data.queue_number} - ${data.name} (${data.reason})<br>
-    <span class="text-gray-500 text-xs">Added on: ${timestamp}</span>
-  `;
+            ${data.queue_number} - ${data.name} (${data.reason})<br>
+            <span class="text-gray-500 text-xs">Added on: ${timestamp}</span>
+        `;
 
           queueList.appendChild(listItem);
         }
-
 
         updateGridLayout();
       }
@@ -296,7 +304,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
           newQueueItem.innerHTML = `
             <h3 class="font-semibold text-xl">${firstRightItem.dataset.queue_number} - ${firstRightItem.dataset.name}</h3>
             <p class="text-gray-500 text-sm">Reason: ${firstRightItem.dataset.reason}</p>
-            <p class="text-gray-500 text-sm">Time Added: <span class="font-semibold">${movedTimestamp}</span></p>
+            <p class="text-gray-500 text-xs">Time Added: <span class="font-semibold">${movedTimestamp}</span></p>
             <p class="text-gray-500 text-sm">
                 Status: <span class="status-text ${statusColor} font-semibold">${processingText}</span>
             </p>

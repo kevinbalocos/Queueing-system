@@ -62,7 +62,7 @@ class model_queueing extends CI_Model
             'name' => $name,
             'reason' => $reason,
             'status' => 'backroom',  // Set status to backroom
-            'position' => $new_position  // Maintain correct queue order in backroom
+            'position' => $new_position,  // Maintain correct queue order in backroom
         );
 
         if ($this->db->insert('queue', $data)) {

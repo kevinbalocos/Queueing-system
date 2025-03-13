@@ -44,6 +44,12 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
               <h3 class="font-semibold text-xl"><?= $item->queue_number; ?> - <?= $item->name; ?></h3>
               <p class="text-gray-500 text-sm">Reason: <?= $item->reason; ?></p>
 
+              <p class="text-gray-500 text-xs">
+                Time Added: <span class="font-semibold">
+                  <?= date("M d, Y h:i A", strtotime($item->created_at)); ?>
+                </span>
+              </p>
+
               <p class="text-gray-500 text-sm">
                 Status: <span class="text-green-500 font-semibold">Backroom</span>
               </p>
@@ -76,7 +82,9 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
             data-queue_number="<?= $item->queue_number; ?>" data-name="<?= $item->name; ?>"
             data-reason="<?= $item->reason; ?>"
             data-proceed_url="<?= base_url('controller_queueing/proceed_to_examiners/' . $item->id); ?>">
-            <?= $item->queue_number; ?> - <?= $item->name; ?> (<?= $item->reason; ?>)
+            <?= $item->queue_number; ?> - <?= $item->name; ?> (<?= $item->reason; ?>) <br>
+            <span class="text-gray-500 text-xs">Added on:
+              <?= date("M d, Y h:i A", strtotime($item->created_at)); ?></span>
           </li>
         <?php endforeach; ?>
       </ul>
@@ -113,79 +121,209 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
 </body>
 
 <script>
- const socket = new WebSocket("ws://localhost:8080");
+  const socket = new WebSocket("ws://localhost:8080");
 
-socket.onopen = function () {
-  console.log("Connected to WebSocket server (Backroom)");
-};
+  socket.onopen = function () {
+    console.log("Connected to WebSocket server (Backroom)");
+  };
 
-socket.onmessage = function (event) {
-  try {
-    const data = JSON.parse(event.data);
+  socket.onmessage = function (event) {
+    try {
+      const data = JSON.parse(event.data);
 
-    if (data.action === "proceed_to_backroom") {  // ✅ Updated to listen for correct event
-      console.log("New backroom queue item received:", data);
-      addNewBackroomQueue(data);  // Now correctly updates Backroom UI
+      if (data.action === "proceed_to_backroom") {
+        console.log("New backroom queue item received:", data);
+        addNewBackroomQueue(data);
+      }
+    } catch (error) {
+      console.error("Error parsing WebSocket data:", error);
     }
-  } catch (error) {
-    console.error("Error parsing WebSocket data:", error);
+  };
+
+  socket.onerror = function (error) {
+    console.error("WebSocket Error: ", error);
+  };
+
+  socket.onclose = function () {
+    console.log("Disconnected from WebSocket server");
+  };
+
+  function addNewBackroomQueue(data) {
+    const queueContainer = document.getElementById("queue-container");
+    const queueList = document.getElementById("queueList");
+
+    if (!queueContainer || !queueList) {
+      console.error("Error: Queue containers not found.");
+      return;
+    }
+
+    const queueId = `queue-item-${data.queue_id}`;
+    if (document.getElementById(queueId)) {
+      console.warn(`Queue item ${queueId} already exists.`);
+      return;
+    }
+
+    let timestamp = "Invalid Date"; // Default fallback
+
+    if (data.created_at) {  // Ensure created_at exists
+      let createdAt = new Date(data.created_at);
+
+      if (!isNaN(createdAt.getTime())) {
+        timestamp = createdAt.toLocaleString("en-US", {
+          month: "short",
+          day: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true
+        });
+      } else {
+        console.error("⚠️ Invalid Date format received:", data.created_at);
+      }
+    } else {
+      console.error("⚠️ Missing created_at value:", data.created_at);
+    }
+
+    const listItem = document.createElement("li");
+    listItem.id = queueId;
+    listItem.dataset.queue_id = data.queue_id;
+    listItem.dataset.queue_number = data.queue_number;
+    listItem.dataset.name = data.name;
+    listItem.dataset.reason = data.reason;
+    listItem.dataset.proceed_url = data.proceed_url
+      ? data.proceed_url
+      : `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_backroom/${data.queue_id}`;
+
+    listItem.className =
+      "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center shadow-md";
+    listItem.innerHTML = `
+    <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
+    <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
+    <p class="text-gray-500 text-xs">
+        Time Added: <span class="font-semibold">${timestamp}</span>
+    </p>
+    <p class="text-gray-500 text-sm">
+        Status: <span class="text-green-500 font-semibold">Backroom</span>
+    </p>
+    <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg">
+        <i class="fa-solid fa-hourglass-half"></i>
+    </button>
+    <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 rounded-full border border-blue-50 shadow-lg opacity-50 cursor-not-allowed"
+        data-id="${data.queue_id}"
+        data-url="${listItem.dataset.proceed_url}" disabled>
+        <i class="fa-solid fa-user-check text-2xl"></i>
+    </button>
+  `;
+  
+     // Append item to correct container
+     if (queueContainer.children.length < 20) {
+          queueContainer.appendChild(listItem);
+        } else {
+          listItem.className = "p-3 bg-gray-50 border rounded-lg";
+
+          // Get current timestamp
+          let timestamp = new Date().toLocaleString("en-US", {
+            month: "short",
+            day: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true
+          });
+
+          listItem.innerHTML = `
+    ${data.queue_number} - ${data.name} (${data.reason})<br>
+    <span class="text-gray-500 text-xs">Added on: ${timestamp}</span>
+  `;
+
+          queueList.appendChild(listItem);
+        }
+
+
+        updateGridLayout();
+      }
+
+  function removeQueueItem(queueId) {
+    let queueItem = document.getElementById(`queue-item-${queueId}`);
+
+    if (queueItem) {
+      queueItem.remove();
+      console.log(`Queue ID ${queueId} removed from UI.`);
+
+      moveFirstRightItemToLeft();
+      updateGridLayout();
+    } else {
+      console.warn(`Queue item ${queueId} not found.`);
+    }
   }
-};
 
-socket.onerror = function (error) {
-  console.error("WebSocket Error: ", error);
-};
+  function moveFirstRightItemToLeft() {
+    const queueContainer = document.getElementById("queue-container");
+    const queueList = document.getElementById("queueList");
 
-socket.onclose = function () {
-  console.log("Disconnected from WebSocket server");
-};
+    if (queueContainer.children.length < 20 && queueList.children.length > 0) {
+      const firstRightItem = queueList.children[0];
 
-function addNewBackroomQueue(data) {
-  const queueContainer = document.getElementById("queue-container");
-  const queueList = document.getElementById("queueList");
+      const queueId = firstRightItem.dataset.queue_id || null;
+      if (!queueId) {
+        console.error("❌ Queue ID is undefined. Cannot move item.");
+        return;
+      }
 
-  if (!queueContainer || !queueList) {
-    console.error("Error: Queue containers not found.");
-    return;
-  }
+      let movedTimestamp = new Date().toLocaleString("en-US", {
+        month: "short",
+        day: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true
+      });
 
-  const queueId = `queue-item-${data.queue_id}`;
-  if (document.getElementById(queueId)) {
-    console.warn(`Queue item ${queueId} already exists.`);
-    return;
-  }
+      const processingBy = firstRightItem.dataset.processing_by || "";
+      const isProcessing = processingBy ? true : false;
+      const processingText = isProcessing ? `Processing by ${processingBy}` : "Waiting";
+      const statusColor = isProcessing ? "text-red-500" : "text-green-500";
 
-  const listItem = document.createElement("li");
-  listItem.id = queueId;
-  listItem.dataset.queue_id = data.queue_id;
-  listItem.dataset.queue_number = data.queue_number;
-  listItem.dataset.name = data.name;
-  listItem.dataset.reason = data.reason;
-  listItem.dataset.proceed_url = data.proceed_url
-    ? data.proceed_url
-    : `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_backroom/${data.queue_id}`;
+      const newQueueItem = document.createElement("div");
+      newQueueItem.id = firstRightItem.id;
+      newQueueItem.className = "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center";
+      newQueueItem.dataset.queue_id = queueId;
 
-  listItem.className =
-    "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center shadow-md";
-  listItem.innerHTML = `
-        <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
-        <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
-        <p class="text-gray-500 text-sm">
-            Status: <span class="text-green-500 font-semibold">Backroom</span>
-        </p>
-        <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg">
-            <i class="fa-solid fa-hourglass-half"></i>
-        </button>
-        <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 rounded-full border border-blue-50 shadow-lg opacity-50 cursor-not-allowed"
-            data-id="${data.queue_id}"
-            data-url="${listItem.dataset.proceed_url}" disabled>
-            <i class="fa-solid fa-user-check text-2xl"></i>
-        </button>
+      newQueueItem.innerHTML = `
+      <h3 class="font-semibold text-xl">${firstRightItem.dataset.queue_number} - ${firstRightItem.dataset.name}</h3>
+      <p class="text-gray-500 text-sm">Reason: ${firstRightItem.dataset.reason}</p>
+      <p class="text-gray-500 text-xs">Time Added: <span class="font-semibold">${movedTimestamp}</span></p>
+      <p class="text-gray-500 text-sm">
+          Status: <span class="status-text ${statusColor} font-semibold">${processingText}</span>
+      </p>
+      <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}"
+          data-id="${queueId}" ${isProcessing ? 'disabled' : ''}>
+          <i class="fa-solid fa-hourglass-half"></i>
+      </button>
+      <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 rounded-full border border-blue-50 shadow-lg opacity-50 cursor-not-allowed"
+          data-id="${queueId}"
+          data-url="${firstRightItem.dataset.proceed_url}"
+          disabled>
+          <i class="fa-solid fa-user-check text-2xl"></i>
+      </button>
     `;
-  queueContainer.appendChild(listItem);
 
-  updateGridLayout();
-}
+      firstRightItem.remove();
+      queueContainer.appendChild(newQueueItem);
+      console.log(`✅ Moved queue item (ID: ${queueId}) to the left with timestamp: ${movedTimestamp}`);
+    }
+  }
+
+  function updateGridLayout() {
+    const queueContainer = document.getElementById("queue-container");
+    const queueList = document.getElementById("queueList");
+
+    const leftItems = queueContainer.children.length;
+    const rightItems = queueList.children.length;
+
+    queueContainer.style.gridTemplateColumns = `repeat(${leftItems < 5 ? leftItems : 5}, 1fr)`;
+    queueList.style.gridTemplateColumns = `repeat(${rightItems < 5 ? rightItems : 5}, 1fr)`;
+  }
 </script>
 
 <script>

@@ -128,7 +128,7 @@ class controller_queueing extends CI_Controller
             ->get('queue')
             ->row()->position;
 
-        $new_position = $max_position ? $max_position + 1 : 1; 
+        $new_position = $max_position ? $max_position + 1 : 1;
 
         $queue_number = $this->model_queueing->add_to_queue($name, $reason, $new_position);
 
@@ -152,7 +152,8 @@ class controller_queueing extends CI_Controller
                 'status' => 'landtax',
                 'position' => $new_position,
                 'processing_by' => '',
-                'proceed_url' => $proceed_url
+                'proceed_url' => $proceed_url,
+                'created_at' => $new_item->created_at
             ];
             $this->send_to_websocket($queue_data, 'add_to_queue');
 
@@ -182,29 +183,30 @@ class controller_queueing extends CI_Controller
     {
         $name = $this->input->post('name');
         $reason = $this->input->post('reason');
-    
+
         // Ensure correct queue numbering
         $max_position = $this->db->select_max('position')
             ->where('status', 'backroom')
             ->get('queue')
             ->row()->position;
-    
+
         $new_position = $max_position ? $max_position + 1 : 1;
-    
+
         // Insert into the Backroom queue
         $queue_number = $this->model_queueing->add_to_backroom($name, $reason);
-    
+
         if ($queue_number) {
+            // Fetch newly inserted queue item with created_at
             $new_item = $this->db->where('queue_number', $queue_number)->get('queue')->row();
-    
+
             if (!$new_item || empty($new_item->id)) {
                 echo json_encode(['status' => 'error', 'message' => 'Failed to fetch the new queue item.']);
                 return;
             }
-    
+
             $queue_id = $new_item->id;
             $proceed_url = base_url("index.php/controller_queueing/proceed_to_examiners/{$queue_id}");
-    
+
             $queue_data = [
                 'queue_id' => (string) $queue_id,
                 'id' => $queue_id,
@@ -214,12 +216,13 @@ class controller_queueing extends CI_Controller
                 'status' => 'backroom',  // Set status correctly
                 'position' => $new_position,
                 'processing_by' => '',
-                'proceed_url' => $proceed_url
+                'proceed_url' => $proceed_url,
+                'created_at' => $new_item->created_at // ✅ Fetch timestamp from DB
             ];
-    
+
             // 🔥 Send to WebSocket with the correct event name!
             $this->send_to_websocket($queue_data, 'proceed_to_backroom');
-    
+
             echo json_encode([
                 'status' => 'success',
                 'message' => "Queue item added successfully to Backroom. Your queue number is $queue_number.",
@@ -229,7 +232,7 @@ class controller_queueing extends CI_Controller
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Failed to add to the Backroom queue.']);
         }
-    }    
+    }
 
     public function add_to_examiners()
     {
@@ -274,58 +277,75 @@ class controller_queueing extends CI_Controller
 
     public function proceed_to_backroom($id)
     {
-        header('Content-Type: application/json'); 
-
-        $queue_item = $this->db->where('id', $id)->get('queue')->row();
+        header('Content-Type: application/json');
+    
+        // Fetch the queue item
+        $queue_item = $this->db->select('id, queue_number, name, reason, created_at')
+                               ->where('id', $id)
+                               ->get('queue')
+                               ->row();
+                               
         if (!$queue_item) {
             http_response_code(400);
             echo json_encode(['status' => 'error', 'message' => 'Queue item not found.']);
             exit;
         }
-
-        $max_position = $this->db->select_max('position')->where('status', 'backroom')->get('queue')->row()->position;
+    
+        // Determine new position for "backroom" status
+        $max_position = $this->db->select_max('position')
+                                 ->where('status', 'backroom')
+                                 ->get('queue')
+                                 ->row()->position;
+                                 
         $new_position = $max_position ? $max_position + 1 : 1;
-
+    
+        // Update queue status to "backroom"
         $this->db->where('id', $id)->update('queue', [
             'status' => 'backroom',
             'position' => $new_position
         ]);
-
-        $updated_item = $this->db->where('id', $id)->get('queue')->row();
-
+    
+        // Fetch the updated item (ensures database update is reflected)
+        $updated_item = $this->db->select('id, queue_number, name, reason, created_at')
+                                 ->where('id', $id)
+                                 ->get('queue')
+                                 ->row();
+    
         if (!$updated_item) {
             http_response_code(400);
             echo json_encode(['status' => 'error', 'message' => 'Queue item not found after update.']);
             exit;
         }
-
+    
         $proceed_url = base_url("controller_queueing/proceed_to_backroom/{$updated_item->id}");
-
+    
         log_message('debug', "Generated proceed_url: {$proceed_url}");
-
+    
+        // ✅ Include `created_at` in the WebSocket message
         $queue_data = [
             'status' => 'success',
-            'action' => 'proceed_to_backroom',  
+            'action' => 'proceed_to_backroom',
             'queue_id' => $updated_item->id,
             'queue_number' => $updated_item->queue_number,
             'name' => $updated_item->name,
             'reason' => $updated_item->reason,
             'status_text' => 'backroom',
             'processing_by' => '',
-            'proceed_url' => $proceed_url 
+            'created_at' => $updated_item->created_at, // ✅ Include created_at
+            'proceed_url' => $proceed_url
         ];
-
+    
         $this->send_to_websocket($queue_data, 'proceed_to_backroom');
-
-        
+    
         echo json_encode([
             'status' => 'success',
             'message' => 'Queue item successfully proceeded to Backroom.',
             'proceed_url' => $proceed_url,
-            'queue_id' => $updated_item->id 
+            'queue_id' => $updated_item->id,
+            'created_at' => $updated_item->created_at // ✅ Include created_at in JSON response
         ]);
         exit;
-    }
+    }    
 
     public function proceed_to_examiners($id)
     {
@@ -364,29 +384,29 @@ class controller_queueing extends CI_Controller
     public function mark_as_processing()
     {
         header('Content-Type: application/json');
-    
+
         $queue_id = $this->input->post('queue_id', TRUE);
         $user_id = $this->session->userdata('user_id'); // ✅ Get logged-in user ID
-    
+
         if (!$queue_id) {
             echo json_encode(['status' => 'error', 'message' => 'Queue ID is missing']);
             return;
         }
-    
+
         $queue = $this->db->get_where('queue', ['id' => $queue_id])->row();
         if (!$queue) {
             echo json_encode(['status' => 'error', 'message' => 'Queue not found']);
             return;
         }
-    
+
         if ($queue->processing_by) {
             echo json_encode(['status' => 'error', 'message' => 'Already being processed']);
             return;
         }
-    
+
         $this->db->where('id', $queue_id);
         $update = $this->db->update('queue', ['processing_by' => $user_id]); // ✅ Store processing user ID
-    
+
         if ($update) {
             $message = json_encode([
                 'status' => 'success',
@@ -394,9 +414,9 @@ class controller_queueing extends CI_Controller
                 'queue_id' => $queue_id,
                 'processing_by' => $user_id // ✅ Include processing user ID
             ]);
-    
+
             $this->sendWebSocketMessage($message);
-    
+
             echo json_encode([
                 'status' => 'success',
                 'message' => 'Queue marked as processing',
@@ -408,11 +428,11 @@ class controller_queueing extends CI_Controller
             echo json_encode(['status' => 'error', 'message' => 'Database update failed']);
             return;
         }
-    }    
+    }
 
     private function sendWebSocketMessage($message)
     {
-        $sock = fsockopen("localhost", 8080); 
+        $sock = fsockopen("localhost", 8080);
 
         if ($sock) {
             fwrite($sock, $message);
