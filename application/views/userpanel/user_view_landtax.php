@@ -29,11 +29,47 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
 </head>
 
 <body class="bg-gray-100">
-  <div class="flex min-h-screen p-5">
+  <!-- ✅ Navbar -->
+  <nav class="bg-white text-cyan-700 fixed top-0 left-0 w-full shadow-lg z-10">
+    <div class=" px-4">
+      <div class="flex justify-between items-center py-4">
+        <div class="flex items-center space-x-3">
+          <span class="text-xl font-bold uppercase tracking-widest">Land Tax Queue</span>
+        </div>
+
+        <div class="hidden md:flex space-x-6 items-center">
+          <?php if ($this->session->userdata('logged_in')): ?>
+            <span class="text-lg font-semibold text-xs font-bold uppercase">Welcome,
+              <?= htmlspecialchars($this->session->userdata('username')); ?>!</span>
+          <?php else: ?>
+            <span class="text-lg font-semibold">Guest</span>
+          <?php endif; ?>
+        </div>
+        <!-- Hamburger Button -->
+        <button id="menu-btn" class="md:hidden focus:outline-none">
+          <i class="fas fa-bars text-2xl"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="hidden md:hidden bg-blue-800 text-white py-2">
+      <a href="#" class="block px-4 py-2 hover:bg-blue-600">Home</a>
+      <a href="#" class="block px-4 py-2 hover:bg-blue-600">About</a>
+      <a href="#" class="block px-4 py-2 hover:bg-blue-600">Services</a>
+      <a href="<?= base_url('controller_admin_landing/logout'); ?>"
+        class="block px-4 py-2 bg-red-500 text-center hover:bg-red-600">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </a>
+    </div>
+  </nav>
+
+
+  <div class="flex min-h-screen p-5 pt-20">
     <!-- Left Section (Now Serving) -->
     <div class="flex-1 bg-white p-5 rounded-lg shadow-md ">
-      <h2 class="text-2xl font-bold text-blue-900 text-center">Now Serving</h2>
-      <div id="queue-container" class="flex flex-wrap gap-1 bg-blue-50 overflow-y-auto">
+      <h2 class="text-2xl font-bold text-cyan-500 uppercase tracking-wider pb-5 text-center">Now Serving</h2>
+      <div id="queue-container" class="flex flex-wrap gap-1 bg-cyan-50 overflow-y-auto">
         <?php if ($queue): ?>
           <?php foreach ($left_items as $item): ?>
             <?php
@@ -45,10 +81,8 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
 
               <h3 class="font-semibold text-xl"><?= $item->queue_number; ?> - <?= $item->name; ?></h3>
               <p class="text-gray-500 text-sm">Reason: <?= $item->reason; ?></p>
-              <p class="text-gray-500 text-xs">
-                Time Added: <span class="font-semibold">
-                  <?= date("M d, Y h:i A", strtotime($item->created_at)); ?>
-                </span>
+              <p class="text-gray-500 text-sm">Time Added: <span
+                  class="font-semibold"><?= date('M d, Y, h:i A', strtotime($item->created_at)); ?></span>
               </p>
 
               <p class="text-gray-500 text-sm">
@@ -178,23 +212,19 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
           return;
         }
 
-        // Format the timestamp
-        let timestamp = "Invalid Date"; // Default fallback
+        // Format created_at timestamp
         if (data.created_at) {
-          let createdAt = new Date(data.created_at);
-          if (!isNaN(createdAt.getTime())) {
-            timestamp = createdAt.toLocaleString("en-US", {
-              month: "short",
-              day: "2-digit",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: true
-            });
-          } else {
-            console.error("⚠️ Invalid Date format received:", data.created_at);
-          }
+          let date = new Date(data.created_at);
+          formattedCreatedAt = date.toLocaleString("en-US", {
+            month: "short",  // "Mar"
+            day: "2-digit",  // "13"
+            year: "numeric", // "2025"
+            hour: "2-digit", // "05"
+            minute: "2-digit", // "44"
+            hour12: true     // "PM"
+          }).replace(",", ""); // Para walang comma sa pagitan ng araw at taon tulad ng PHP output
         }
+
 
         const listItem = document.createElement("div");
         listItem.id = queueId;
@@ -202,6 +232,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
         listItem.dataset.queue_number = data.queue_number;
         listItem.dataset.name = data.name;
         listItem.dataset.reason = data.reason;
+        listItem.dataset.created_at = data.created_at; // Store raw created_at
         listItem.dataset.proceed_url = data.proceed_url
           ? data.proceed_url
           : `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_backroom/${data.queue_id}`;
@@ -210,13 +241,12 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
         const processingText = isProcessing ? `Processing by ${data.processing_by}` : "Waiting";
         const statusColor = isProcessing ? "text-red-500" : "text-green-500";
 
-        listItem.className =
-          "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center";
+        listItem.className = "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center";
 
         listItem.innerHTML = `
         <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
         <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
-        <p class="text-gray-500 text-xs">Time Added: <span class="font-semibold">${timestamp}</span></p>
+        <p class="text-gray-500 text-sm">Time Added: <span class="font-semibold">${formattedCreatedAt}</span></p>
         <p class="text-gray-500 text-sm">
             Status: <span class="status-text ${statusColor} font-semibold">${processingText}</span>
         </p>
@@ -240,7 +270,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
 
           listItem.innerHTML = `
             ${data.queue_number} - ${data.name} (${data.reason})<br>
-            <span class="text-gray-500 text-xs">Added on: ${timestamp}</span>
+            <span class="text-gray-500 text-xs">Added on: ${formattedCreatedAt}</span>
         `;
 
           queueList.appendChild(listItem);
@@ -272,30 +302,33 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
         if (queueContainer.children.length < 20 && queueList.children.length > 0) {
           const firstRightItem = queueList.children[0];
 
-          // Ensure queue_id is retrieved properly
           const queueId = firstRightItem.dataset.queue_id || null;
           if (!queueId) {
             console.error("❌ Queue ID is undefined. Cannot move item.");
             return;
           }
 
-          // Get current timestamp
-          let movedTimestamp = new Date().toLocaleString("en-US", {
-            month: "short",
-            day: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true
-          });
+          // Retrieve created_at and format it
+          let rawCreatedAt = firstRightItem.dataset.created_at || null;
+          let movedTimestamp = "Unknown Time";
 
-          // Extract processing information
+          if (rawCreatedAt) {
+            let date = new Date(rawCreatedAt);
+            movedTimestamp = date.toLocaleString("en-US", {
+              month: "short", // "Mar"
+              day: "2-digit", // "13"
+              year: "numeric", // "2025"
+              hour: "2-digit", // "05"
+              minute: "2-digit", // "44"
+              hour12: true // "PM"
+            });
+          }
+
           const processingBy = firstRightItem.dataset.processing_by || "";
           const isProcessing = processingBy ? true : false;
           const processingText = isProcessing ? `Processing by ${processingBy}` : "Waiting";
           const statusColor = isProcessing ? "text-red-500" : "text-green-500";
 
-          // Create a new div with the proper structure for queue-container
           const newQueueItem = document.createElement("div");
           newQueueItem.id = firstRightItem.id;
           newQueueItem.className = "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center";
@@ -304,7 +337,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
           newQueueItem.innerHTML = `
             <h3 class="font-semibold text-xl">${firstRightItem.dataset.queue_number} - ${firstRightItem.dataset.name}</h3>
             <p class="text-gray-500 text-sm">Reason: ${firstRightItem.dataset.reason}</p>
-            <p class="text-gray-500 text-xs">Time Added: <span class="font-semibold">${movedTimestamp}</span></p>
+            <p class="text-gray-500 text-sm">Time Added: <span class="font-semibold">${movedTimestamp}</span></p>
             <p class="text-gray-500 text-sm">
                 Status: <span class="status-text ${statusColor} font-semibold">${processingText}</span>
             </p>
@@ -320,14 +353,13 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
             </button>
         `;
 
-          // Remove the old list item from queueList
           firstRightItem.remove();
-
-          // Append the new div to queue-container
           queueContainer.appendChild(newQueueItem);
           console.log(`✅ Moved queue item (ID: ${queueId}) to the left with timestamp: ${movedTimestamp}`);
         }
       }
+
+
 
 
 
