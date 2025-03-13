@@ -334,7 +334,8 @@ class controller_queueing extends CI_Controller
             'created_at' => $updated_item->created_at, // ✅ Include created_at
             'proceed_url' => $proceed_url
         ];
-    
+
+        
         $this->send_to_websocket($queue_data, 'proceed_to_backroom');
     
         echo json_encode([
