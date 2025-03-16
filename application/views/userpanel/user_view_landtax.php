@@ -83,7 +83,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
               <h3 class="font-semibold text-xl"><?= $item->queue_number; ?> - <?= $item->name; ?></h3>
               <p class="text-gray-500 text-sm">Reason: <?= $item->reason; ?></p>
               <p class="text-gray-500 text-sm">Time Added: <span
-                  class="font-semibold"><?= date('M d, Y, h:i A', strtotime($item->created_at)); ?></span></p>
+                  class="font-semibold"><?= date('M d Y, h:i A', strtotime($item->created_at)); ?></span></p>
               <p class="text-gray-500 text-sm">
                 Status:
                 <span class="status-text <?= $item->processing_by ? 'text-red-500' : 'text-green-500'; ?> font-semibold">
