@@ -31,11 +31,45 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
 </head>
 
 <body class="bg-gray-100">
-  <div class="flex min-h-screen p-5">
+  <nav class="bg-white text-cyan-700 fixed top-0 left-0 w-full shadow-lg z-10">
+    <div class=" px-4">
+      <div class="flex justify-between items-center py-4">
+        <div class="flex items-center space-x-3">
+          <span class="text-xl font-bold uppercase tracking-widest">Backroom Queue</span>
+        </div>
+
+        <div class="hidden md:flex space-x-6 items-center">
+          <?php if ($this->session->userdata('logged_in')): ?>
+            <span class="text-lg font-semibold text-xs font-bold uppercase">Welcome,
+              <?= htmlspecialchars($this->session->userdata('username')); ?>!</span>
+          <?php else: ?>
+            <span class="text-lg font-semibold">Guest</span>
+          <?php endif; ?>
+        </div>
+        <!-- Hamburger Button -->
+        <button id="menu-btn" class="md:hidden focus:outline-none">
+          <i class="fas fa-bars text-2xl"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="hidden md:hidden bg-blue-800 text-white py-2">
+      <a href="#" class="block px-4 py-2 hover:bg-blue-600">Home</a>
+      <a href="#" class="block px-4 py-2 hover:bg-blue-600">About</a>
+      <a href="#" class="block px-4 py-2 hover:bg-blue-600">Services</a>
+      <a href="<?= base_url('controller_admin_landing/logout'); ?>"
+        class="block px-4 py-2 bg-red-500 text-center hover:bg-red-600">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </a>
+    </div>
+  </nav>
+
+  <div class="flex min-h-screen p-5 pt-20">
     <!-- Left Section (Now Serving in Backroom) -->
     <div class="flex-1 bg-white p-5 rounded-lg shadow-md">
-      <h2 class="text-2xl font-bold text-blue-900 text-center">Now Serving - Backroom</h2>
-      <div id="queue-container" class="flex flex-wrap gap-1 bg-blue-50 overflow-y-auto">
+      <h2 class="text-2xl font-bold text-cyan-500 uppercase tracking-wider pb-5 text-center">Now Serving - Backroom</h2>
+      <div id="queue-container" class="flex flex-wrap gap-1 bg-cyan-50 overflow-y-auto">
         <?php if ($backroom): ?>
           <?php foreach ($left_items as $item): ?>
             <?php
@@ -72,7 +106,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
               <button
                 class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg <?= $isProcessingByCurrentUser ? '' : 'opacity-50 cursor-not-allowed' ?>"
                 data-id="<?= $item->id; ?>"
-                data-url="<?= base_url("controller_queueing/proceed_to_backroom/{$item->id}") ?>"
+                data-url="<?= base_url("controller_queueing/proceed_to_examiners/{$item->id}") ?>"
                 <?= $isProcessingByCurrentUser ? '' : 'disabled'; ?>>
                 <i class="fa-solid fa-user-check text-2xl"></i>
               </button>
@@ -144,6 +178,9 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
       if (data.action === "proceed_to_backroom") {
         console.log("New backroom queue item received:", data);
         addNewBackroomQueue(data);
+      } else if (data.action === "proceed_to_examiners") {
+        console.log("Queue item moved to Examiners:", data);
+        removeQueueItem(data.queue_id);
       }
     } catch (error) {
       console.error("Error parsing WebSocket data:", error);
@@ -202,7 +239,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
     listItem.dataset.reason = data.reason;
     listItem.dataset.proceed_url = data.proceed_url
       ? data.proceed_url
-      : `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_backroom/${data.queue_id}`;
+      : `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_examiners/${data.queue_id}`;
 
     listItem.className =
       "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center shadow-md";
@@ -231,12 +268,12 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
     </button>
 
     <!-- Proceed Button -->
-    <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg ${proceedDisabled}"
-        data-id="${data.queue_id}"
-        data-url="${listItem.dataset.proceed_url}"
-        ${isProcessing ? "disabled" : ""}>
-        <i class="fa-solid fa-user-check text-2xl"></i>
-    </button>
+     <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 rounded-full border border-blue-50 shadow-lg opacity-50 cursor-not-allowed"
+            data-id="${data.queue_id}"
+            data-url="${listItem.dataset.proceed_url}"
+            disabled>
+            <i class="fa-solid fa-user-check text-2xl"></i>
+      </button>
   `;
 
     // Append item to correct container
@@ -305,7 +342,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
 
       const processingBy = firstRightItem.dataset.processing_by || "";
       const isProcessing = processingBy ? true : false;
-      const processingText = isProcessing ? `Processing by ${processingBy}` : "Waiting";
+      const processingText = isProcessing ? `Processing by ${processingBy}` : "Backroom";
       const statusColor = isProcessing ? "text-red-500" : "text-green-500";
 
       const newQueueItem = document.createElement("div");
@@ -316,7 +353,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
       newQueueItem.innerHTML = `
       <h3 class="font-semibold text-xl">${firstRightItem.dataset.queue_number} - ${firstRightItem.dataset.name}</h3>
       <p class="text-gray-500 text-sm">Reason: ${firstRightItem.dataset.reason}</p>
-      <p class="text-gray-500 text-xs">Time Added: <span class="font-semibold">${movedTimestamp}</span></p>
+      <p class="text-gray-500 text-sm">Time Added: <span class="font-semibold">${movedTimestamp}</span></p>
       <p class="text-gray-500 text-sm">
           Status: <span class="status-text ${statusColor} font-semibold">${processingText}</span>
       </p>
@@ -389,31 +426,36 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
 
 </script>
 <script>
-  document.querySelectorAll('.proceed-btn').forEach(button => {
-    button.addEventListener('click', function (e) {
-      e.preventDefault(); // Prevent the default form action
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('.proceed-btn')) {
+      e.preventDefault();
 
-      let url = this.href; // Get the URL from the button link
-      let currentBtn = this; // Store the button reference
+      let button = e.target.closest('.proceed-btn');
+      let url = button.getAttribute("data-url");
+      let queueId = button.getAttribute("data-id");
 
-      fetch(url, {
-        method: 'GET',
-      })
+      if (!url) {
+        console.error("Error: Proceed URL is missing.");
+        return;
+      }
+
+      button.disabled = true;
+      button.classList.add("opacity-50", "cursor-not-allowed");
+
+      fetch(url, { method: 'GET' })
         .then(response => response.json())
         .then(data => {
           if (data.status === 'success') {
-            // Show success toast
             Toastify({
               text: data.message,
               duration: 3000,
               close: true,
               gravity: "top",
               position: "right",
-              backgroundColor: "linear-gradient(to right, #00b09b,rgb(17, 69, 183))"
+              backgroundColor: "linear-gradient(to right, #00b09b, #1165b7)"
             }).showToast();
 
-            // Optionally, update the UI (like removing the item from the left section)
-            currentBtn.closest('div').remove(); // Remove the item after it's processed
+            console.log(`Waiting for WebSocket confirmation to remove queue item ${queueId}`);
           }
         })
         .catch(error => {
@@ -426,8 +468,12 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
             position: "right",
             backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)"
           }).showToast();
+
+          // Re-enable button on error
+          button.disabled = false;
+          button.classList.remove("opacity-50", "cursor-not-allowed");
         });
-    });
+    }
   });
 </script>
 <script>
