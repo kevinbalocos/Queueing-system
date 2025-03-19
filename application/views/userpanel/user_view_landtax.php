@@ -315,14 +315,15 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
           if (rawCreatedAt) {
             let date = new Date(rawCreatedAt);
             movedTimestamp = date.toLocaleString("en-US", {
-              month: "short", // "Mar"
-              day: "2-digit", // "13"
-              year: "numeric", // "2025"
-              hour: "2-digit", // "05"
-              minute: "2-digit", // "44"
-              hour12: true // "PM"
-            });
+              month: "short",
+              day: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true
+            }).replace(",", "");
           }
+
 
           const processingBy = firstRightItem.dataset.processing_by || "";
           const isProcessing = processingBy ? true : false;
