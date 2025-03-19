@@ -77,14 +77,13 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
             ?>
             <div
               class="flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center"
-              id="queue-item-<?= $item->id; ?>">
+              id="queue-item-<?= $item->id; ?>" data-queue_id="<?= $item->id; ?>"
+              data-created_at="<?= $item->created_at; ?>"> <!-- Ensure `created_at` is present -->
 
               <h3 class="font-semibold text-xl"><?= $item->queue_number; ?> - <?= $item->name; ?></h3>
               <p class="text-gray-500 text-sm">Reason: <?= $item->reason; ?></p>
               <p class="text-gray-500 text-sm">Time Added: <span
-                  class="font-semibold"><?= date('M d, Y, h:i A', strtotime($item->created_at)); ?></span>
-              </p>
-
+                  class="font-semibold"><?= date('M d Y, h:i A', strtotime($item->created_at)); ?></span></p>
               <p class="text-gray-500 text-sm">
                 Status:
                 <span class="status-text <?= $item->processing_by ? 'text-red-500' : 'text-green-500'; ?> font-semibold">
@@ -92,16 +91,14 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
                 </span>
               </p>
 
-              <!-- Mark as Processing Button -->
-              <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg
-                    <?= $item->processing_by ? 'opacity-50 cursor-not-allowed' : '' ?>" data-id="<?= $item->id; ?>"
-                <?= $item->processing_by ? 'disabled' : ''; ?>>
+              <button
+                class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg <?= $item->processing_by ? 'opacity-50 cursor-not-allowed' : '' ?>"
+                data-id="<?= $item->id; ?>" <?= $item->processing_by ? 'disabled' : ''; ?>>
                 <i class="fa-solid fa-hourglass-half"></i>
               </button>
 
-              <!-- Proceed Button -->
-              <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg
-                    <?= $isProcessingByCurrentUser ? '' : 'opacity-50 cursor-not-allowed' ?>"
+              <button
+                class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg <?= $isProcessingByCurrentUser ? '' : 'opacity-50 cursor-not-allowed' ?>"
                 data-id="<?= $item->id; ?>"
                 data-url="<?= base_url("controller_queueing/proceed_to_backroom/{$item->id}") ?>"
                 <?= $isProcessingByCurrentUser ? '' : 'disabled'; ?>>
@@ -120,17 +117,15 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
         <?php foreach ($right_items as $item): ?>
           <li class="p-3 bg-gray-50 border rounded-lg" data-queue_id="<?= $item->id; ?>"
             data-queue_number="<?= $item->queue_number; ?>" data-name="<?= $item->name; ?>"
-            data-reason="<?= $item->reason; ?>">
+            data-reason="<?= $item->reason; ?>" data-created_at="<?= $item->created_at; ?>"> <!-- Added created_at -->
             <?= $item->queue_number; ?> - <?= $item->name; ?> (<?= $item->reason; ?>)
             <br>
             <span class="text-gray-500 text-xs">Added on:
               <?= date('M d, Y, h:i A', strtotime($item->created_at)); ?>
             </span>
           </li>
-
         <?php endforeach; ?>
       </ul>
-
 
       <!-- Add to Queue Form -->
       <form action="<?= base_url('controller_queueing/add_to_queue'); ?>" method="post" class="mt-5">
@@ -197,6 +192,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
           console.error("WebSocket JSON Error:", error);
         }
       };
+
       function addQueueItem(data) {
         const queueContainer = document.getElementById("queue-container");
         const queueList = document.getElementById("queueList");
@@ -308,7 +304,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
             return;
           }
 
-          // Retrieve created_at and format it
+          // ✅ Retain and format created_at
           let rawCreatedAt = firstRightItem.dataset.created_at || null;
           let movedTimestamp = "Unknown Time";
 
@@ -321,19 +317,22 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
               hour: "2-digit",
               minute: "2-digit",
               hour12: true
-            }).replace(",", "");
+            });
           }
 
 
+          // Keep processing status
           const processingBy = firstRightItem.dataset.processing_by || "";
           const isProcessing = processingBy ? true : false;
           const processingText = isProcessing ? `Processing by ${processingBy}` : "Waiting";
           const statusColor = isProcessing ? "text-red-500" : "text-green-500";
 
+          // ✅ Ensure `created_at` is carried over
           const newQueueItem = document.createElement("div");
           newQueueItem.id = firstRightItem.id;
           newQueueItem.className = "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center";
           newQueueItem.dataset.queue_id = queueId;
+          newQueueItem.dataset.created_at = rawCreatedAt; // ✅ Retain original `created_at`
 
           newQueueItem.innerHTML = `
             <h3 class="font-semibold text-xl">${firstRightItem.dataset.queue_number} - ${firstRightItem.dataset.name}</h3>
@@ -359,10 +358,6 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
           console.log(`✅ Moved queue item (ID: ${queueId}) to the left with timestamp: ${movedTimestamp}`);
         }
       }
-
-
-
-
 
       function updateGridLayout() {
         const queueContainer = document.getElementById("queue-container");
@@ -510,19 +505,21 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
           const data = JSON.parse(event.data);
 
           if (data.action === "update_queue") {
-            console.log(`Queue ${data.queue_id} marked as processing by ${data.processing_by}`);
+            console.log(`Queue ${data.queue_id} marked as processing by ${data.processing_by}, Created At: ${data.created_at}`);
 
             updateQueueStatus(
               data.queue_id,
               `Processing by ${data.processing_by}`,
               "text-red-500",
-              data.processing_by
+              data.processing_by,
+              data.created_at // ✅ Pass `created_at`
             );
           }
         } catch (error) {
           console.error("❌ WebSocket JSON Error:", error);
         }
       };
+
 
       socket.onerror = function (error) {
         console.error("❌ WebSocket Error:", error);
@@ -576,7 +573,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
         }
       });
 
-      function updateQueueStatus(queueId, statusText, textColor, processingBy) {
+      function updateQueueStatus(queueId, statusText, textColor, processingBy, createdAt) {
         let queueRow = document.querySelector(`#queue-item-${queueId}`);
         if (!queueRow) {
           console.warn(`⚠️ Queue row with ID ${queueId} not found!`);
@@ -586,6 +583,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
         let statusTextElement = queueRow.querySelector(".status-text");
         let proceedBtn = queueRow.querySelector(".proceed-btn");
         let processingBtn = queueRow.querySelector(".processing-btn");
+        let createdAtElement = queueRow.querySelector(".queue-created-at");
 
         if (statusTextElement) {
           statusTextElement.innerText = statusText;
@@ -596,6 +594,19 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
         if (processingBtn) {
           processingBtn.classList.add("opacity-50", "cursor-not-allowed");
           processingBtn.setAttribute("disabled", "disabled");
+        }
+
+        if (createdAtElement) {
+          let formattedTime = createdAt ? new Date(createdAt).toLocaleString("en-US", {
+            month: "short",
+            day: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true
+          }) : "Unknown Time";
+
+          createdAtElement.innerText = `Time Added: ${formattedTime}`;
         }
 
         console.log(`👤 Current User: ${currentUser}, Processing By: ${processingBy}`);

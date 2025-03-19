@@ -74,15 +74,26 @@ class model_queueing extends CI_Model
 
     public function add_to_examiners($name, $reason)
     {
+        // Get the last queue number (ensuring sequence consistency)
         $last_queue = $this->db->select_max('queue_number')->get('queue')->row();
-        $new_queue_number = $last_queue->queue_number + 1;
+        $new_queue_number = $last_queue->queue_number ? $last_queue->queue_number + 1 : 1;
+
+        // Get the highest position in the examiners queue
+        $max_position = $this->db->select_max('position')->where('status', 'examiner')->get('queue')->row()->position;
+        $new_position = $max_position ? $max_position + 1 : 1; // Append to the end
+
         $data = array(
             'queue_number' => $new_queue_number,
             'name' => $name,
             'reason' => $reason,
-            'status' => 'examiner'
+            'status' => 'examiner',  // Set status to examiner
+            'position' => $new_position,  // Maintain correct queue order in examiners
         );
-        return $this->db->insert('queue', $data);
+
+        if ($this->db->insert('queue', $data)) {
+            return $new_queue_number;
+        }
+        return false;
     }
 
     public function add_to_businesstax($name, $reason)
