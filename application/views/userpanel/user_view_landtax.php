@@ -117,13 +117,17 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
         <?php foreach ($right_items as $item): ?>
           <li class="p-3 bg-gray-50 border rounded-lg" data-queue_id="<?= $item->id; ?>"
             data-queue_number="<?= $item->queue_number; ?>" data-name="<?= $item->name; ?>"
-            data-reason="<?= $item->reason; ?>" data-created_at="<?= $item->created_at; ?>"> <!-- Added created_at -->
+            data-reason="<?= $item->reason; ?>" data-created_at="<?= $item->created_at; ?>"
+            data-proceed_url="<?= base_url("controller_queueing/proceed_to_backroom/{$item->id}") ?>"
+            data-processing_by="<?= $item->processing_by ? $item->processing_by : '' ?>">
             <?= $item->queue_number; ?> - <?= $item->name; ?> (<?= $item->reason; ?>)
             <br>
             <span class="text-gray-500 text-xs">Added on:
               <?= date('M d, Y, h:i A', strtotime($item->created_at)); ?>
             </span>
           </li>
+
+
         <?php endforeach; ?>
       </ul>
 
@@ -297,17 +301,14 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
 
         if (queueContainer.children.length < 20 && queueList.children.length > 0) {
           const firstRightItem = queueList.children[0];
-
           const queueId = firstRightItem.dataset.queue_id || null;
           if (!queueId) {
             console.error("❌ Queue ID is undefined. Cannot move item.");
             return;
           }
-
-          // ✅ Retain and format created_at
+          // Retain and format created_at
           let rawCreatedAt = firstRightItem.dataset.created_at || null;
           let movedTimestamp = "Unknown Time";
-
           if (rawCreatedAt) {
             let date = new Date(rawCreatedAt);
             movedTimestamp = date.toLocaleString("en-US", {
@@ -319,60 +320,55 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
               hour12: true
             });
           }
-
-
           // Keep processing status
           const processingBy = firstRightItem.dataset.processing_by || "";
           const isProcessing = processingBy ? true : false;
           const processingText = isProcessing ? `Processing by ${processingBy}` : "Waiting";
           const statusColor = isProcessing ? "text-red-500" : "text-green-500";
 
-          // ✅ Ensure `created_at` is carried over
+          // Create the new element for left container
           const newQueueItem = document.createElement("div");
           newQueueItem.id = firstRightItem.id;
           newQueueItem.className = "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center";
           newQueueItem.dataset.queue_id = queueId;
-          newQueueItem.dataset.created_at = rawCreatedAt; // ✅ Retain original `created_at`
+          newQueueItem.dataset.created_at = rawCreatedAt;
 
           newQueueItem.innerHTML = `
-            <h3 class="font-semibold text-xl">${firstRightItem.dataset.queue_number} - ${firstRightItem.dataset.name}</h3>
-            <p class="text-gray-500 text-sm">Reason: ${firstRightItem.dataset.reason}</p>
-            <p class="text-gray-500 text-sm">Time Added: <span class="font-semibold">${movedTimestamp}</span></p>
-            <p class="text-gray-500 text-sm">
-                Status: <span class="status-text ${statusColor} font-semibold">${processingText}</span>
-            </p>
-            <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}"
-                data-id="${queueId}" ${isProcessing ? 'disabled' : ''}>
-                <i class="fa-solid fa-hourglass-half"></i>
-            </button>
-            <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 rounded-full border border-blue-50 shadow-lg opacity-50 cursor-not-allowed"
-                data-id="${queueId}"
-                data-url="${firstRightItem.dataset.proceed_url}"
-                disabled>
-                <i class="fa-solid fa-user-check text-2xl"></i>
-            </button>
+          <h3 class="font-semibold text-xl">${firstRightItem.dataset.queue_number} - ${firstRightItem.dataset.name}</h3>
+          <p class="text-gray-500 text-sm">Reason: ${firstRightItem.dataset.reason}</p>
+          <p class="text-gray-500 text-sm">Time Added: <span class="font-semibold">${movedTimestamp}</span></p>
+          <p class="text-gray-500 text-sm">
+              Status: <span class="status-text ${statusColor} font-semibold">${processingText}</span>
+          </p>
+          <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}"
+              data-id="${queueId}" ${isProcessing ? 'disabled' : ''}>
+              <i class="fa-solid fa-hourglass-half"></i>
+          </button>
+          <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 rounded-full border border-blue-50 shadow-lg opacity-50 cursor-not-allowed"
+              data-id="${queueId}"
+              data-url="${firstRightItem.dataset.proceed_url}"
+              disabled>
+              <i class="fa-solid fa-user-check text-2xl"></i>
+          </button>
         `;
-
           firstRightItem.remove();
           queueContainer.appendChild(newQueueItem);
           console.log(`✅ Moved queue item (ID: ${queueId}) to the left with timestamp: ${movedTimestamp}`);
         }
       }
 
+      // Attach the function to the global scope:
+      window.moveFirstRightItemToLeft = moveFirstRightItemToLeft;
+
       function updateGridLayout() {
         const queueContainer = document.getElementById("queue-container");
         const queueList = document.getElementById("queueList");
-
         const leftItems = queueContainer.children.length;
         const rightItems = queueList.children.length;
-
         queueContainer.style.gridTemplateColumns = `repeat(${leftItems < 5 ? leftItems : 5}, 1fr)`;
         queueList.style.gridTemplateColumns = `repeat(${rightItems < 5 ? rightItems : 5}, 1fr)`;
       }
 
-      socket.onclose = function () {
-        console.log("Disconnected from WebSocket server");
-      };
     });
   </script>
 
@@ -431,9 +427,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
 
       e.preventDefault();
 
-      let queueItem = currentBtn.closest('.queue-item');
       let url = currentBtn.dataset.url;
-
       if (!url) {
         console.error("Error: No URL found for proceed action.");
         return;
@@ -452,21 +446,23 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
               style: { background: "linear-gradient(to right, #00b09b, rgb(17, 69, 183))" }
             }).showToast();
 
-            let queueItem = document.querySelector(`[data-queue-id="${data.queue_id}"]`);
+            // Use the correct attribute name here:
+            let queueItem = document.querySelector(`[data-queue_id="${data.queue_id}"]`);
             if (queueItem) {
               queueItem.remove();
               console.log(`Queue ID ${data.queue_id} removed from UI.`);
-              updateGridLayout(); // Call function to update layout dynamically
+              moveFirstRightItemToLeft(); // Move a right item if available
+              updateGridLayout();         // Update the layout dynamically
             } else {
               console.warn(`Warning: Queue item ${data.queue_id} not found.`);
             }
+
           } else {
             throw new Error(data.message || "Unknown error");
           }
         })
         .catch(error => {
           console.error('Fetch Error:', error);
-
           Toastify({
             text: 'An error occurred. Please try again.',
             duration: 3000,
@@ -477,6 +473,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
           }).showToast();
         });
     });
+
 
     // Function to update the queue grid dynamically
     function updateGridLayout() {
@@ -505,21 +502,21 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
           const data = JSON.parse(event.data);
 
           if (data.action === "update_queue") {
-            console.log(`Queue ${data.queue_id} marked as processing by ${data.processing_by}, Created At: ${data.created_at}`);
+            console.log(`Queue ${data.queue_id} marked as processing by ${data.processing_by}`);
 
+            // ✅ Ensure `updateQueueStatus` updates all elements correctly
             updateQueueStatus(
               data.queue_id,
               `Processing by ${data.processing_by}`,
               "text-red-500",
               data.processing_by,
-              data.created_at // ✅ Pass `created_at`
+              data.created_at
             );
           }
         } catch (error) {
           console.error("❌ WebSocket JSON Error:", error);
         }
       };
-
 
       socket.onerror = function (error) {
         console.error("❌ WebSocket Error:", error);
@@ -575,6 +572,12 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
 
       function updateQueueStatus(queueId, statusText, textColor, processingBy, createdAt) {
         let queueRow = document.querySelector(`#queue-item-${queueId}`);
+
+        // ✅ Try to locate the queue item even after refresh
+        if (!queueRow) {
+          queueRow = document.querySelector(`[data-queue_id="${queueId}"]`);
+        }
+
         if (!queueRow) {
           console.warn(`⚠️ Queue row with ID ${queueId} not found!`);
           return;
@@ -623,10 +626,11 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
           }
         }
       }
+
+      let currentUser = "<?= $currentUser; ?>";
+      console.log("📌 Current User (JavaScript):", currentUser);
     });
 
-    let currentUser = "<?= $currentUser; ?>";
-    console.log("📌 Current User (JavaScript):", currentUser);
   </script>
 
 
