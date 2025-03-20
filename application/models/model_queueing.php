@@ -98,16 +98,28 @@ class model_queueing extends CI_Model
 
     public function add_to_businesstax($name, $reason)
     {
+        // Get the last queue number (ensuring sequence consistency)
         $last_queue = $this->db->select_max('queue_number')->get('queue')->row();
-        $new_queue_number = $last_queue->queue_number + 1;
+        $new_queue_number = $last_queue->queue_number ? $last_queue->queue_number + 1 : 1;
+
+        // Get the highest position in the Business Tax queue
+        $max_position = $this->db->select_max('position')->where('status', 'businesstax')->get('queue')->row()->position;
+        $new_position = $max_position ? $max_position + 1 : 1; // Append to the end
+
         $data = array(
             'queue_number' => $new_queue_number,
             'name' => $name,
             'reason' => $reason,
-            'status' => 'businesstax'
+            'status' => 'businesstax',  // Set status to Business Tax
+            'position' => $new_position, // Maintain correct queue order in Business Tax
         );
-        return $this->db->insert('queue', $data);
+
+        if ($this->db->insert('queue', $data)) {
+            return $new_queue_number;
+        }
+        return false;
     }
+
 
     public function add_to_payment($name, $reason)
     {

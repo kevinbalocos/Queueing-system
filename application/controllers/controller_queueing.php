@@ -294,9 +294,54 @@ class controller_queueing extends CI_Controller
         $name = $this->input->post('name');
         $reason = $this->input->post('reason');
 
-        $this->model_queueing->add_to_businesstax($name, $reason);
+        // Ensure correct queue numbering
+        $max_position = $this->db->select_max('position')
+            ->where('status', 'businesstax')
+            ->get('queue')
+            ->row()->position;
 
-        echo json_encode(['status' => 'success', 'message' => 'Queue item added successfully to Business Tax.']);
+        $new_position = $max_position ? $max_position + 1 : 1;
+
+        // Insert into the Business Tax queue
+        $queue_number = $this->model_queueing->add_to_businesstax($name, $reason);
+
+        if ($queue_number) {
+            // Fetch newly inserted queue item with created_at
+            $new_item = $this->db->where('queue_number', $queue_number)->get('queue')->row();
+
+            if (!$new_item || empty($new_item->id)) {
+                echo json_encode(['status' => 'error', 'message' => 'Failed to fetch the new queue item.']);
+                return;
+            }
+
+            $queue_id = $new_item->id;
+            $proceed_url = base_url("index.php/controller_queueing/proceed_to_payment/{$queue_id}");
+
+            $queue_data = [
+                'queue_id' => (string) $queue_id,
+                'id' => $queue_id,
+                'queue_number' => $queue_number,
+                'name' => $name,
+                'reason' => $reason,
+                'status' => 'businesstax',  // Set status correctly
+                'position' => $new_position,
+                'processing_by' => '',
+                'proceed_url' => $proceed_url,
+                'created_at' => $new_item->created_at // ✅ Fetch timestamp from DB
+            ];
+
+            // 🔥 Send to WebSocket with the correct event name!
+            $this->send_to_websocket($queue_data, 'proceed_to_businesstax');
+
+            echo json_encode([
+                'status' => 'success',
+                'message' => "Queue item added successfully to Business Tax. Your queue number is $queue_number.",
+                'queue_number' => $queue_number,
+                'proceed_url' => $proceed_url
+            ]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to add to the Business Tax queue.']);
+        }
     }
 
     public function add_to_payment()
@@ -734,6 +779,67 @@ class controller_queueing extends CI_Controller
             echo json_encode([
                 'status' => 'success',
                 'message' => 'Queue marked as processing by examiner',
+                'queue_id' => $queue_id,
+                'processing_by' => $user_id,
+                'created_at' => $updatedQueue->created_at ?? date("Y-m-d H:i:s") // Ensure fallback
+            ]);
+            return;
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Database update failed']);
+            return;
+        }
+    }
+
+    public function mark_as_processing_business_tax()
+    {
+        header('Content-Type: application/json');
+
+        $queue_id = $this->input->post('queue_id', TRUE);
+        $user_id = $this->session->userdata('user_id');
+
+        if (!$queue_id) {
+            echo json_encode(['status' => 'error', 'message' => 'Queue ID is missing']);
+            return;
+        }
+
+        $queue = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+            ->get_where('queue', ['id' => $queue_id])
+            ->row();
+
+        if (!$queue) {
+            echo json_encode(['status' => 'error', 'message' => 'Queue not found']);
+            return;
+        }
+
+        // ✅ Assign the queue to the current Business Tax processor (user_id)
+        $this->db->where('id', $queue_id);
+        $update = $this->db->update('queue', ['processing_by' => $user_id]);
+
+        if ($update) {
+            $updatedQueue = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+                ->get_where('queue', ['id' => $queue_id])
+                ->row();
+
+            // Log created_at before sending WebSocket message
+            error_log("✅ Final Created At (Business Tax): " . json_encode($updatedQueue->created_at));
+
+            $message = json_encode([
+                'status' => 'success',
+                'action' => 'update_queue',
+                'queue_id' => $queue_id,
+                'queue_number' => $updatedQueue->queue_number ?? '',
+                'name' => $updatedQueue->name ?? '',
+                'reason' => $updatedQueue->reason ?? '',
+                'status_text' => 'processing',
+                'processing_by' => $user_id,
+                'created_at' => !empty($updatedQueue->created_at) ? $updatedQueue->created_at : date("Y-m-d H:i:s") // Ensure fallback timestamp
+            ]);
+
+            $this->sendWebSocketMessage($message);
+
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Queue marked as processing by Business Tax processor',
                 'queue_id' => $queue_id,
                 'processing_by' => $user_id,
                 'created_at' => $updatedQueue->created_at ?? date("Y-m-d H:i:s") // Ensure fallback
