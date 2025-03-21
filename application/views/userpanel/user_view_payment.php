@@ -234,31 +234,30 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
       let isProcessing = data.processing_by ? true : false;
       let statusText = isProcessing ? `Processing by ${data.processing_by}` : "Payment";
       let statusColor = isProcessing ? "text-red-500" : "text-green-500";
-      let proceedDisabled = isProcessing ? "disabled opacity-50 cursor-not-allowed" : "";
       let processingDisabled = isProcessing ? "opacity-50 cursor-not-allowed" : "";
 
       listItem.innerHTML = `
-    <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
-    <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
-    <p class="text-gray-500 text-sm">
-        Time Added: <span class="font-semibold">${timestamp}</span>
-    </p>
-    <p class="text-gray-500 text-sm">
-        Status: <span class="status-text ${statusColor} font-semibold">${statusText}</span>
-    </p>
+            <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
+            <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
+            <p class="text-gray-500 text-sm">
+                Time Added: <span class="font-semibold">${timestamp}</span>
+            </p>
+            <p class="text-gray-500 text-sm">
+                Status: <span class="status-text ${statusColor} font-semibold">${statusText}</span>
+            </p>
 
-    <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg ${processingDisabled}"
-        data-id="${data.queue_id}" data-type="payment" ${isProcessing ? "disabled" : ""}>
-        <i class="fa-solid fa-hourglass-half"></i>
-    </button>
+            <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg ${processingDisabled}"
+                data-id="${data.queue_id}" data-type="payment" ${isProcessing ? "disabled" : ""}>
+                <i class="fa-solid fa-hourglass-half"></i>
+            </button>
 
-    <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 rounded-full border border-blue-50 shadow-lg opacity-50 cursor-not-allowed"
-        data-id="${data.queue_id}"
-        data-url="${listItem.dataset.proceed_url}"
-        disabled>
-        <i class="fa-solid fa-user-check text-2xl"></i>
-    </button>
-  `;
+            <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 rounded-full border border-blue-50 shadow-lg opacity-50 cursor-not-allowed"
+                data-id="${data.queue_id}"
+                data-url="${listItem.dataset.proceed_url}"
+                disabled>
+                <i class="fa-solid fa-user-check text-2xl"></i>
+            </button>
+        `;
 
       if (queueContainer.children.length < 20) {
         queueContainer.appendChild(listItem);
@@ -275,9 +274,9 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
         });
 
         listItem.innerHTML = `
-      ${data.queue_number} - ${data.name} (${data.reason})<br>
-      <span class="text-gray-500 text-xs">Added on: ${timestamp}</span>
-    `;
+                ${data.queue_number} - ${data.name} (${data.reason})<br>
+                <span class="text-gray-500 text-xs">Added on: ${timestamp}</span>
+            `;
 
         queueList.appendChild(listItem);
       }
@@ -318,7 +317,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
           year: "numeric",
           hour: "2-digit",
           minute: "2-digit",
-          hour12: true,
+          hour12: true
         });
 
         const processingBy = firstRightItem.dataset.processing_by || "";
@@ -332,7 +331,24 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
           "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center shadow-md";
         newQueueItem.dataset.queue_id = queueId;
 
-        newQueueItem.innerHTML = firstRightItem.innerHTML;
+        newQueueItem.innerHTML = `
+                <h3 class="font-semibold text-xl">${firstRightItem.dataset.queue_number} - ${firstRightItem.dataset.name}</h3>
+                <p class="text-gray-500 text-sm">Reason: ${firstRightItem.dataset.reason}</p>
+                <p class="text-gray-500 text-sm">Time Added: <span class="font-semibold">${movedTimestamp}</span></p>
+                <p class="text-gray-500 text-sm">
+                    Status: <span class="status-text ${statusColor} font-semibold">${processingText}</span>
+                </p>
+                <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg ${isProcessing ? "opacity-50 cursor-not-allowed" : ""
+          }" data-id="${queueId}" ${isProcessing ? "disabled" : ""}>
+                    <i class="fa-solid fa-hourglass-half"></i>
+                </button>
+                <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 rounded-full border border-blue-50 shadow-lg opacity-50 cursor-not-allowed"
+                    data-id="${queueId}"
+                    data-url="${firstRightItem.dataset.proceed_url}"
+                    disabled>
+                    <i class="fa-solid fa-user-check text-2xl"></i>
+                </button>
+            `;
 
         firstRightItem.remove();
         queueContainer.appendChild(newQueueItem);
@@ -388,31 +404,38 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
 
   </script>
   <script>
-    document.querySelectorAll('.proceed-btn').forEach(button => {
-      button.addEventListener('click', function (e) {
-        e.preventDefault(); // Prevent the default form action
+    document.addEventListener('click', function (e) {
+      if (e.target.closest('.proceed-btn')) {
+        e.preventDefault();
 
-        let url = this.href; // Get the URL from the button link
-        let currentBtn = this; // Store the button reference
+        let button = e.target.closest('.proceed-btn');
+        let url = button.getAttribute("data-url");
+        let queueId = button.getAttribute("data-id");
 
-        fetch(url, {
-          method: 'GET',
-        })
+        if (!url) {
+          console.error("Error: Proceed URL is missing.");
+          return;
+        }
+
+        button.disabled = true;
+        button.classList.add("opacity-50", "cursor-not-allowed");
+
+        fetch(url, { method: 'GET' })
           .then(response => response.json())
           .then(data => {
             if (data.status === 'success') {
-              // Show success toast
               Toastify({
                 text: data.message,
                 duration: 3000,
                 close: true,
                 gravity: "top",
                 position: "right",
-                backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)"
+                backgroundColor: "linear-gradient(to right, #00b09b, #1165b7)"
               }).showToast();
 
-              // Optionally, update the UI (like removing the item from the left section)
-              currentBtn.closest('div').remove(); // Remove the item after it's processed
+              console.log(`✅ Proceeded queue item ${queueId}, removing immediately.`);
+
+              removeQueueItem(queueId);
             }
           })
           .catch(error => {
@@ -425,10 +448,132 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
               position: "right",
               backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)"
             }).showToast();
+
+            // Re-enable button on error
+            button.disabled = false;
+            button.classList.remove("opacity-50", "cursor-not-allowed");
           });
-      });
+      }
     });
   </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const socket = new WebSocket("ws://localhost:8080");
+
+      socket.onopen = function () {
+        console.log("✅ WebSocket connection established (Payment)");
+      };
+
+      socket.onmessage = function (event) {
+        try {
+          const data = JSON.parse(event.data);
+          console.log("📩 Received WebSocket Message:", data);
+
+          if (data.action === "update_payment_queue") {
+            console.log(`Queue ${data.queue_id} marked as processing by ${data.processing_by}`);
+            updatePaymentQueueStatus(
+              data.queue_id,
+              `Processing by ${data.processing_by}`,
+              "text-red-500",
+              data.processing_by,
+              data.created_at
+            );
+          }
+        } catch (error) {
+          console.error("❌ WebSocket JSON Error:", error);
+        }
+      };
+
+      socket.onerror = function (error) {
+        console.error("❌ WebSocket Error:", error);
+      };
+
+      socket.onclose = function () {
+        console.log("⚠️ WebSocket connection closed (Payment)");
+      };
+
+      document.body.addEventListener("click", function (e) {
+        const button = e.target.closest(".processing-btn");
+
+        if (button) {
+          e.preventDefault();
+          const queueId = button.getAttribute("data-id");
+
+          if (!queueId) {
+            console.error("❌ Queue ID is undefined.");
+            Swal.fire({ title: "Error!", text: "Invalid queue ID.", icon: "error", position: "top" });
+            return;
+          }
+
+          fetch("<?= base_url('controller_queueing/mark_as_processing_payment'); ?>", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({ queue_id: queueId }),
+          })
+            .then(response => response.json())
+            .then(data => {
+              if (data.status === "success") {
+                console.log("✅ Payment queue marked as processing:", data);
+
+                updatePaymentQueueStatus(queueId, `Processing by ${data.processing_by}`, "text-red-500", data.processing_by);
+
+                socket.send(JSON.stringify({
+                  action: "update_payment_queue",
+                  queue_id: queueId,
+                  status: "processing",
+                  processing_by: data.processing_by
+                }));
+
+                Swal.close();
+              } else {
+                throw new Error(data.message);
+              }
+            })
+            .catch(error => {
+              console.error("❌ Fetch Error:", error);
+              Swal.fire({ title: "Error!", text: error.message, icon: "error", position: "top" });
+            });
+        }
+      });
+
+      function updatePaymentQueueStatus(queueId, statusText, textColor, processingBy, createdAt) {
+        let queueRow = document.querySelector(`#queue-item-${queueId}`);
+        if (!queueRow) {
+          console.warn(`⚠️ Payment queue row with ID ${queueId} not found!`);
+          return;
+        }
+
+        let statusTextElement = queueRow.querySelector(".status-text");
+        let proceedBtn = queueRow.querySelector(".proceed-btn");
+        let processingBtn = queueRow.querySelector(".processing-btn");
+
+        if (statusTextElement) {
+          statusTextElement.innerText = statusText;
+          statusTextElement.classList.remove("text-green-500", "text-yellow-500", "text-blue-500", "text-red-500");
+          statusTextElement.classList.add(textColor);
+        }
+
+        if (processingBtn) {
+          processingBtn.classList.add("opacity-50", "cursor-not-allowed");
+          processingBtn.setAttribute("disabled", "disabled");
+        }
+
+        if (processingBy && String(processingBy) === String(currentUser)) {
+          console.log(`✅ User ${currentUser} is processing Queue ${queueId}, enabling proceed button.`);
+          proceedBtn.classList.remove("opacity-50", "cursor-not-allowed");
+          proceedBtn.removeAttribute("disabled");
+        } else {
+          console.log(`❌ Queue ${queueId} is being processed by another user (${processingBy}). Disabling proceed button.`);
+          proceedBtn.classList.add("opacity-50", "cursor-not-allowed");
+          proceedBtn.setAttribute("disabled", "disabled");
+        }
+      }
+
+      let currentUser = "<?= $currentUser; ?>";
+      console.log("📌 Current User (JavaScript):", currentUser);
+    });
+  </script>
+
 </body>
 
 </html>

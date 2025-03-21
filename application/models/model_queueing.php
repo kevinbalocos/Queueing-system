@@ -123,15 +123,26 @@ class model_queueing extends CI_Model
 
     public function add_to_payment($name, $reason)
     {
+        // Get the last queue number (ensuring sequence consistency)
         $last_queue = $this->db->select_max('queue_number')->get('queue')->row();
-        $new_queue_number = $last_queue->queue_number + 1;
+        $new_queue_number = $last_queue->queue_number ? $last_queue->queue_number + 1 : 1;
+
+        // Get the highest position in the Payment queue
+        $max_position = $this->db->select_max('position')->where('status', 'payment')->get('queue')->row()->position;
+        $new_position = $max_position ? $max_position + 1 : 1; // Append to the end
+
         $data = array(
             'queue_number' => $new_queue_number,
             'name' => $name,
             'reason' => $reason,
-            'status' => 'payment'
+            'status' => 'payment',  // Set status to Payment
+            'position' => $new_position, // Maintain correct queue order in Payment
         );
-        return $this->db->insert('queue', $data);
+
+        if ($this->db->insert('queue', $data)) {
+            return $new_queue_number;
+        }
+        return false;
     }
 
     public function add_to_fireprotection($name, $reason)
@@ -164,7 +175,7 @@ class model_queueing extends CI_Model
     public function get_queue()
     {
         return $this->db->where('status', 'landtax')
-            ->order_by('created_at', 'ASC')
+            ->order_by('position', 'ASC')
             ->get('queue')
             ->result();
     }
@@ -178,30 +189,30 @@ class model_queueing extends CI_Model
     // Get people in examiners
     public function get_examiners()
     {
-        return $this->db->where('status', 'examiner')->order_by('created_at', 'ASC')->get('queue')->result();
+        return $this->db->where('status', 'examiner')->order_by('position', 'ASC')->get('queue')->result();
     }
     // Get people in Business Tax
     public function get_businesstax()
     {
-        return $this->db->where('status', 'businesstax')->order_by('created_at', 'ASC')->get('queue')->result();
+        return $this->db->where('status', 'businesstax')->order_by('position', 'ASC')->get('queue')->result();
     }
 
     // Get people in Payment
     public function get_payment()
     {
-        return $this->db->where('status', 'payment')->order_by('created_at', 'ASC')->get('queue')->result();
+        return $this->db->where('status', 'payment')->order_by('position', 'ASC')->get('queue')->result();
     }
 
     // Get people in Fire Protection
     public function get_fireprotection()
     {
-        return $this->db->where('status', 'fireprotection')->order_by('created_at', 'ASC')->get('queue')->result();
+        return $this->db->where('status', 'fireprotection')->order_by('position', 'ASC')->get('queue')->result();
     }
 
     // Get people in Releasing
     public function get_releasing()
     {
-        return $this->db->where('status', 'releasing')->order_by('created_at', 'ASC')->get('queue')->result();
+        return $this->db->where('status', 'releasing')->order_by('position', 'ASC')->get('queue')->result();
     }
     public function mark_as_processing($queue_id, $user_id)
     {
