@@ -317,7 +317,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
           year: "numeric",
           hour: "2-digit",
           minute: "2-digit",
-          hour12: true
+          hour12: true,
         });
 
         const processingBy = firstRightItem.dataset.processing_by || "";
@@ -327,17 +327,28 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
 
         const newQueueItem = document.createElement("div");
         newQueueItem.id = firstRightItem.id;
-        newQueueItem.className = "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center";
+        newQueueItem.className =
+          "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center shadow-md";
         newQueueItem.dataset.queue_id = queueId;
 
         newQueueItem.innerHTML = `
-        <h3 class="font-semibold text-xl">${firstRightItem.dataset.queue_number} - ${firstRightItem.dataset.name}</h3>
-        <p class="text-gray-500 text-sm">Reason: ${firstRightItem.dataset.reason}</p>
-        <p class="text-gray-500 text-sm">Time Added: <span class="font-semibold">${movedTimestamp}</span></p>
-        <p class="text-gray-500 text-sm">
-            Status: <span class="status-text ${statusColor} font-semibold">${processingText}</span>
-        </p>
-      `;
+      <h3 class="font-semibold text-xl">${firstRightItem.dataset.queue_number} - ${firstRightItem.dataset.name}</h3>
+      <p class="text-gray-500 text-sm">Reason: ${firstRightItem.dataset.reason}</p>
+      <p class="text-gray-500 text-sm">Time Added: <span class="font-semibold">${movedTimestamp}</span></p>
+      <p class="text-gray-500 text-sm">
+          Status: <span class="status-text ${statusColor} font-semibold">${processingText}</span>
+      </p>
+      <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg ${isProcessing ? "opacity-50 cursor-not-allowed" : ""
+          }" data-id="${queueId}" ${isProcessing ? "disabled" : ""}>
+          <i class="fa-solid fa-hourglass-half"></i>
+      </button>
+      <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 rounded-full border border-blue-50 shadow-lg opacity-50 cursor-not-allowed"
+          data-id="${queueId}"
+          data-url="${firstRightItem.dataset.proceed_url}"
+          disabled>
+          <i class="fa-solid fa-user-check text-2xl"></i>
+      </button>
+    `;
 
         firstRightItem.remove();
         queueContainer.appendChild(newQueueItem);
@@ -422,7 +433,10 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
                 backgroundColor: "linear-gradient(to right, #00b09b, #1165b7)"
               }).showToast();
 
-              console.log(`Waiting for WebSocket confirmation to remove queue item ${queueId}`);
+              console.log(`✅ Proceeded queue item ${queueId}, removing immediately.`);
+
+              // ✅ Immediately remove from UI
+              removeQueueItem(queueId);
             }
           })
           .catch(error => {
