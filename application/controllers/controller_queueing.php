@@ -18,6 +18,33 @@ class controller_queueing extends CI_Controller
         $data['first'] = $this->model_queueing->get_first_in_queue();
         $this->load->view('userpanel/user_view_landtax', $data);
     }
+    public function delete_queue($id)
+    {
+        $this->load->model('model_queueing');
+    
+        // Ensure this is a POST request
+        if ($this->input->server('REQUEST_METHOD') === 'POST') {
+            if ($this->model_queueing->delete_queue($id)) {
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'Queue record deleted successfully',
+                    'queue_id' => $id
+                ]);
+            } else {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Failed to delete the queue record'
+                ]);
+            }
+        } else {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Invalid request method'
+            ]);
+        }
+    }
+    
+
 
     // Load Backroom View
     public function BackRoom()
@@ -606,40 +633,43 @@ class controller_queueing extends CI_Controller
     public function mark_as_processing()
     {
         header('Content-Type: application/json');
-
+    
         $queue_id = $this->input->post('queue_id', TRUE);
-        $user_id = $this->session->userdata('user_id');
-
+        // Instead of user_id, now we retrieve the username from session
+        $username = $this->session->userdata('username');
+    
         if (!$queue_id) {
             echo json_encode(['status' => 'error', 'message' => 'Queue ID is missing']);
             return;
         }
-
+    
+        // Retrieve the queue record
         $queue = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
             ->get_where('queue', ['id' => $queue_id])
             ->row();
-
+    
         if (!$queue) {
             echo json_encode(['status' => 'error', 'message' => 'Queue not found']);
             return;
         }
-
+    
         if ($queue->processing_by) {
             echo json_encode(['status' => 'error', 'message' => 'Already being processed']);
             return;
         }
-
+    
+        // Update the queue record with the username
         $this->db->where('id', $queue_id);
-        $update = $this->db->update('queue', ['processing_by' => $user_id]);
-
+        $update = $this->db->update('queue', ['processing_by' => $username]);
+    
         if ($update) {
             $updatedQueue = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
                 ->get_where('queue', ['id' => $queue_id])
                 ->row();
-
-            // Log created_at before sending WebSocket message
+    
+            // Log created_at before sending WebSocket message (if needed)
             error_log("✅ Final Created At: " . json_encode($updatedQueue->created_at));
-
+    
             $message = json_encode([
                 'status' => 'success',
                 'action' => 'update_queue',
@@ -648,18 +678,19 @@ class controller_queueing extends CI_Controller
                 'name' => $updatedQueue->name ?? '',
                 'reason' => $updatedQueue->reason ?? '',
                 'status_text' => 'processing',
-                'processing_by' => $user_id,
-                'created_at' => !empty($updatedQueue->created_at) ? $updatedQueue->created_at : date("Y-m-d H:i:s") // Ensure fallback timestamp
+                // Return the username here instead of user id:
+                'processing_by' => $username,
+                'created_at' => !empty($updatedQueue->created_at) ? $updatedQueue->created_at : date("Y-m-d H:i:s")
             ]);
-
+    
             $this->sendWebSocketMessage($message);
-
+    
             echo json_encode([
                 'status' => 'success',
                 'message' => 'Queue marked as processing',
                 'queue_id' => $queue_id,
-                'processing_by' => $user_id,
-                'created_at' => $updatedQueue->created_at ?? date("Y-m-d H:i:s") // Ensure fallback
+                'processing_by' => $username,
+                'created_at' => $updatedQueue->created_at ?? date("Y-m-d H:i:s")
             ]);
             return;
         } else {
@@ -667,6 +698,7 @@ class controller_queueing extends CI_Controller
             return;
         }
     }
+    
 
     public function mark_as_processing_backroom()
     {
