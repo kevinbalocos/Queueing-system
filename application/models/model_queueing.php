@@ -34,6 +34,12 @@ class model_queueing extends CI_Model
         }
         return false;
     }
+    public function delete_queue($id)
+    {
+        $this->db->where('id', $id);
+        return $this->db->delete('queue'); // Replace 'queue' with your actual table name if different
+    }
+
 
     public function get_queue_item($queue_id)
     {
