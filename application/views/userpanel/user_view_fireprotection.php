@@ -154,17 +154,15 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
   <script>
     const socket = new WebSocket("ws://localhost:8080");
 
-    socket.onopen = function () {
-      console.log("Connected to WebSocket server (Fire Protection)");
-    };
+    socket.onopen = () => console.log("Connected to WebSocket server (Fire Protection)");
 
-    socket.onmessage = function (event) {
+    socket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
 
         if (data.action === "proceed_to_fireprotection") {
           console.log("New Fire Protection queue item received:", data);
-          addNewFireProtectionQueue(data);
+          addQueueItem(data, "Fire Protection");
         } else if (data.action === "proceed_to_releasing") {
           console.log("Queue item moved to Releasing:", data);
           removeQueueItem(data.queue_id);
@@ -174,15 +172,43 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
       }
     };
 
-    socket.onerror = function (error) {
-      console.error("WebSocket Error: ", error);
-    };
+    socket.onerror = (error) => console.error("WebSocket Error: ", error);
+    socket.onclose = () => console.log("Disconnected from WebSocket server");
 
-    socket.onclose = function () {
-      console.log("Disconnected from WebSocket server");
-    };
+    function formatTimestamp(dateString) {
+      const date = new Date(dateString);
+      return isNaN(date.getTime())
+        ? "Invalid Date"
+        : date.toLocaleString("en-US", {
+          month: "short",
+          day: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+    }
 
-    function addNewFireProtectionQueue(data) {
+    function createQueueItem(data, statusText, statusColor, processingDisabled) {
+      return `
+        <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
+        <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
+        <p class="text-gray-500 text-sm">Time Added: <span class="font-semibold">${formatTimestamp(data.created_at)}</span></p>
+        <p class="text-gray-500 text-sm">Status: <span class="status-text ${statusColor} font-semibold">${statusText}</span></p>
+        <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg ${processingDisabled}"
+            data-id="${data.queue_id}" data-type="fireprotection" ${processingDisabled ? "disabled" : ""}>
+            <i class="fa-solid fa-hourglass-half"></i>
+        </button>
+        <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 rounded-full border border-blue-50 shadow-lg opacity-50 cursor-not-allowed"
+            data-id="${data.queue_id}"
+            data-url="${data.proceed_url || `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_releasing/${data.queue_id}`}"
+            disabled>
+            <i class="fa-solid fa-user-check text-2xl"></i>
+        </button>
+      `;
+    }
+
+    function addQueueItem(data, defaultStatus) {
       const queueContainer = document.getElementById("queue-container");
       const queueList = document.getElementById("queueList");
 
@@ -197,86 +223,25 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
         return;
       }
 
-      let timestamp = "Invalid Date";
-
-      if (data.created_at) {
-        let createdAt = new Date(data.created_at);
-        if (!isNaN(createdAt.getTime())) {
-          timestamp = createdAt.toLocaleString("en-US", {
-            month: "short",
-            day: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true
-          });
-        } else {
-          console.error("⚠️ Invalid Date format received:", data.created_at);
-        }
-      } else {
-        console.error("⚠️ Missing created_at value:", data.created_at);
-      }
+      const isProcessing = data.processing_by ? true : false;
+      const statusText = isProcessing ? `Processing by ${data.processing_by}` : defaultStatus;
+      const statusColor = isProcessing ? "text-red-500" : "text-green-500";
+      const processingDisabled = isProcessing ? "opacity-50 cursor-not-allowed" : "";
 
       const listItem = document.createElement("li");
       listItem.id = queueId;
+      listItem.className = "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center shadow-md";
       listItem.dataset.queue_id = data.queue_id;
-      listItem.dataset.queue_number = data.queue_number;
-      listItem.dataset.name = data.name;
-      listItem.dataset.reason = data.reason;
-      listItem.dataset.proceed_url = data.proceed_url
-        ? data.proceed_url
-        : `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_releasing/${data.queue_id}`;
-
-      listItem.className =
-        "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center shadow-md";
-
-      let isProcessing = data.processing_by ? true : false;
-      let statusText = isProcessing ? `Processing by ${data.processing_by}` : "Fire Protection";
-      let statusColor = isProcessing ? "text-red-500" : "text-green-500";
-      let processingDisabled = isProcessing ? "opacity-50 cursor-not-allowed" : "";
-
-      listItem.innerHTML = `
-            <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
-            <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
-            <p class="text-gray-500 text-sm">
-                Time Added: <span class="font-semibold">${timestamp}</span>
-            </p>
-            <p class="text-gray-500 text-sm">
-                Status: <span class="status-text ${statusColor} font-semibold">${statusText}</span>
-            </p>
-
-            <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg ${processingDisabled}"
-                data-id="${data.queue_id}" data-type="fireprotection" ${isProcessing ? "disabled" : ""}>
-                <i class="fa-solid fa-hourglass-half"></i>
-            </button>
-
-            <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 rounded-full border border-blue-50 shadow-lg opacity-50 cursor-not-allowed"
-                data-id="${data.queue_id}"
-                data-url="${listItem.dataset.proceed_url}"
-                disabled>
-                <i class="fa-solid fa-user-check text-2xl"></i>
-            </button>
-        `;
+      listItem.innerHTML = createQueueItem(data, statusText, statusColor, processingDisabled);
 
       if (queueContainer.children.length < 20) {
         queueContainer.appendChild(listItem);
       } else {
         listItem.className = "p-3 bg-gray-50 border rounded-lg";
-
-        let timestamp = new Date().toLocaleString("en-US", {
-          month: "short",
-          day: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true
-        });
-
         listItem.innerHTML = `
-                ${data.queue_number} - ${data.name} (${data.reason})<br>
-                <span class="text-gray-500 text-xs">Added on: ${timestamp}</span>
-            `;
-
+      ${data.queue_number} - ${data.name} (${data.reason})<br>
+      <span class="text-gray-500 text-xs">Added on: ${formatTimestamp(Date.now())}</span>
+    `;
         queueList.appendChild(listItem);
       }
 
@@ -289,7 +254,6 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
       if (queueItem) {
         queueItem.remove();
         console.log(`Queue ID ${queueId} removed from UI.`);
-
         moveFirstRightItemToLeft();
         updateGridLayout();
       } else {
@@ -303,51 +267,23 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
 
       if (queueContainer.children.length < 20 && queueList.children.length > 0) {
         const firstRightItem = queueList.children[0];
-
         const queueId = firstRightItem.dataset.queue_id || null;
         if (!queueId) {
           console.error("❌ Queue ID is undefined. Cannot move item.");
           return;
         }
 
-        let movedTimestamp = new Date().toLocaleString("en-US", {
-          month: "short",
-          day: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true
-        });
-
         const processingBy = firstRightItem.dataset.processing_by || "";
         const isProcessing = processingBy ? true : false;
-        const processingText = isProcessing ? `Processing by ${processingBy}` : "Fire Protection";
+        const statusText = isProcessing ? `Processing by ${processingBy}` : "Fire Protection";
         const statusColor = isProcessing ? "text-red-500" : "text-green-500";
+        const processingDisabled = isProcessing ? "opacity-50 cursor-not-allowed" : "";
 
         const newQueueItem = document.createElement("div");
         newQueueItem.id = firstRightItem.id;
-        newQueueItem.className =
-          "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center shadow-md";
+        newQueueItem.className = "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center shadow-md";
         newQueueItem.dataset.queue_id = queueId;
-
-        newQueueItem.innerHTML = `
-                <h3 class="font-semibold text-xl">${firstRightItem.dataset.queue_number} - ${firstRightItem.dataset.name}</h3>
-                <p class="text-gray-500 text-sm">Reason: ${firstRightItem.dataset.reason}</p>
-                <p class="text-gray-500 text-sm">Time Added: <span class="font-semibold">${movedTimestamp}</span></p>
-                <p class="text-gray-500 text-sm">
-                    Status: <span class="status-text ${statusColor} font-semibold">${processingText}</span>
-                </p>
-                <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg ${isProcessing ? "opacity-50 cursor-not-allowed" : ""
-          }" data-id="${queueId}" ${isProcessing ? "disabled" : ""}>
-                    <i class="fa-solid fa-hourglass-half"></i>
-                </button>
-                <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 rounded-full border border-blue-50 shadow-lg opacity-50 cursor-not-allowed"
-                    data-id="${queueId}"
-                    data-url="${firstRightItem.dataset.proceed_url}"
-                    disabled>
-                    <i class="fa-solid fa-user-check text-2xl"></i>
-                </button>
-            `;
+        newQueueItem.innerHTML = createQueueItem(firstRightItem.dataset, statusText, statusColor, processingDisabled);
 
         firstRightItem.remove();
         queueContainer.appendChild(newQueueItem);
@@ -356,7 +292,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
 
     function updateGridLayout() {
       const queueContainer = document.getElementById("queue-container");
-      queueContainer.style.gridTemplateColumns = `repeat(${queueContainer.children.length < 5 ? queueContainer.children.length : 5}, 1fr)`;
+      queueContainer.style.gridTemplateColumns = `repeat(${Math.min(queueContainer.children.length, 5)}, 1fr)`;
     }
   </script>
 
