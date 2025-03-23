@@ -267,8 +267,18 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
 
       if (queueContainer.children.length < 20 && queueList.children.length > 0) {
         const firstRightItem = queueList.children[0];
-        const queueId = firstRightItem.dataset.queue_id || null;
-        if (!queueId) {
+
+        // Extract dataset properties, providing fallback defaults if missing
+        const queueData = {
+          queue_id: firstRightItem.dataset.queue_id || null,
+          queue_number: firstRightItem.dataset.queue_number || "N/A",
+          name: firstRightItem.dataset.name || "Unknown",
+          reason: firstRightItem.dataset.reason || "No reason provided",
+          created_at: firstRightItem.dataset.created_at || new Date().toISOString(),
+          proceed_url: firstRightItem.dataset.proceed_url || `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_releasing/${firstRightItem.dataset.queue_id}`
+        };
+
+        if (!queueData.queue_id) {
           console.error("❌ Queue ID is undefined. Cannot move item.");
           return;
         }
@@ -282,8 +292,13 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
         const newQueueItem = document.createElement("div");
         newQueueItem.id = firstRightItem.id;
         newQueueItem.className = "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center shadow-md";
-        newQueueItem.dataset.queue_id = queueId;
-        newQueueItem.innerHTML = createQueueItem(firstRightItem.dataset, statusText, statusColor, processingDisabled);
+
+        // Reassign dataset properties to new element
+        Object.keys(queueData).forEach(key => {
+          newQueueItem.dataset[key] = queueData[key];
+        });
+
+        newQueueItem.innerHTML = createQueueItem(queueData, statusText, statusColor, processingDisabled);
 
         firstRightItem.remove();
         queueContainer.appendChild(newQueueItem);
@@ -334,33 +349,39 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
     });
   </script>
 
-
   <script>
-    document.querySelectorAll('.proceed-btn').forEach(button => {
-      button.addEventListener('click', function (e) {
-        e.preventDefault(); // Prevent the default form action
+    document.addEventListener('click', function (e) {
+      if (e.target.closest('.proceed-btn')) {
+        e.preventDefault();
 
-        let url = this.href; // Get the URL from the button link
-        let currentBtn = this; // Store the button reference
+        let button = e.target.closest('.proceed-btn');
+        let url = button.getAttribute("data-url");
+        let queueId = button.getAttribute("data-id");
 
-        fetch(url, {
-          method: 'GET',
-        })
+        if (!url) {
+          console.error("Error: Proceed URL is missing.");
+          return;
+        }
+
+        button.disabled = true;
+        button.classList.add("opacity-50", "cursor-not-allowed");
+
+        fetch(url, { method: 'GET' })
           .then(response => response.json())
           .then(data => {
             if (data.status === 'success') {
-              // Show success toast
               Toastify({
                 text: data.message,
                 duration: 3000,
                 close: true,
                 gravity: "top",
                 position: "right",
-                backgroundColor: "linear-gradient(to right, #00b09b,rgb(60, 9, 188))"
+                backgroundColor: "linear-gradient(to right, #00b09b, #1165b7)"
               }).showToast();
 
-              // Optionally, update the UI (like removing the item from the left section)
-              currentBtn.closest('div').remove(); // Remove the item after it's processed
+              console.log(`✅ Proceeded queue item ${queueId}, removing immediately.`);
+
+              removeQueueItem(queueId);
             }
           })
           .catch(error => {
@@ -373,8 +394,133 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
               position: "right",
               backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)"
             }).showToast();
+
+            // Re-enable button on error
+            button.disabled = false;
+            button.classList.remove("opacity-50", "cursor-not-allowed");
           });
+      }
+    });
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const socket = new WebSocket("ws://localhost:8080");
+
+      socket.onopen = function () {
+        console.log("✅ WebSocket connection established (Fire Protection)");
+      };
+
+      socket.onmessage = function (event) {
+        try {
+          const data = JSON.parse(event.data);
+          console.log("📩 Received WebSocket Message:", data);
+
+          if (data.action === "update_fireprotection_queue") {
+            console.log(`Queue ${data.queue_id} marked as processing by ${data.processing_by}`);
+            updateFireProtectionQueueStatus(
+              data.queue_id,
+              `Processing by ${data.processing_by}`,
+              "text-red-500",
+              data.processing_by
+            );
+          }
+        } catch (error) {
+          console.error("❌ WebSocket JSON Error:", error);
+        }
+      };
+
+      socket.onerror = function (error) {
+        console.error("❌ WebSocket Error:", error);
+      };
+
+      socket.onclose = function () {
+        console.log("⚠️ WebSocket connection closed (Fire Protection)");
+      };
+
+      document.body.addEventListener("click", function (e) {
+        const button = e.target.closest(".processing-btn");
+
+        if (button) {
+          e.preventDefault();
+          const queueId = button.getAttribute("data-id");
+
+          if (!queueId) {
+            console.error("❌ Queue ID is undefined.");
+            Swal.fire({ title: "Error!", text: "Invalid queue ID.", icon: "error", position: "top" });
+            return;
+          }
+
+          fetch("<?= base_url('controller_queueing/mark_as_processing_fireprotection'); ?>", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({ queue_id: queueId }),
+          })
+            .then(response => response.json())
+            .then(data => {
+              if (data.status === "success") {
+                console.log("✅ Fire Protection queue marked as processing:", data);
+
+                updateFireProtectionQueueStatus(queueId, `Processing by ${data.processing_by}`, "text-red-500", data.processing_by);
+
+                socket.send(JSON.stringify({
+                  action: "update_fireprotection_queue",
+                  queue_id: queueId,
+                  status: "processing",
+                  processing_by: data.processing_by
+                }));
+
+                Swal.close();
+              } else {
+                throw new Error(data.message);
+              }
+            })
+            .catch(error => {
+              console.error("❌ Fetch Error:", error);
+              Swal.fire({ title: "Error!", text: error.message, icon: "error", position: "top" });
+            });
+        }
       });
+
+      function updateFireProtectionQueueStatus(queueId, statusText, textColor, processingBy) {
+        let queueRow = document.querySelector(`#queue-item-${queueId}`);
+        if (!queueRow) {
+          console.warn(`⚠️ Fire Protection queue row with ID ${queueId} not found!`);
+          return;
+        }
+
+        let statusTextElement = queueRow.querySelector(".status-text");
+        let proceedBtn = queueRow.querySelector(".proceed-btn");
+        let processingBtn = queueRow.querySelector(".processing-btn");
+
+        if (statusTextElement) {
+          statusTextElement.innerText = statusText;
+          statusTextElement.classList.remove("text-green-500", "text-yellow-500", "text-blue-500", "text-red-500");
+          statusTextElement.classList.add(textColor);
+        }
+
+        if (processingBtn) {
+          processingBtn.classList.add("opacity-50", "cursor-not-allowed");
+          processingBtn.setAttribute("disabled", "disabled");
+        }
+
+        if (processingBy && String(processingBy) === String(currentUser)) {
+          console.log(`✅ User ${currentUser} is processing Queue ${queueId}, enabling proceed button.`);
+          if (proceedBtn) {
+            proceedBtn.classList.remove("opacity-50", "cursor-not-allowed");
+            proceedBtn.removeAttribute("disabled");
+          }
+        } else {
+          console.log(`❌ Queue ${queueId} is being processed by another user (${processingBy}). Disabling proceed button.`);
+          if (proceedBtn) {
+            proceedBtn.classList.add("opacity-50", "cursor-not-allowed");
+            proceedBtn.setAttribute("disabled", "disabled");
+          }
+        }
+      }
+
+      let currentUser = "<?= $currentUser; ?>";
+      console.log("📌 Current User (JavaScript):", currentUser);
     });
   </script>
 </body>

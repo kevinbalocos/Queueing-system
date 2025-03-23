@@ -153,18 +153,27 @@ class model_queueing extends CI_Model
 
     public function add_to_fireprotection($name, $reason)
     {
+        // Get the last queue number (ensuring sequence consistency)
         $last_queue = $this->db->select_max('queue_number')->get('queue')->row();
-        $new_queue_number = $last_queue->queue_number + 1;
+        $new_queue_number = $last_queue->queue_number ? $last_queue->queue_number + 1 : 1;
+    
+        // Get the highest position in the Fire Protection queue
+        $max_position = $this->db->select_max('position')->where('status', 'fireprotection')->get('queue')->row()->position;
+        $new_position = $max_position ? $max_position + 1 : 1; // Append to the end
+    
         $data = array(
             'queue_number' => $new_queue_number,
             'name' => $name,
             'reason' => $reason,
-            'status' => 'fireprotection'
+            'status' => 'fireprotection',  // Set status to Fire Protection
+            'position' => $new_position, // Maintain correct queue order in Fire Protection
         );
-        return $this->db->insert('queue', $data);
-    }
-
-
+    
+        if ($this->db->insert('queue', $data)) {
+            return $new_queue_number;
+        }
+        return false;
+    }    
 
     // Get the first in queue
     public function get_first_in_queue()
