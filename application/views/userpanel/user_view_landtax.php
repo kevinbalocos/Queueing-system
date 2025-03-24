@@ -32,7 +32,7 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; 
   <div class="flex min-h-screen p-5">
     <!-- Left Section (Now Serving) -->
     <div class="flex-1 bg-white p-5 rounded-lg shadow-md ">
-      <h2 class="text-2xl font-bold text-blue-900 text-center">Now Serving</h2>
+      <h2 class="text-2xl font-bold uppercase text-blue-900 text-center">Now Serving</h2>
       <div id="queue-container" class="flex flex-wrap gap-1 bg-blue-50 overflow-y-auto">
         <?php if ($queue): ?>
           <?php foreach ($left_items as $item): ?>
