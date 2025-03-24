@@ -27,8 +27,9 @@ class WebSocketServer implements MessageComponentInterface
             return;
         }
 
-        // Log before broadcasting
-        echo "📡 Broadcasting Message: " . json_encode($data) . "\n";
+        $created_at = isset($data['created_at']) && !empty($data['created_at'])
+            ? date("Y-m-d H:i:s", strtotime($data['created_at']))
+            : null;
 
         // Broadcast message to all clients
         foreach ($this->clients as $client) {
@@ -41,7 +42,8 @@ class WebSocketServer implements MessageComponentInterface
                     "name" => $data['name'] ?? '',
                     "reason" => $data['reason'] ?? '',
                     "status_text" => $data['status'] ?? 'Waiting',
-                    "processing_by" => $data['processing_by'] ?? ''
+                    "processing_by" => $data['processing_by'] ?? '',
+                    "created_at" => $created_at // Send NULL if missing, let frontend handle it
                 ]));
             }
         }

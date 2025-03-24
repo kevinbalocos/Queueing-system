@@ -18,6 +18,33 @@ class controller_queueing extends CI_Controller
         $data['first'] = $this->model_queueing->get_first_in_queue();
         $this->load->view('userpanel/user_view_landtax', $data);
     }
+    public function delete_queue($id)
+    {
+        $this->load->model('model_queueing');
+
+        // Ensure this is a POST request
+        if ($this->input->server('REQUEST_METHOD') === 'POST') {
+            if ($this->model_queueing->delete_queue($id)) {
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'Queue record deleted successfully',
+                    'queue_id' => $id
+                ]);
+            } else {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Failed to delete the queue record'
+                ]);
+            }
+        } else {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Invalid request method'
+            ]);
+        }
+    }
+
+
 
     // Load Backroom View
     public function BackRoom()
@@ -128,7 +155,7 @@ class controller_queueing extends CI_Controller
             ->get('queue')
             ->row()->position;
 
-        $new_position = $max_position ? $max_position + 1 : 1; 
+        $new_position = $max_position ? $max_position + 1 : 1;
 
         $queue_number = $this->model_queueing->add_to_queue($name, $reason, $new_position);
 
@@ -152,7 +179,8 @@ class controller_queueing extends CI_Controller
                 'status' => 'landtax',
                 'position' => $new_position,
                 'processing_by' => '',
-                'proceed_url' => $proceed_url
+                'proceed_url' => $proceed_url,
+                'created_at' => $new_item->created_at
             ];
             $this->send_to_websocket($queue_data, 'add_to_queue');
 
@@ -183,9 +211,54 @@ class controller_queueing extends CI_Controller
         $name = $this->input->post('name');
         $reason = $this->input->post('reason');
 
-        $this->model_queueing->add_to_backroom($name, $reason);
+        // Ensure correct queue numbering
+        $max_position = $this->db->select_max('position')
+            ->where('status', 'backroom')
+            ->get('queue')
+            ->row()->position;
 
-        echo json_encode(['status' => 'success', 'message' => 'Queue item added successfully to Backroom.']);
+        $new_position = $max_position ? $max_position + 1 : 1;
+
+        // Insert into the Backroom queue
+        $queue_number = $this->model_queueing->add_to_backroom($name, $reason);
+
+        if ($queue_number) {
+            // Fetch newly inserted queue item with created_at
+            $new_item = $this->db->where('queue_number', $queue_number)->get('queue')->row();
+
+            if (!$new_item || empty($new_item->id)) {
+                echo json_encode(['status' => 'error', 'message' => 'Failed to fetch the new queue item.']);
+                return;
+            }
+
+            $queue_id = $new_item->id;
+            $proceed_url = base_url("index.php/controller_queueing/proceed_to_examiners/{$queue_id}");
+
+            $queue_data = [
+                'queue_id' => (string) $queue_id,
+                'id' => $queue_id,
+                'queue_number' => $queue_number,
+                'name' => $name,
+                'reason' => $reason,
+                'status' => 'backroom',  // Set status correctly
+                'position' => $new_position,
+                'processing_by' => '',
+                'proceed_url' => $proceed_url,
+                'created_at' => $new_item->created_at // ✅ Fetch timestamp from DB
+            ];
+
+            // 🔥 Send to WebSocket with the correct event name!
+            $this->send_to_websocket($queue_data, 'proceed_to_backroom');
+
+            echo json_encode([
+                'status' => 'success',
+                'message' => "Queue item added successfully to Backroom. Your queue number is $queue_number.",
+                'queue_number' => $queue_number,
+                'proceed_url' => $proceed_url
+            ]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to add to the Backroom queue.']);
+        }
     }
 
     public function add_to_examiners()
@@ -193,9 +266,54 @@ class controller_queueing extends CI_Controller
         $name = $this->input->post('name');
         $reason = $this->input->post('reason');
 
-        $this->model_queueing->add_to_examiners($name, $reason);
+        // Ensure correct queue numbering
+        $max_position = $this->db->select_max('position')
+            ->where('status', 'examiners')
+            ->get('queue')
+            ->row()->position;
 
-        echo json_encode(['status' => 'success', 'message' => 'Queue item added successfully to Examiners.']);
+        $new_position = $max_position ? $max_position + 1 : 1;
+
+        // Insert into the Examiners queue
+        $queue_number = $this->model_queueing->add_to_examiners($name, $reason);
+
+        if ($queue_number) {
+            // Fetch newly inserted queue item with created_at
+            $new_item = $this->db->where('queue_number', $queue_number)->get('queue')->row();
+
+            if (!$new_item || empty($new_item->id)) {
+                echo json_encode(['status' => 'error', 'message' => 'Failed to fetch the new queue item.']);
+                return;
+            }
+
+            $queue_id = $new_item->id;
+            $proceed_url = base_url("index.php/controller_queueing/proceed_to_business_tax/{$queue_id}");
+
+            $queue_data = [
+                'queue_id' => (string) $queue_id,
+                'id' => $queue_id,
+                'queue_number' => $queue_number,
+                'name' => $name,
+                'reason' => $reason,
+                'status' => 'examiners',  // Set status correctly
+                'position' => $new_position,
+                'processing_by' => '',
+                'proceed_url' => $proceed_url,
+                'created_at' => $new_item->created_at // ✅ Fetch timestamp from DB
+            ];
+
+            // 🔥 Send to WebSocket with the correct event name!
+            $this->send_to_websocket($queue_data, 'proceed_to_examiners');
+
+            echo json_encode([
+                'status' => 'success',
+                'message' => "Queue item added successfully to Examiners. Your queue number is $queue_number.",
+                'queue_number' => $queue_number,
+                'proceed_url' => $proceed_url
+            ]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to add to the Examiners queue.']);
+        }
     }
 
     public function add_to_businesstax()
@@ -203,9 +321,54 @@ class controller_queueing extends CI_Controller
         $name = $this->input->post('name');
         $reason = $this->input->post('reason');
 
-        $this->model_queueing->add_to_businesstax($name, $reason);
+        // Ensure correct queue numbering
+        $max_position = $this->db->select_max('position')
+            ->where('status', 'businesstax')
+            ->get('queue')
+            ->row()->position;
 
-        echo json_encode(['status' => 'success', 'message' => 'Queue item added successfully to Business Tax.']);
+        $new_position = $max_position ? $max_position + 1 : 1;
+
+        // Insert into the Business Tax queue
+        $queue_number = $this->model_queueing->add_to_businesstax($name, $reason);
+
+        if ($queue_number) {
+            // Fetch newly inserted queue item with created_at
+            $new_item = $this->db->where('queue_number', $queue_number)->get('queue')->row();
+
+            if (!$new_item || empty($new_item->id)) {
+                echo json_encode(['status' => 'error', 'message' => 'Failed to fetch the new queue item.']);
+                return;
+            }
+
+            $queue_id = $new_item->id;
+            $proceed_url = base_url("index.php/controller_queueing/proceed_to_payment/{$queue_id}");
+
+            $queue_data = [
+                'queue_id' => (string) $queue_id,
+                'id' => $queue_id,
+                'queue_number' => $queue_number,
+                'name' => $name,
+                'reason' => $reason,
+                'status' => 'businesstax',  // Set status correctly
+                'position' => $new_position,
+                'processing_by' => '',
+                'proceed_url' => $proceed_url,
+                'created_at' => $new_item->created_at // ✅ Fetch timestamp from DB
+            ];
+
+            // 🔥 Send to WebSocket with the correct event name!
+            $this->send_to_websocket($queue_data, 'proceed_to_businesstax');
+
+            echo json_encode([
+                'status' => 'success',
+                'message' => "Queue item added successfully to Business Tax. Your queue number is $queue_number.",
+                'queue_number' => $queue_number,
+                'proceed_url' => $proceed_url
+            ]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to add to the Business Tax queue.']);
+        }
     }
 
     public function add_to_payment()
@@ -213,9 +376,54 @@ class controller_queueing extends CI_Controller
         $name = $this->input->post('name');
         $reason = $this->input->post('reason');
 
-        $this->model_queueing->add_to_payment($name, $reason);
+        // Ensure correct queue numbering
+        $max_position = $this->db->select_max('position')
+            ->where('status', 'payment')
+            ->get('queue')
+            ->row()->position;
 
-        echo json_encode(['status' => 'success', 'message' => 'Queue item added successfully to Payment.']);
+        $new_position = $max_position ? $max_position + 1 : 1;
+
+        // Insert into the Payment queue
+        $queue_number = $this->model_queueing->add_to_payment($name, $reason);
+
+        if ($queue_number) {
+            // Fetch newly inserted queue item with created_at
+            $new_item = $this->db->where('queue_number', $queue_number)->get('queue')->row();
+
+            if (!$new_item || empty($new_item->id)) {
+                echo json_encode(['status' => 'error', 'message' => 'Failed to fetch the new queue item.']);
+                return;
+            }
+
+            $queue_id = $new_item->id;
+            $proceed_url = base_url("index.php/controller_queueing/proceed_to_fireprotection/{$queue_id}");
+
+            $queue_data = [
+                'queue_id' => (string) $queue_id,
+                'id' => $queue_id,
+                'queue_number' => $queue_number,
+                'name' => $name,
+                'reason' => $reason,
+                'status' => 'payment', // Set status correctly
+                'position' => $new_position,
+                'processing_by' => '',
+                'proceed_url' => $proceed_url,
+                'created_at' => $new_item->created_at // ✅ Fetch timestamp from DB
+            ];
+
+            // 🔥 Send to WebSocket with the correct event name!
+            $this->send_to_websocket($queue_data, 'proceed_to_payment');
+
+            echo json_encode([
+                'status' => 'success',
+                'message' => "Queue item added successfully to Payment. Your queue number is $queue_number.",
+                'queue_number' => $queue_number,
+                'proceed_url' => $proceed_url
+            ]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to add to the Payment queue.']);
+        }
     }
 
     public function add_to_fireprotection()
@@ -223,32 +431,92 @@ class controller_queueing extends CI_Controller
         $name = $this->input->post('name');
         $reason = $this->input->post('reason');
 
-        $this->model_queueing->add_to_fireprotection($name, $reason);
+        // Ensure correct queue numbering
+        $max_position = $this->db->select_max('position')
+            ->where('status', 'fireprotection')
+            ->get('queue')
+            ->row()->position;
 
-        echo json_encode(['status' => 'success', 'message' => 'Queue item added successfully to Fire Protection.']);
+        $new_position = $max_position ? $max_position + 1 : 1;
+
+        // Insert into the Fire Protection queue
+        $queue_number = $this->model_queueing->add_to_fireprotection($name, $reason);
+
+        if ($queue_number) {
+            // Fetch newly inserted queue item with created_at
+            $new_item = $this->db->where('queue_number', $queue_number)->get('queue')->row();
+
+            if (!$new_item || empty($new_item->id)) {
+                echo json_encode(['status' => 'error', 'message' => 'Failed to fetch the new queue item.']);
+                return;
+            }
+
+            $queue_id = $new_item->id;
+            $proceed_url = base_url("index.php/controller_queueing/proceed_to_nextstep/{$queue_id}");
+
+            $queue_data = [
+                'queue_id' => (string) $queue_id,
+                'id' => $queue_id,
+                'queue_number' => $queue_number,
+                'name' => $name,
+                'reason' => $reason,
+                'status' => 'fireprotection', // Set status correctly
+                'position' => $new_position,
+                'processing_by' => '',
+                'proceed_url' => $proceed_url,
+                'created_at' => $new_item->created_at // ✅ Fetch timestamp from DB
+            ];
+
+            // 🔥 Send to WebSocket with the correct event name!
+            $this->send_to_websocket($queue_data, 'proceed_to_fireprotection');
+
+            echo json_encode([
+                'status' => 'success',
+                'message' => "Queue item added successfully to Fire Protection. Your queue number is $queue_number.",
+                'queue_number' => $queue_number,
+                'proceed_url' => $proceed_url
+            ]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to add to the Fire Protection queue.']);
+        }
     }
-
 
     public function proceed_to_backroom($id)
     {
-        header('Content-Type: application/json'); 
+        header('Content-Type: application/json');
 
-        $queue_item = $this->db->where('id', $id)->get('queue')->row();
+        // Fetch the queue item
+        $queue_item = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+            ->where('id', $id)
+            ->get('queue')
+            ->row();
+
         if (!$queue_item) {
             http_response_code(400);
             echo json_encode(['status' => 'error', 'message' => 'Queue item not found.']);
             exit;
         }
 
-        $max_position = $this->db->select_max('position')->where('status', 'backroom')->get('queue')->row()->position;
+        // Determine new position for "backroom" status
+        $max_position = $this->db->select_max('position')
+            ->where('status', 'backroom')
+            ->get('queue')
+            ->row()->position;
+
         $new_position = $max_position ? $max_position + 1 : 1;
 
+        // Update queue status to "backroom" and clear `processing_by`
         $this->db->where('id', $id)->update('queue', [
             'status' => 'backroom',
-            'position' => $new_position
+            'position' => $new_position,
+            'processing_by' => NULL // ✅ Clear processing_by
         ]);
 
-        $updated_item = $this->db->where('id', $id)->get('queue')->row();
+        // Fetch the updated item (ensures database update is reflected)
+        $updated_item = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+            ->where('id', $id)
+            ->get('queue')
+            ->row();
 
         if (!$updated_item) {
             http_response_code(400);
@@ -260,116 +528,774 @@ class controller_queueing extends CI_Controller
 
         log_message('debug', "Generated proceed_url: {$proceed_url}");
 
+        // ✅ Include `created_at` in the WebSocket message
         $queue_data = [
             'status' => 'success',
-            'action' => 'proceed_to_backroom',  
+            'action' => 'proceed_to_backroom',
             'queue_id' => $updated_item->id,
             'queue_number' => $updated_item->queue_number,
             'name' => $updated_item->name,
             'reason' => $updated_item->reason,
             'status_text' => 'backroom',
-            'processing_by' => '',
-            'proceed_url' => $proceed_url 
+            'processing_by' => NULL, // ✅ Set processing_by to NULL
+            'created_at' => $updated_item->created_at,
+            'proceed_url' => $proceed_url
         ];
 
         $this->send_to_websocket($queue_data, 'proceed_to_backroom');
 
-        
         echo json_encode([
             'status' => 'success',
             'message' => 'Queue item successfully proceeded to Backroom.',
             'proceed_url' => $proceed_url,
-            'queue_id' => $updated_item->id 
+            'queue_id' => $updated_item->id,
+            'created_at' => $updated_item->created_at
         ]);
         exit;
     }
 
     public function proceed_to_examiners($id)
     {
-        $this->model_queueing->proceed_queue($id, 'examiner');
+        header('Content-Type: application/json');
 
-        echo json_encode(['status' => 'success', 'message' => 'Queue item successfully proceeded to Examiners.']);
+        // Fetch the queue item
+        $queue_item = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+            ->where('id', $id)
+            ->get('queue')
+            ->row();
+
+        if (!$queue_item) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Queue item not found.']);
+            exit;
+        }
+
+        // Determine new position for "examiner" status
+        $max_position = $this->db->select_max('position')
+            ->where('status', 'examiner')
+            ->get('queue')
+            ->row()->position;
+
+        $new_position = $max_position ? $max_position + 1 : 1;
+
+        // Update queue status to "examiner" and clear `processing_by`
+        $this->db->where('id', $id)->update('queue', [
+            'status' => 'examiner',
+            'position' => $new_position,
+            'processing_by' => NULL // ✅ Clear processing_by
+        ]);
+
+        // Fetch the updated item
+        $updated_item = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+            ->where('id', $id)
+            ->get('queue')
+            ->row();
+
+        if (!$updated_item) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Queue item not found after update.']);
+            exit;
+        }
+
+        $proceed_url = base_url("controller_queueing/proceed_to_examiners/{$updated_item->id}");
+
+        log_message('debug', "Generated proceed_url: {$proceed_url}");
+
+        // ✅ Include `created_at` in the WebSocket message
+        $queue_data = [
+            'status' => 'success',
+            'action' => 'proceed_to_examiners',
+            'queue_id' => $updated_item->id,
+            'queue_number' => $updated_item->queue_number,
+            'name' => $updated_item->name,
+            'reason' => $updated_item->reason,
+            'status_text' => 'examiner',
+            'processing_by' => NULL, // ✅ Set processing_by to NULL
+            'created_at' => $updated_item->created_at,
+            'proceed_url' => $proceed_url
+        ];
+
+        $this->send_to_websocket($queue_data, 'proceed_to_examiners');
+
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Queue item successfully proceeded to Examiners.',
+            'proceed_url' => $proceed_url,
+            'queue_id' => $updated_item->id,
+            'created_at' => $updated_item->created_at
+        ]);
+        exit;
     }
-
     public function proceed_to_businesstax($id)
     {
-        $this->model_queueing->proceed_queue($id, 'businesstax');
+        header('Content-Type: application/json');
 
-        echo json_encode(['status' => 'success', 'message' => 'Queue item successfully proceeded to Business Tax.']);
+        // Fetch the queue item
+        $queue_item = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+            ->where('id', $id)
+            ->get('queue')
+            ->row();
+
+        if (!$queue_item) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Queue item not found.']);
+            exit;
+        }
+
+        // Determine new position for "businesstax" status
+        $max_position = $this->db->select_max('position')
+            ->where('status', 'businesstax')
+            ->get('queue')
+            ->row()->position;
+
+        $new_position = $max_position ? $max_position + 1 : 1;
+
+        // Update queue status to "businesstax" and clear `processing_by`
+        $this->db->where('id', $id)->update('queue', [
+            'status' => 'businesstax',
+            'position' => $new_position,
+            'processing_by' => NULL // ✅ Clear processing_by
+        ]);
+
+        // Fetch the updated item
+        $updated_item = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+            ->where('id', $id)
+            ->get('queue')
+            ->row();
+
+        if (!$updated_item) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Queue item not found after update.']);
+            exit;
+        }
+
+        $proceed_url = base_url("controller_queueing/proceed_to_businesstax/{$updated_item->id}");
+
+        log_message('debug', "Generated proceed_url: {$proceed_url}");
+
+        // ✅ Include `created_at` in the WebSocket message
+        $queue_data = [
+            'status' => 'success',
+            'action' => 'proceed_to_businesstax',
+            'queue_id' => $updated_item->id,
+            'queue_number' => $updated_item->queue_number,
+            'name' => $updated_item->name,
+            'reason' => $updated_item->reason,
+            'status_text' => 'businesstax',
+            'processing_by' => NULL, // ✅ Set processing_by to NULL
+            'created_at' => $updated_item->created_at,
+            'proceed_url' => $proceed_url
+        ];
+
+        $this->send_to_websocket($queue_data, 'proceed_to_businesstax');
+
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Queue item successfully proceeded to Business Tax.',
+            'proceed_url' => $proceed_url,
+            'queue_id' => $updated_item->id,
+            'created_at' => $updated_item->created_at
+        ]);
+        exit;
     }
 
     public function proceed_to_payment($id)
     {
-        $this->model_queueing->proceed_queue($id, 'payment');
+        header('Content-Type: application/json');
 
-        echo json_encode(['status' => 'success', 'message' => 'Queue item successfully proceeded to Payment.']);
+        // Fetch the queue item
+        $queue_item = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+            ->where('id', $id)
+            ->get('queue')
+            ->row();
+
+        if (!$queue_item) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Queue item not found.']);
+            exit;
+        }
+
+        // Determine new position for "payment" status
+        $max_position = $this->db->select_max('position')
+            ->where('status', 'payment')
+            ->get('queue')
+            ->row()->position;
+
+        $new_position = $max_position ? $max_position + 1 : 1;
+
+        // Update queue status to "payment" and clear `processing_by`
+        $this->db->where('id', $id)->update('queue', [
+            'status' => 'payment',
+            'position' => $new_position,
+            'processing_by' => NULL // ✅ Clear processing_by
+        ]);
+
+        // Fetch the updated item
+        $updated_item = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+            ->where('id', $id)
+            ->get('queue')
+            ->row();
+
+        if (!$updated_item) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Queue item not found after update.']);
+            exit;
+        }
+
+        $proceed_url = base_url("controller_queueing/proceed_to_payment/{$updated_item->id}");
+
+        log_message('debug', "Generated proceed_url: {$proceed_url}");
+
+        // ✅ Include `created_at` in the WebSocket message
+        $queue_data = [
+            'status' => 'success',
+            'action' => 'proceed_to_payment',
+            'queue_id' => $updated_item->id,
+            'queue_number' => $updated_item->queue_number,
+            'name' => $updated_item->name,
+            'reason' => $updated_item->reason,
+            'status_text' => 'payment',
+            'processing_by' => NULL, // ✅ Set processing_by to NULL
+            'created_at' => $updated_item->created_at,
+            'proceed_url' => $proceed_url
+        ];
+
+        $this->send_to_websocket($queue_data, 'proceed_to_payment');
+
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Queue item successfully proceeded to Payment.',
+            'proceed_url' => $proceed_url,
+            'queue_id' => $updated_item->id,
+            'created_at' => $updated_item->created_at
+        ]);
+        exit;
     }
 
     public function proceed_to_fireprotection($id)
     {
-        $this->model_queueing->proceed_queue($id, 'fireprotection');
+        header('Content-Type: application/json');
 
-        echo json_encode(['status' => 'success', 'message' => 'Queue item successfully proceeded to Fire Protection.']);
+        // Fetch the queue item
+        $queue_item = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+            ->where('id', $id)
+            ->get('queue')
+            ->row();
+
+        if (!$queue_item) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Queue item not found.']);
+            exit;
+        }
+
+        // Determine new position for "fireprotection" status
+        $max_position = $this->db->select_max('position')
+            ->where('status', 'fireprotection')
+            ->get('queue')
+            ->row()->position;
+
+        $new_position = $max_position ? $max_position + 1 : 1;
+
+        // Update queue status to "fireprotection" and clear `processing_by`
+        $this->db->where('id', $id)->update('queue', [
+            'status' => 'fireprotection',
+            'position' => $new_position,
+            'processing_by' => NULL // ✅ Clear processing_by
+        ]);
+
+        // Fetch the updated item
+        $updated_item = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+            ->where('id', $id)
+            ->get('queue')
+            ->row();
+
+        if (!$updated_item) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Queue item not found after update.']);
+            exit;
+        }
+
+        $proceed_url = base_url("controller_queueing/proceed_to_fireprotection/{$updated_item->id}");
+
+        log_message('debug', "Generated proceed_url: {$proceed_url}");
+
+        // ✅ Include `created_at` in the WebSocket message
+        $queue_data = [
+            'status' => 'success',
+            'action' => 'proceed_to_fireprotection',
+            'queue_id' => $updated_item->id,
+            'queue_number' => $updated_item->queue_number,
+            'name' => $updated_item->name,
+            'reason' => $updated_item->reason,
+            'status_text' => 'fireprotection',
+            'processing_by' => NULL, // ✅ Set processing_by to NULL
+            'created_at' => $updated_item->created_at,
+            'proceed_url' => $proceed_url
+        ];
+
+        $this->send_to_websocket($queue_data, 'proceed_to_fireprotection');
+
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Queue item successfully proceeded to Fire Protection.',
+            'proceed_url' => $proceed_url,
+            'queue_id' => $updated_item->id,
+            'created_at' => $updated_item->created_at
+        ]);
+        exit;
     }
 
     public function proceed_to_releasing($id)
     {
-        $this->model_queueing->proceed_queue($id, 'releasing');
+        header('Content-Type: application/json');
 
-        echo json_encode(['status' => 'success', 'message' => 'Queue item successfully proceeded to Releasing.']);
+        // Fetch the queue item
+        $queue_item = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+            ->where('id', $id)
+            ->get('queue')
+            ->row();
+
+        if (!$queue_item) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Queue item not found.']);
+            exit;
+        }
+
+        // Determine new position for "releasing" status
+        $max_position = $this->db->select_max('position')
+            ->where('status', 'releasing')
+            ->get('queue')
+            ->row()->position;
+
+        $new_position = $max_position ? $max_position + 1 : 1;
+
+        // Update queue status to "releasing" and clear `processing_by`
+        $this->db->where('id', $id)->update('queue', [
+            'status' => 'releasing',
+            'position' => $new_position,
+            'processing_by' => NULL // ✅ Clear processing_by
+        ]);
+
+        // Fetch the updated item
+        $updated_item = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+            ->where('id', $id)
+            ->get('queue')
+            ->row();
+
+        if (!$updated_item) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Queue item not found after update.']);
+            exit;
+        }
+
+        $proceed_url = base_url("controller_queueing/proceed_to_releasing/{$updated_item->id}");
+
+        log_message('debug', "Generated proceed_url: {$proceed_url}");
+
+        // ✅ Include `created_at` in the WebSocket message
+        $queue_data = [
+            'status' => 'success',
+            'action' => 'proceed_to_releasing',
+            'queue_id' => $updated_item->id,
+            'queue_number' => $updated_item->queue_number,
+            'name' => $updated_item->name,
+            'reason' => $updated_item->reason,
+            'status_text' => 'releasing',
+            'processing_by' => NULL, // ✅ Set processing_by to NULL
+            'created_at' => $updated_item->created_at,
+            'proceed_url' => $proceed_url
+        ];
+
+        $this->send_to_websocket($queue_data, 'proceed_to_releasing');
+
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Queue item successfully proceeded to Releasing.',
+            'proceed_url' => $proceed_url,
+            'queue_id' => $updated_item->id,
+            'created_at' => $updated_item->created_at
+        ]);
+        exit;
     }
+
     public function mark_as_processing()
     {
         header('Content-Type: application/json');
-    
+
         $queue_id = $this->input->post('queue_id', TRUE);
-        $user_id = $this->session->userdata('user_id'); // ✅ Get logged-in user ID
-    
+        // Instead of user_id, now we retrieve the username from session
+        $username = $this->session->userdata('username');
+
         if (!$queue_id) {
             echo json_encode(['status' => 'error', 'message' => 'Queue ID is missing']);
             return;
         }
-    
-        $queue = $this->db->get_where('queue', ['id' => $queue_id])->row();
+
+        // Retrieve the queue record
+        $queue = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+            ->get_where('queue', ['id' => $queue_id])
+            ->row();
+
         if (!$queue) {
             echo json_encode(['status' => 'error', 'message' => 'Queue not found']);
             return;
         }
-    
+
         if ($queue->processing_by) {
             echo json_encode(['status' => 'error', 'message' => 'Already being processed']);
             return;
         }
-    
+
+        // Update the queue record with the username
         $this->db->where('id', $queue_id);
-        $update = $this->db->update('queue', ['processing_by' => $user_id]); // ✅ Store processing user ID
-    
+        $update = $this->db->update('queue', ['processing_by' => $username]);
+
         if ($update) {
+            $updatedQueue = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+                ->get_where('queue', ['id' => $queue_id])
+                ->row();
+
+            // Log created_at before sending WebSocket message (if needed)
+            error_log("✅ Final Created At: " . json_encode($updatedQueue->created_at));
+
             $message = json_encode([
                 'status' => 'success',
                 'action' => 'update_queue',
                 'queue_id' => $queue_id,
-                'processing_by' => $user_id // ✅ Include processing user ID
+                'queue_number' => $updatedQueue->queue_number ?? '',
+                'name' => $updatedQueue->name ?? '',
+                'reason' => $updatedQueue->reason ?? '',
+                'status_text' => 'processing',
+                // Return the username here instead of user id:
+                'processing_by' => $username,
+                'created_at' => !empty($updatedQueue->created_at) ? $updatedQueue->created_at : date("Y-m-d H:i:s")
             ]);
-    
+
             $this->sendWebSocketMessage($message);
-    
+
             echo json_encode([
                 'status' => 'success',
                 'message' => 'Queue marked as processing',
                 'queue_id' => $queue_id,
-                'processing_by' => $user_id
+                'processing_by' => $username,
+                'created_at' => $updatedQueue->created_at ?? date("Y-m-d H:i:s")
             ]);
             return;
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Database update failed']);
             return;
         }
-    }    
+    }
+
+
+    public function mark_as_processing_backroom()
+    {
+        header('Content-Type: application/json');
+
+        $queue_id = $this->input->post('queue_id', TRUE);
+        $user_id = $this->session->userdata('user_id');
+
+        if (!$queue_id) {
+            echo json_encode(['status' => 'error', 'message' => 'Queue ID is missing']);
+            return;
+        }
+
+        $queue = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+            ->get_where('queue', ['id' => $queue_id])
+            ->row();
+
+        if (!$queue) {
+            echo json_encode(['status' => 'error', 'message' => 'Queue not found']);
+            return;
+        }
+
+        // ✅ Always overwrite processing_by with the new backroom user_id
+        $this->db->where('id', $queue_id);
+        $update = $this->db->update('queue', ['processing_by' => $user_id]);
+
+        if ($update) {
+            $updatedQueue = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+                ->get_where('queue', ['id' => $queue_id])
+                ->row();
+
+            // Log created_at before sending WebSocket message
+            error_log("✅ Final Created At: " . json_encode($updatedQueue->created_at));
+
+            $message = json_encode([
+                'status' => 'success',
+                'action' => 'update_queue',
+                'queue_id' => $queue_id,
+                'queue_number' => $updatedQueue->queue_number ?? '',
+                'name' => $updatedQueue->name ?? '',
+                'reason' => $updatedQueue->reason ?? '',
+                'status_text' => 'processing',
+                'processing_by' => $user_id,
+                'created_at' => !empty($updatedQueue->created_at) ? $updatedQueue->created_at : date("Y-m-d H:i:s") // Ensure fallback timestamp
+            ]);
+
+            $this->sendWebSocketMessage($message);
+
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Queue marked as processing by backroom',
+                'queue_id' => $queue_id,
+                'processing_by' => $user_id,
+                'created_at' => $updatedQueue->created_at ?? date("Y-m-d H:i:s") // Ensure fallback
+            ]);
+            return;
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Database update failed']);
+            return;
+        }
+    }
+
+    public function mark_as_processing_examiners()
+    {
+        header('Content-Type: application/json');
+
+        $queue_id = $this->input->post('queue_id', TRUE);
+        $user_id = $this->session->userdata('user_id');
+
+        if (!$queue_id) {
+            echo json_encode(['status' => 'error', 'message' => 'Queue ID is missing']);
+            return;
+        }
+
+        $queue = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+            ->get_where('queue', ['id' => $queue_id])
+            ->row();
+
+        if (!$queue) {
+            echo json_encode(['status' => 'error', 'message' => 'Queue not found']);
+            return;
+        }
+
+        // ✅ Assign the queue to the current examiner (user_id)
+        $this->db->where('id', $queue_id);
+        $update = $this->db->update('queue', ['processing_by' => $user_id]);
+
+        if ($update) {
+            $updatedQueue = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+                ->get_where('queue', ['id' => $queue_id])
+                ->row();
+
+            // Log created_at before sending WebSocket message
+            error_log("✅ Final Created At: " . json_encode($updatedQueue->created_at));
+
+            $message = json_encode([
+                'status' => 'success',
+                'action' => 'update_queue',
+                'queue_id' => $queue_id,
+                'queue_number' => $updatedQueue->queue_number ?? '',
+                'name' => $updatedQueue->name ?? '',
+                'reason' => $updatedQueue->reason ?? '',
+                'status_text' => 'processing',
+                'processing_by' => $user_id,
+                'created_at' => !empty($updatedQueue->created_at) ? $updatedQueue->created_at : date("Y-m-d H:i:s") // Ensure fallback timestamp
+            ]);
+
+            $this->sendWebSocketMessage($message);
+
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Queue marked as processing by examiner',
+                'queue_id' => $queue_id,
+                'processing_by' => $user_id,
+                'created_at' => $updatedQueue->created_at ?? date("Y-m-d H:i:s") // Ensure fallback
+            ]);
+            return;
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Database update failed']);
+            return;
+        }
+    }
+
+    public function mark_as_processing_business_tax()
+    {
+        header('Content-Type: application/json');
+
+        $queue_id = $this->input->post('queue_id', TRUE);
+        $user_id = $this->session->userdata('user_id');
+
+        if (!$queue_id) {
+            echo json_encode(['status' => 'error', 'message' => 'Queue ID is missing']);
+            return;
+        }
+
+        $queue = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+            ->get_where('queue', ['id' => $queue_id])
+            ->row();
+
+        if (!$queue) {
+            echo json_encode(['status' => 'error', 'message' => 'Queue not found']);
+            return;
+        }
+
+        // ✅ Assign the queue to the current Business Tax processor (user_id)
+        $this->db->where('id', $queue_id);
+        $update = $this->db->update('queue', ['processing_by' => $user_id]);
+
+        if ($update) {
+            $updatedQueue = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+                ->get_where('queue', ['id' => $queue_id])
+                ->row();
+
+            // Log created_at before sending WebSocket message
+            error_log("✅ Final Created At (Business Tax): " . json_encode($updatedQueue->created_at));
+
+            $message = json_encode([
+                'status' => 'success',
+                'action' => 'update_queue',
+                'queue_id' => $queue_id,
+                'queue_number' => $updatedQueue->queue_number ?? '',
+                'name' => $updatedQueue->name ?? '',
+                'reason' => $updatedQueue->reason ?? '',
+                'status_text' => 'processing',
+                'processing_by' => $user_id,
+                'created_at' => !empty($updatedQueue->created_at) ? $updatedQueue->created_at : date("Y-m-d H:i:s") // Ensure fallback timestamp
+            ]);
+
+            $this->sendWebSocketMessage($message);
+
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Queue marked as processing by Business Tax processor',
+                'queue_id' => $queue_id,
+                'processing_by' => $user_id,
+                'created_at' => $updatedQueue->created_at ?? date("Y-m-d H:i:s") // Ensure fallback
+            ]);
+            return;
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Database update failed']);
+            return;
+        }
+    }
+
+    public function mark_as_processing_payment()
+    {
+        header('Content-Type: application/json');
+
+        $queue_id = $this->input->post('queue_id', TRUE);
+        $user_id = $this->session->userdata('user_id');
+
+        if (!$queue_id) {
+            echo json_encode(['status' => 'error', 'message' => 'Queue ID is missing']);
+            return;
+        }
+
+        $queue = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+            ->get_where('queue', ['id' => $queue_id])
+            ->row();
+
+        if (!$queue) {
+            echo json_encode(['status' => 'error', 'message' => 'Queue not found']);
+            return;
+        }
+
+        // ✅ Assign the queue to the current Payment processor (user_id)
+        $this->db->where('id', $queue_id);
+        $update = $this->db->update('queue', ['processing_by' => $user_id]);
+
+        if ($update) {
+            $updatedQueue = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+                ->get_where('queue', ['id' => $queue_id])
+                ->row();
+
+            // Log created_at before sending WebSocket message
+            error_log("✅ Final Created At (Payment): " . json_encode($updatedQueue->created_at));
+
+            $message = json_encode([
+                'status' => 'success',
+                'action' => 'update_payment_queue', // Different action name for WebSocket
+                'queue_id' => $queue_id,
+                'queue_number' => $updatedQueue->queue_number ?? '',
+                'name' => $updatedQueue->name ?? '',
+                'reason' => $updatedQueue->reason ?? '',
+                'status_text' => 'processing',
+                'processing_by' => $user_id,
+                'created_at' => !empty($updatedQueue->created_at) ? $updatedQueue->created_at : date("Y-m-d H:i:s") // Ensure fallback timestamp
+            ]);
+
+            $this->sendWebSocketMessage($message);
+
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Queue marked as processing by Payment processor',
+                'queue_id' => $queue_id,
+                'processing_by' => $user_id,
+                'created_at' => $updatedQueue->created_at ?? date("Y-m-d H:i:s") // Ensure fallback
+            ]);
+            return;
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Database update failed']);
+            return;
+        }
+    }
+
+    public function mark_as_processing_fireprotection()
+    {
+        header('Content-Type: application/json');
+
+        $queue_id = $this->input->post('queue_id', TRUE);
+        $user_id = $this->session->userdata('user_id');
+
+        if (!$queue_id) {
+            echo json_encode(['status' => 'error', 'message' => 'Queue ID is missing']);
+            return;
+        }
+
+        $queue = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+            ->get_where('queue', ['id' => $queue_id])
+            ->row();
+
+        if (!$queue) {
+            echo json_encode(['status' => 'error', 'message' => 'Queue not found']);
+            return;
+        }
+
+        // ✅ Assign the queue to the current Fire Protection processor (user_id)
+        $this->db->where('id', $queue_id);
+        $update = $this->db->update('queue', ['processing_by' => $user_id]);
+
+        if ($update) {
+            $updatedQueue = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
+                ->get_where('queue', ['id' => $queue_id])
+                ->row();
+
+            // Log created_at before sending WebSocket message
+            error_log("✅ Final Created At (Fire Protection): " . json_encode($updatedQueue->created_at));
+
+            $message = json_encode([
+                'status' => 'success',
+                'action' => 'update_fireprotection_queue', // 🔥 Different action name for WebSocket
+                'queue_id' => $queue_id,
+                'queue_number' => $updatedQueue->queue_number ?? '',
+                'name' => $updatedQueue->name ?? '',
+                'reason' => $updatedQueue->reason ?? '',
+                'status_text' => 'processing',
+                'processing_by' => $user_id,
+                'created_at' => !empty($updatedQueue->created_at) ? $updatedQueue->created_at : date("Y-m-d H:i:s") // Ensure fallback timestamp
+            ]);
+
+            $this->sendWebSocketMessage($message);
+
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Queue marked as processing by Fire Protection processor',
+                'queue_id' => $queue_id,
+                'processing_by' => $user_id,
+                'created_at' => $updatedQueue->created_at ?? date("Y-m-d H:i:s") // Ensure fallback
+            ]);
+            return;
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Database update failed']);
+            return;
+        }
+    }
 
     private function sendWebSocketMessage($message)
     {
-        $sock = fsockopen("localhost", 8080); 
+        $sock = fsockopen("localhost", 8080);
 
         if ($sock) {
             fwrite($sock, $message);
