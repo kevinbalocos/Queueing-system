@@ -236,14 +236,23 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
 
       if (queueContainer.children.length < 20) {
         queueContainer.appendChild(listItem);
-      } else {
+    } else {
         listItem.className = "p-3 bg-gray-50 border rounded-lg";
         listItem.innerHTML = `
-      ${data.queue_number} - ${data.name} (${data.reason})<br>
-      <span class="text-gray-500 text-xs">Added on: ${formatTimestamp(Date.now())}</span>
-    `;
+          ${data.queue_number} - ${data.name} (${data.reason})<br>
+          <span class="text-gray-500 text-xs">Added on: ${formatTimestamp(data.created_at)}</span>
+        `;
+
+        // Store data attributes explicitly for later retrieval
+        listItem.setAttribute("data-queue_id", data.queue_id);
+        listItem.setAttribute("data-queue_number", data.queue_number);
+        listItem.setAttribute("data-name", data.name);
+        listItem.setAttribute("data-reason", data.reason);
+        listItem.setAttribute("data-created_at", data.created_at);
+        listItem.setAttribute("data-proceed_url", data.proceed_url || `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_releasing/${data.queue_id}`);
+
         queueList.appendChild(listItem);
-      }
+    }
 
       updateGridLayout();
     }
@@ -268,14 +277,22 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
       if (queueContainer.children.length < 20 && queueList.children.length > 0) {
         const firstRightItem = queueList.children[0];
 
-        // Extract dataset properties, providing fallback defaults if missing
+        if (!firstRightItem) {
+          console.error("❌ No item found in the queue list!");
+          return;
+        }
+
+        console.log("First Right Item:", firstRightItem);
+        console.log("Dataset Attributes:", firstRightItem.dataset);
+
+        // Extract dataset properties, ensuring they exist
         const queueData = {
-          queue_id: firstRightItem.dataset.queue_id || null,
-          queue_number: firstRightItem.dataset.queue_number || "N/A",
-          name: firstRightItem.dataset.name || "Unknown",
-          reason: firstRightItem.dataset.reason || "No reason provided",
-          created_at: firstRightItem.dataset.created_at || new Date().toISOString(),
-          proceed_url: firstRightItem.dataset.proceed_url || `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_releasing/${firstRightItem.dataset.queue_id}`
+          queue_id: firstRightItem.getAttribute("data-queue_id") || null,
+          queue_number: firstRightItem.getAttribute("data-queue_number") || "N/A",
+          name: firstRightItem.getAttribute("data-name") || "Unknown",
+          reason: firstRightItem.getAttribute("data-reason") || "No reason provided",
+          created_at: firstRightItem.getAttribute("data-created_at") || new Date().toISOString(),
+          proceed_url: firstRightItem.getAttribute("data-proceed_url") || `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_releasing/${firstRightItem.getAttribute("data-queue_id")}`
         };
 
         if (!queueData.queue_id) {
@@ -283,25 +300,31 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
           return;
         }
 
-        const processingBy = firstRightItem.dataset.processing_by || "";
-        const isProcessing = processingBy ? true : false;
-        const statusText = isProcessing ? `Processing by ${processingBy}` : "Fire Protection";
-        const statusColor = isProcessing ? "text-red-500" : "text-green-500";
-        const processingDisabled = isProcessing ? "opacity-50 cursor-not-allowed" : "";
+        const movedTimestamp = new Date().toLocaleString("en-US", {
+          month: "short",
+          day: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true
+        });
+
+        queueData.created_at = movedTimestamp;
 
         const newQueueItem = document.createElement("div");
         newQueueItem.id = firstRightItem.id;
         newQueueItem.className = "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center shadow-md";
 
-        // Reassign dataset properties to new element
         Object.keys(queueData).forEach(key => {
           newQueueItem.dataset[key] = queueData[key];
         });
 
-        newQueueItem.innerHTML = createQueueItem(queueData, statusText, statusColor, processingDisabled);
+        newQueueItem.innerHTML = createQueueItem(queueData, "Fire Protection", "text-green-500", "");
 
         firstRightItem.remove();
         queueContainer.appendChild(newQueueItem);
+
+        console.log(`✅ Moved queue item (ID: ${queueData.queue_id}) to the left with timestamp: ${movedTimestamp}`);
       }
     }
 
