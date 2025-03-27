@@ -20,31 +20,44 @@ class controller_queueing extends CI_Controller
     }
     public function delete_queue($id)
     {
+        $this->output->set_content_type('application/json');
+
+        if ($this->input->server('REQUEST_METHOD') !== 'POST') {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid request method']);
+            return;
+        }
+
         $this->load->model('model_queueing');
 
-        // Ensure this is a POST request
-        if ($this->input->server('REQUEST_METHOD') === 'POST') {
-            if ($this->model_queueing->delete_queue($id)) {
-                echo json_encode([
-                    'status' => 'success',
-                    'message' => 'Queue record deleted successfully',
-                    'queue_id' => $id
-                ]);
-            } else {
-                echo json_encode([
-                    'status' => 'error',
-                    'message' => 'Failed to delete the queue record'
-                ]);
-            }
+        // Check if the queue item exists before deletion
+        $queue_item = $this->db->where('id', $id)->get('queue')->row();
+        if (!$queue_item) {
+            echo json_encode(['status' => 'error', 'message' => 'Queue item not found']);
+            return;
+        }
+
+        // Attempt to delete the queue item
+        if ($this->model_queueing->delete_queue($id)) {
+            $response = [
+                'status' => 'success',
+                'message' => 'Queue record deleted successfully',
+                'queue_id' => (string) $id,
+                'action' => 'delete_queue'
+            ];
+
+            echo json_encode($response);
+            ob_flush();
+            flush(); // Ensure immediate output
+
+            // Send WebSocket message to notify all clients
+            $this->send_to_websocket($response, 'delete_queue');
         } else {
             echo json_encode([
                 'status' => 'error',
-                'message' => 'Invalid request method'
+                'message' => 'Failed to delete the queue record'
             ]);
         }
     }
-
-
 
     // Load Backroom View
     public function BackRoom()
@@ -1237,7 +1250,7 @@ class controller_queueing extends CI_Controller
         header('Content-Type: application/json');
 
         $queue_id = $this->input->post('queue_id', TRUE);
-        $user_id = $this->session->userdata('user_id');
+        $username = $this->session->userdata('username');
 
         if (!$queue_id) {
             echo json_encode(['status' => 'error', 'message' => 'Queue ID is missing']);
@@ -1255,7 +1268,7 @@ class controller_queueing extends CI_Controller
 
         // ✅ Assign the queue to the current Fire Protection processor (user_id)
         $this->db->where('id', $queue_id);
-        $update = $this->db->update('queue', ['processing_by' => $user_id]);
+        $update = $this->db->update('queue', ['processing_by' => $username]);
 
         if ($update) {
             $updatedQueue = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
@@ -1273,7 +1286,7 @@ class controller_queueing extends CI_Controller
                 'name' => $updatedQueue->name ?? '',
                 'reason' => $updatedQueue->reason ?? '',
                 'status_text' => 'processing',
-                'processing_by' => $user_id,
+                'processing_by' => $username,
                 'created_at' => !empty($updatedQueue->created_at) ? $updatedQueue->created_at : date("Y-m-d H:i:s") // Ensure fallback timestamp
             ]);
 
@@ -1283,7 +1296,7 @@ class controller_queueing extends CI_Controller
                 'status' => 'success',
                 'message' => 'Queue marked as processing by Fire Protection processor',
                 'queue_id' => $queue_id,
-                'processing_by' => $user_id,
+                'processing_by' => $username,
                 'created_at' => $updatedQueue->created_at ?? date("Y-m-d H:i:s") // Ensure fallback
             ]);
             return;
