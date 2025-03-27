@@ -31,7 +31,6 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
 
 <body class="bg-gray-100">
   <!-- ✅ Navbar -->
-  <!-- ✅ Navbar -->
   <nav class="bg-white text-cyan-700 fixed top-0 left-0 w-full shadow-lg z-10">
     <div class="px-4">
       <div class="flex justify-between items-center py-4">
@@ -119,7 +118,7 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
               <div class="pt-2">
                 <p class="text-gray-500 text-sm text-right pb-10">
                   <span
-                    class="status-text <?= $item->processing_by ? 'bg-cyan-100 text-cyan-500 rounded-full px-3 py-1' : 'bg-cyan-100 text-cyan-500 rounded-full px-3 py-1'; ?> font-semibold">
+                    class="status-text <?= $item->processing_by ? 'bg-cyan-100 text-red-500 rounded-full px-3 py-1' : 'bg-cyan-100 text-cyan-500 rounded-full px-3 py-1'; ?> font-semibold">
                     <?= $item->processing_by ? "processing by {$item->processing_by}" : "Waiting"; ?>
                   </span>
                 </p>
@@ -243,8 +242,6 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
     </div>
   </div>
 
-
-
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       const socket = new WebSocket("ws://localhost:8080");
@@ -271,6 +268,9 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
           } else if (data.action === "proceed_to_backroom") {
             console.log(`Queue ID ${data.queue_id} proceeding to Backroom...`);
 
+            removeQueueItem(data.queue_id);
+          } else if (data.action === "delete_queue") {
+            console.log(`Queue ID ${data.queue_id} deleted.`);
             removeQueueItem(data.queue_id);
           }
         } catch (error) {
@@ -355,7 +355,7 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
     <!-- Button Container (pushed to the bottom) -->
     <div class="flex justify-between items-center mt-auto pt-4 border-t">
       <div class="flex space-x-2">
-        <button class="proceed-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg" 
+        <button class="proceed-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg opacity-50 cursor-not-allowed" 
                 data-id="${data.queue_id}" data-url="${proceedUrl}" disabled>
           <i class="fa-solid fa-circle-check text-2xl"></i>
         </button>
@@ -379,25 +379,36 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
         } else {
           listItem.className = "p-5 bg-white border border-cyan-400 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:bg-cyan-50 flex flex-col space-y-4";
           listItem.innerHTML = `
-          <div class="flex items-center gap-4">
-     <div class="w-12 h-12 flex items-center justify-center text-white font-bold text-xl bg-cyan-600 rounded-full shadow-md">${data.queue_number}</div>
-    <div class="flex flex-col"> <div class="text-lg font-semibold text-cyan-900">${data.name} </div>
+ <div class="flex items-center gap-4">
+               <!-- Queue Number -->
+               <div class="w-12 h-12 flex items-center justify-center text-white font-bold text-xl 
+                     bg-cyan-600 rounded-full shadow-md">
+                     ${data.queue_number}
+               </div>
 
-      <span class="text-gray-500 text-xs"> ${formattedCreatedAt}</span>
-    </div> 
-    </div>
-    <div class="mt-3 flex justify-end">
-         <span class="text-sm px-4 py-2 rounded-full bg-cyan-100 text-cyan-800 font-medium shadow-sm">
-           ${data.reason}
-         </span>
-       </div>
+               <!-- User Info -->
+               <div class="flex flex-col">
+                 <div class="text-lg font-semibold text-cyan-900">
+                 ${data.name}
+                 </div>
+                 <span class="text-xs text-gray-500">
+                 ${formattedCreatedAt}
+                 </span>
+               </div>
+             </div>
+
+             <!-- Queue Reason Badge -->
+             <div class="mt-3 flex justify-end">
+               <span class="text-sm px-4 py-2 rounded-lg bg-cyan-100 text-cyan-800 font-medium shadow-sm">
+                 ${data.reason}
+               </span>
+             </div>
     `;
           queueList.appendChild(listItem);
         }
 
         updateGridLayout();
       }
-
 
 
       function removeQueueItem(queueId) {
@@ -477,7 +488,7 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
       <!-- Button Container -->
       <div class="flex justify-between items-center mt-auto pt-4 border-t">
         <div class="flex space-x-2">
-          <button class="proceed-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg" 
+          <button class="proceed-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg opacity-50 cursor-not-allowed" 
                   data-id="${queueId}" data-url="${proceedUrl}" disabled>
             <i class="fa-solid fa-circle-check text-2xl"></i>
           </button>
@@ -586,8 +597,19 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
       }).then((result) => {
         if (result.isConfirmed) {
           fetch(url, { method: "POST" }) // Ensure the request is handled correctly in CodeIgniter
-            .then(response => response.json())
-            .then(data => {
+            .then(response => response.text()) // First, get raw response
+            .then(text => {
+              console.log("Raw Response:", text); // Debugging
+
+              let data;
+              try {
+                data = JSON.parse(text.trim()); // Ensure valid JSON
+              } catch (error) {
+                console.error("JSON Parse Error:", error, "Response Text:", text);
+                Swal.fire("Error", "Invalid server response. Please try again.", "error");
+                return;
+              }
+
               if (data.status === "success") {
                 Toastify({
                   text: data.message,
