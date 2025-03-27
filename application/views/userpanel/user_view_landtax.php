@@ -194,7 +194,7 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
 
             <!-- Queue Reason Badge -->
             <div class="mt-3 flex justify-end">
-              <span class="text-sm px-4 py-2 rounded-lg bg-cyan-100 text-cyan-800 font-medium shadow-sm">
+              <span class="text-sm px-4 py-2 rounded-full bg-cyan-100 text-cyan-800 font-medium shadow-sm">
                 <?= $item->reason; ?>
               </span>
             </div>
@@ -377,16 +377,27 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
         if (queueContainer.children.length < 20) {
           queueContainer.appendChild(listItem);
         } else {
-          listItem.className = "p-3 bg-gray-50 border rounded-lg";
+          listItem.className = "p-5 bg-white border border-cyan-400 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:bg-cyan-50 flex flex-col space-y-4";
           listItem.innerHTML = `
-      ${data.queue_number} - ${data.name} (${data.reason})<br>
-      <span class="text-gray-500 text-xs">Added on: ${formattedCreatedAt}</span>
+          <div class="flex items-center gap-4">
+     <div class="w-12 h-12 flex items-center justify-center text-white font-bold text-xl bg-cyan-600 rounded-full shadow-md">${data.queue_number}</div>
+    <div class="flex flex-col"> <div class="text-lg font-semibold text-cyan-900">${data.name} </div>
+
+      <span class="text-gray-500 text-xs"> ${formattedCreatedAt}</span>
+    </div> 
+    </div>
+    <div class="mt-3 flex justify-end">
+         <span class="text-sm px-4 py-2 rounded-full bg-cyan-100 text-cyan-800 font-medium shadow-sm">
+           ${data.reason}
+         </span>
+       </div>
     `;
           queueList.appendChild(listItem);
         }
 
         updateGridLayout();
       }
+
 
 
       function removeQueueItem(queueId) {
@@ -743,7 +754,7 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
               if (data.status === "success") {
                 console.log("✅ Queue marked as processing:", data);
 
-                updateQueueStatus(queueId, `Processing by ${data.processing_by}`, "text-red-500", data.processing_by);
+                updateQueueStatus(queueId, `Processing by ${data.processing_by}`, "text-cyan-500", data.processing_by);
 
                 socket.send(JSON.stringify({
                   action: "update_queue",
