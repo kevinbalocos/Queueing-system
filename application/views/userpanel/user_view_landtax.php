@@ -776,7 +776,7 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
               if (data.status === "success") {
                 console.log("✅ Queue marked as processing:", data);
 
-                updateQueueStatus(queueId, `Processing by ${data.processing_by}`, "text-cyan-500", data.processing_by);
+                updateQueueStatus(queueId, `Processing by ${data.processing_by}`, "text-red-500", data.processing_by);
 
                 socket.send(JSON.stringify({
                   action: "update_queue",
