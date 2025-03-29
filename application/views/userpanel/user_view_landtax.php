@@ -274,6 +274,11 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
           } else if (data.action === "delete_queue") {
             console.log(`Queue ID ${data.queue_id} deleted.`);
             removeQueueItem(data.queue_id);
+          } else if (data.action === "update_queue") {
+            console.log("🔄 Real-time queue update received:", data);
+            updateQueueStatus(data.queue_id, "Processing by " + data.processing_by, "text-cyan-500", data.processing_by);
+          } else {
+            console.warn("Unknown action:", data.action);
           }
         } catch (error) {
           console.error("WebSocket JSON Error:", error);
