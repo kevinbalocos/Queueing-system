@@ -37,7 +37,7 @@ class model_queueing extends CI_Model
     public function delete_queue($id)
     {
         $this->db->where('id', $id);
-        return $this->db->delete('queue'); // Replace 'queue' with your actual table name if different
+        return $this->db->delete('queue'); 
     }
 
 

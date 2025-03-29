@@ -121,7 +121,7 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
               <!-- Status Container: placed just above the buttons -->
               <p class="text-gray-500 text-[calc(.7vw)] text-right pb-10">
                 <span
-                  class="status-text <?= $item->processing_by ? 'bg-cyan-100 text-red-500 rounded-full px-3 py-1' : 'bg-cyan-100 text-cyan-500 rounded-full px-3 py-1'; ?> font-semibold">
+                  class="status-text <?= $item->processing_by ? 'bg-cyan-100 text-cyan-500 rounded-full px-3 py-1' : 'bg-cyan-100 text-cyan-500 rounded-full px-3 py-1'; ?> font-semibold">
                   <?= $item->processing_by ? "processing by {$item->processing_by}" : "Waiting"; ?>
                 </span>
               </p>
@@ -414,7 +414,7 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
         // Set base class for list item.
         listItem.className = designType === "left"
           ? "flex flex-col flex-1 min-w-96 queue-item p-3 bg-white border rounded-lg m-1"
-          : "p-5 bg-white border border-cyan-400 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:bg-cyan-50 flex flex-col space-y-4";
+          : "p-5 bg-cyan-50 border border-cyan-400 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:bg-cyan-50 flex flex-col space-y-4";
 
         // Insert appropriate design.
         listItem.innerHTML = renderQueueItem(data, formattedCreatedAt, statusColor, processingText, designType);
