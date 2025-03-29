@@ -774,13 +774,25 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
       }
     }
 
+    /**
+     * Updates the grid layout of the queue containers dynamically.
+     */
+    function updateGridLayout() {
+      const queueContainer = document.getElementById("queue-container");
+      const queueList = document.getElementById("queueList");
 
+      if (!queueContainer || !queueList) {
+        console.warn("updateGridLayout: Queue elements not found.");
+        return;
+      }
+
+      const leftItems = queueContainer.children.length;
+      const rightItems = queueList.children.length;
+
+      queueContainer.style.gridTemplateColumns = `repeat(${leftItems < 5 ? leftItems : 5}, 1fr)`;
+      queueList.style.gridTemplateColumns = `repeat(${rightItems < 5 ? rightItems : 5}, 1fr)`;
+    }
   </script>
-
-
-
-
-
 
 
 </body>
