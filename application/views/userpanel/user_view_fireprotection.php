@@ -13,15 +13,15 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fire Protection Queue</title>
+  <link rel="stylesheet"
+  href="<?php echo base_url('assets/css/user_view_landtax.css?v=' . filemtime('assets/css/user_view_landtax.css')); ?>">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <style>
-    #queue-container {
-      height: 100vh;
-    }
+   
   </style>
 </head>
 
@@ -83,9 +83,9 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
   <div class="flex h-screen p-5 pt-20">
     <!-- Left Section (Now Serving - Fire Protection) -->
     <div class="flex-1 bg-white p-5 h-[calc(100vh-100px)] rounded-lg shadow-md overflow-y-auto">
-      <h2 class="text-2xl font-bold text-cyan-500 uppercase tracking-wider pb-5 text-center">
+      <!-- <h2 class="text-2xl font-bold text-cyan-500 uppercase tracking-wider pb-5 text-center">
         Now Serving - Fire Protection
-      </h2>
+      </h2> -->
       <div id="queue-container" class="flex flex-wrap gap-1 max-h-[calc(100vh-150px)] bg-cyan-100 overflow-y-auto">
         <?php if ($fireprotection): ?>
           <?php foreach ($left_items as $item): ?>
@@ -111,7 +111,7 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
               <p class="text-gray-500 text-[calc(.7vw)] text-right pb-10">
                 <span
                   class="status-text <?= $item->processing_by ? 'bg-cyan-100 text-red-500' : 'bg-cyan-100 text-cyan-500'; ?> rounded-full px-3 py-1 font-semibold">
-                  <?= $item->processing_by ? "Processing by {$item->processing_by}" : "Waiting"; ?>
+                  <?= $item->processing_by ? "Processing by {$item->processing_by}" : "Fire Protection"; ?>
                 </span>
               </p>
 

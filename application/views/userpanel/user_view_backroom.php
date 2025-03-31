@@ -13,18 +13,21 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
 
 <head>
   <!-- Font Awesome for icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Backroom Queue</title>
+  <link rel="stylesheet"
+    href="<?php echo base_url('assets/css/user_view_landtax.css?v=' . filemtime('assets/css/user_view_landtax.css')); ?>">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <style>
-    #queue-container {
-      height: 100vh;
+    html,
+    body {
+      overflow: hidden;
     }
   </style>
 
@@ -88,9 +91,9 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
   <div class="flex h-screen p-5 pt-20">
     <!-- Left Section (Now Serving - Backroom) -->
     <div class="flex-1 bg-white p-5 h-[calc(100vh-100px)] rounded-lg shadow-md overflow-y-auto">
-      <h2 class="text-2xl font-bold text-cyan-500 uppercase tracking-wider pb-5 text-center">
+      <!-- <h2 class="text-2xl font-bold text-cyan-500 uppercase tracking-wider pb-5 text-center">
         Now Serving - Backroom
-      </h2>
+      </h2> -->
       <div id="queue-container" class="flex flex-wrap gap-1 max-h-[calc(100vh-150px)] bg-cyan-100 overflow-y-auto">
         <?php if ($backroom): ?>
           <?php foreach ($left_items as $item): ?>
@@ -116,7 +119,7 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
               <p class="text-gray-500 text-[calc(.7vw)] text-right pb-10">
                 <span
                   class="status-text <?= $item->processing_by ? 'bg-cyan-100 text-red-500' : 'bg-cyan-100 text-cyan-500'; ?> rounded-full px-3 py-1 font-semibold">
-                  <?= $item->processing_by ? "Processing by {$item->processing_by}" : "Waiting"; ?>
+                  <?= $item->processing_by ? "Processing by {$item->processing_by}" : "Backroom"; ?>
                 </span>
               </p>
 
@@ -216,96 +219,96 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
     </div>
   </div>
 
-</body>
 
-<script>
-  const socket = new WebSocket("ws://localhost:8080");
 
-  socket.onopen = function () {
-    console.log("Connected to WebSocket server (Backroom)");
-  };
+  <script>
+    const socket = new WebSocket("ws://localhost:8080");
 
-  socket.onmessage = function (event) {
-    try {
-      const data = JSON.parse(event.data);
+    socket.onopen = function () {
+      console.log("Connected to WebSocket server (Backroom)");
+    };
 
-      if (data.action === "proceed_to_backroom") {
-        console.log("New backroom queue item received:", data);
-        addNewBackroomQueue(data);
-      } else if (data.action === "proceed_to_examiners") {
-        console.log("Queue item moved to Examiners:", data);
-        removeQueueItem(data.queue_id);
+    socket.onmessage = function (event) {
+      try {
+        const data = JSON.parse(event.data);
+
+        if (data.action === "proceed_to_backroom") {
+          console.log("New backroom queue item received:", data);
+          addNewBackroomQueue(data);
+        } else if (data.action === "proceed_to_examiners") {
+          console.log("Queue item moved to Examiners:", data);
+          removeQueueItem(data.queue_id);
+        }
+      } catch (error) {
+        console.error("Error parsing WebSocket data:", error);
       }
-    } catch (error) {
-      console.error("Error parsing WebSocket data:", error);
-    }
-  };
+    };
 
-  socket.onerror = function (error) {
-    console.error("WebSocket Error: ", error);
-  };
+    socket.onerror = function (error) {
+      console.error("WebSocket Error: ", error);
+    };
 
-  socket.onclose = function () {
-    console.log("Disconnected from WebSocket server");
-  };
+    socket.onclose = function () {
+      console.log("Disconnected from WebSocket server");
+    };
 
-  function addNewBackroomQueue(data) {
-    const queueContainer = document.getElementById("queue-container");
-    const queueList = document.getElementById("queueList");
+    function addNewBackroomQueue(data) {
+      const queueContainer = document.getElementById("queue-container");
+      const queueList = document.getElementById("queueList");
 
-    if (!queueContainer || !queueList) {
-      console.error("Error: Queue containers not found.");
-      return;
-    }
+      if (!queueContainer || !queueList) {
+        console.error("Error: Queue containers not found.");
+        return;
+      }
 
-    const queueId = `queue-item-${data.queue_id}`;
-    if (document.getElementById(queueId)) {
-      console.warn(`Queue item ${queueId} already exists.`);
-      return;
-    }
+      const queueId = `queue-item-${data.queue_id}`;
+      if (document.getElementById(queueId)) {
+        console.warn(`Queue item ${queueId} already exists.`);
+        return;
+      }
 
-    let timestamp = "Invalid Date"; // Default fallback
+      let timestamp = "Invalid Date"; // Default fallback
 
-    if (data.created_at) { // Ensure created_at exists
-      let createdAt = new Date(data.created_at);
+      if (data.created_at) { // Ensure created_at exists
+        let createdAt = new Date(data.created_at);
 
-      if (!isNaN(createdAt.getTime())) {
-        timestamp = createdAt.toLocaleString("en-US", {
-          month: "short",
-          day: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true
-        });
+        if (!isNaN(createdAt.getTime())) {
+          timestamp = createdAt.toLocaleString("en-US", {
+            month: "short",
+            day: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true
+          });
+        } else {
+          console.error("⚠️ Invalid Date format received:", data.created_at);
+        }
       } else {
-        console.error("⚠️ Invalid Date format received:", data.created_at);
+        console.error("⚠️ Missing created_at value:", data.created_at);
       }
-    } else {
-      console.error("⚠️ Missing created_at value:", data.created_at);
-    }
 
-    const listItem = document.createElement("li");
-    listItem.id = queueId;
-    listItem.dataset.queue_id = data.queue_id;
-    listItem.dataset.queue_number = data.queue_number;
-    listItem.dataset.name = data.name;
-    listItem.dataset.reason = data.reason;
-    listItem.dataset.proceed_url = data.proceed_url
-      ? data.proceed_url
-      : `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_examiners/${data.queue_id}`;
+      const listItem = document.createElement("li");
+      listItem.id = queueId;
+      listItem.dataset.queue_id = data.queue_id;
+      listItem.dataset.queue_number = data.queue_number;
+      listItem.dataset.name = data.name;
+      listItem.dataset.reason = data.reason;
+      listItem.dataset.proceed_url = data.proceed_url
+        ? data.proceed_url
+        : `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_examiners/${data.queue_id}`;
 
-    listItem.className =
-      "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center shadow-md";
+      listItem.className =
+        "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center shadow-md";
 
-    // Check if the item is currently being processed
-    let isProcessing = data.processing_by ? true : false;
-    let statusText = isProcessing ? `Processing by ${data.processing_by}` : "Backroom";
-    let statusColor = isProcessing ? "text-red-500" : "text-green-500";
-    let proceedDisabled = isProcessing ? "disabled opacity-50 cursor-not-allowed" : "";
-    let processingDisabled = isProcessing ? "opacity-50 cursor-not-allowed" : "";
+      // Check if the item is currently being processed
+      let isProcessing = data.processing_by ? true : false;
+      let statusText = isProcessing ? `Processing by ${data.processing_by}` : "Backroom";
+      let statusColor = isProcessing ? "text-red-500" : "text-green-500";
+      let proceedDisabled = isProcessing ? "disabled opacity-50 cursor-not-allowed" : "";
+      let processingDisabled = isProcessing ? "opacity-50 cursor-not-allowed" : "";
 
-    listItem.innerHTML = `
+      listItem.innerHTML = `
     <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
     <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
     <p class="text-gray-500 text-sm">
@@ -330,81 +333,81 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
       </button>
   `;
 
-    // Append item to correct container
-    if (queueContainer.children.length < 20) {
-      queueContainer.appendChild(listItem);
-    } else {
-      listItem.className = "p-3 bg-gray-50 border rounded-lg";
+      // Append item to correct container
+      if (queueContainer.children.length < 20) {
+        queueContainer.appendChild(listItem);
+      } else {
+        listItem.className = "p-3 bg-gray-50 border rounded-lg";
 
-      // Get current timestamp
-      let timestamp = new Date().toLocaleString("en-US", {
-        month: "short",
-        day: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true
-      });
+        // Get current timestamp
+        let timestamp = new Date().toLocaleString("en-US", {
+          month: "short",
+          day: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true
+        });
 
-      listItem.innerHTML = `
+        listItem.innerHTML = `
     ${data.queue_number} - ${data.name} (${data.reason})<br>
     <span class="text-gray-500 text-xs">Added on: ${timestamp}</span>
   `;
 
-      queueList.appendChild(listItem);
-    }
-
-    updateGridLayout();
-  }
-
-
-  function removeQueueItem(queueId) {
-    let queueItem = document.getElementById(`queue-item-${queueId}`);
-
-    if (queueItem) {
-      queueItem.remove();
-      console.log(`Queue ID ${queueId} removed from UI.`);
-
-      moveFirstRightItemToLeft();
-      updateGridLayout();
-    } else {
-      console.warn(`Queue item ${queueId} not found.`);
-    }
-  }
-
-  function moveFirstRightItemToLeft() {
-    const queueContainer = document.getElementById("queue-container");
-    const queueList = document.getElementById("queueList");
-
-    if (queueContainer.children.length < 20 && queueList.children.length > 0) {
-      const firstRightItem = queueList.children[0];
-
-      const queueId = firstRightItem.dataset.queue_id || null;
-      if (!queueId) {
-        console.error("❌ Queue ID is undefined. Cannot move item.");
-        return;
+        queueList.appendChild(listItem);
       }
 
-      let movedTimestamp = new Date().toLocaleString("en-US", {
-        month: "short",
-        day: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true
-      });
+      updateGridLayout();
+    }
 
-      const processingBy = firstRightItem.dataset.processing_by || "";
-      const isProcessing = processingBy ? true : false;
-      const processingText = isProcessing ? `Processing by ${processingBy}` : "Backroom";
-      const statusColor = isProcessing ? "text-red-500" : "text-green-500";
 
-      const newQueueItem = document.createElement("div");
-      newQueueItem.id = firstRightItem.id;
-      newQueueItem.className = "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center";
-      newQueueItem.dataset.queue_id = queueId;
+    function removeQueueItem(queueId) {
+      let queueItem = document.getElementById(`queue-item-${queueId}`);
 
-      newQueueItem.innerHTML = `
+      if (queueItem) {
+        queueItem.remove();
+        console.log(`Queue ID ${queueId} removed from UI.`);
+
+        moveFirstRightItemToLeft();
+        updateGridLayout();
+      } else {
+        console.warn(`Queue item ${queueId} not found.`);
+      }
+    }
+
+    function moveFirstRightItemToLeft() {
+      const queueContainer = document.getElementById("queue-container");
+      const queueList = document.getElementById("queueList");
+
+      if (queueContainer.children.length < 20 && queueList.children.length > 0) {
+        const firstRightItem = queueList.children[0];
+
+        const queueId = firstRightItem.dataset.queue_id || null;
+        if (!queueId) {
+          console.error("❌ Queue ID is undefined. Cannot move item.");
+          return;
+        }
+
+        let movedTimestamp = new Date().toLocaleString("en-US", {
+          month: "short",
+          day: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true
+        });
+
+        const processingBy = firstRightItem.dataset.processing_by || "";
+        const isProcessing = processingBy ? true : false;
+        const processingText = isProcessing ? `Processing by ${processingBy}` : "Backroom";
+        const statusColor = isProcessing ? "text-red-500" : "text-green-500";
+
+        const newQueueItem = document.createElement("div");
+        newQueueItem.id = firstRightItem.id;
+        newQueueItem.className = "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center";
+        newQueueItem.dataset.queue_id = queueId;
+
+        newQueueItem.innerHTML = `
       <h3 class="font-semibold text-xl">${firstRightItem.dataset.queue_number} - ${firstRightItem.dataset.name}</h3>
       <p class="text-gray-500 text-sm">Reason: ${firstRightItem.dataset.reason}</p>
       <p class="text-gray-500 text-sm">Time Added: <span class="font-semibold">${movedTimestamp}</span></p>
@@ -423,93 +426,46 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
       </button>
     `;
 
-      firstRightItem.remove();
-      queueContainer.appendChild(newQueueItem);
-      console.log(`✅ Moved queue item (ID: ${queueId}) to the left with timestamp: ${movedTimestamp}`);
-    }
-  }
-
-  function updateGridLayout() {
-    const queueContainer = document.getElementById("queue-container");
-    const queueList = document.getElementById("queueList");
-
-    const leftItems = queueContainer.children.length;
-    const rightItems = queueList.children.length;
-
-    queueContainer.style.gridTemplateColumns = `repeat(${leftItems < 5 ? leftItems : 5}, 1fr)`;
-    queueList.style.gridTemplateColumns = `repeat(${rightItems < 5 ? rightItems : 5}, 1fr)`;
-  }
-</script>
-
-<script>
-  document.querySelector('form').addEventListener('submit', function (e) {
-    e.preventDefault(); // Prevent form submission
-
-    let formData = new FormData(this); // Gather form data
-
-    fetch("<?= base_url('controller_queueing/add_to_backroom'); ?>", {
-      method: 'POST',
-      body: formData
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.status === 'success') {
-          // Show success toast
-          Toastify({
-            text: data.message,
-            duration: 3000,
-            close: true,
-            gravity: "top",
-            position: "right",
-            backgroundColor: "linear-gradient(to right, #00b09b,rgb(25, 187, 205))"
-          }).showToast();
-        }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        Toastify({
-          text: 'An error occurred. Please try again.',
-          duration: 3000,
-          close: true,
-          gravity: "top",
-          position: "right",
-          backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)"
-        }).showToast();
-      });
-  });
-
-</script>
-<script>
-  document.addEventListener('click', function (e) {
-    if (e.target.closest('.proceed-btn')) {
-      e.preventDefault();
-
-      let button = e.target.closest('.proceed-btn');
-      let url = button.getAttribute("data-url");
-      let queueId = button.getAttribute("data-id");
-
-      if (!url) {
-        console.error("Error: Proceed URL is missing.");
-        return;
+        firstRightItem.remove();
+        queueContainer.appendChild(newQueueItem);
+        console.log(`✅ Moved queue item (ID: ${queueId}) to the left with timestamp: ${movedTimestamp}`);
       }
+    }
 
-      button.disabled = true;
-      button.classList.add("opacity-50", "cursor-not-allowed");
+    function updateGridLayout() {
+      const queueContainer = document.getElementById("queue-container");
+      const queueList = document.getElementById("queueList");
 
-      fetch(url, { method: 'GET' })
+      const leftItems = queueContainer.children.length;
+      const rightItems = queueList.children.length;
+
+      queueContainer.style.gridTemplateColumns = `repeat(${leftItems < 5 ? leftItems : 5}, 1fr)`;
+      queueList.style.gridTemplateColumns = `repeat(${rightItems < 5 ? rightItems : 5}, 1fr)`;
+    }
+  </script>
+
+  <script>
+    document.querySelector('form').addEventListener('submit', function (e) {
+      e.preventDefault(); // Prevent form submission
+
+      let formData = new FormData(this); // Gather form data
+
+      fetch("<?= base_url('controller_queueing/add_to_backroom'); ?>", {
+        method: 'POST',
+        body: formData
+      })
         .then(response => response.json())
         .then(data => {
           if (data.status === 'success') {
+            // Show success toast
             Toastify({
               text: data.message,
               duration: 3000,
               close: true,
               gravity: "top",
               position: "right",
-              backgroundColor: "linear-gradient(to right, #00b09b, #1165b7)"
+              backgroundColor: "linear-gradient(to right, #00b09b,rgb(25, 187, 205))"
             }).showToast();
-
-            console.log(`Waiting for WebSocket confirmation to remove queue item ${queueId}`);
           }
         })
         .catch(error => {
@@ -522,163 +478,211 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
             position: "right",
             backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)"
           }).showToast();
-
-          // Re-enable button on error
-          button.disabled = false;
-          button.classList.remove("opacity-50", "cursor-not-allowed");
         });
-    }
-  });
-</script>
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const socket = new WebSocket("ws://localhost:8080");
+    });
 
-    socket.onopen = function () {
-      console.log("✅ WebSocket connection established");
-    };
-
-    socket.onmessage = function (event) {
-      try {
-        const data = JSON.parse(event.data);
-        console.log("📩 Received WebSocket Message:", data);
-
-        if (data.action === "update_queue") {
-          console.log(`Queue ${data.queue_id} marked as processing by ${data.processing_by}`);
-          updateQueueStatus(
-            data.queue_id,
-            `Processing by ${data.processing_by}`,
-            "text-red-500",
-            data.processing_by,
-            data.created_at
-          );
-        }
-      } catch (error) {
-        console.error("❌ WebSocket JSON Error:", error);
-      }
-    };
-
-    socket.onerror = function (error) {
-      console.error("❌ WebSocket Error:", error);
-    };
-
-    socket.onclose = function () {
-      console.log("⚠️ WebSocket connection closed");
-    };
-
-    document.body.addEventListener("click", function (e) {
-      const button = e.target.closest(".processing-btn");
-
-      if (button) {
+  </script>
+  <script>
+    document.addEventListener('click', function (e) {
+      if (e.target.closest('.proceed-btn')) {
         e.preventDefault();
-        const queueId = button.getAttribute("data-id");
 
-        if (!queueId) {
-          console.error("❌ Queue ID is undefined.");
-          Swal.fire({ title: "Error!", text: "Invalid queue ID.", icon: "error", position: "top" });
+        let button = e.target.closest('.proceed-btn');
+        let url = button.getAttribute("data-url");
+        let queueId = button.getAttribute("data-id");
+
+        if (!url) {
+          console.error("Error: Proceed URL is missing.");
           return;
         }
 
-        fetch("<?= base_url('controller_queueing/mark_as_processing_backroom'); ?>", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({ queue_id: queueId }),
-        })
+        button.disabled = true;
+        button.classList.add("opacity-50", "cursor-not-allowed");
+
+        fetch(url, { method: 'GET' })
           .then(response => response.json())
           .then(data => {
-            if (data.status === "success") {
-              console.log("✅ Queue marked as processing:", data);
+            if (data.status === 'success') {
+              Toastify({
+                text: data.message,
+                duration: 3000,
+                close: true,
+                gravity: "top",
+                position: "right",
+                backgroundColor: "linear-gradient(to right, #00b09b, #1165b7)"
+              }).showToast();
 
-              updateQueueStatus(queueId, `Processing by ${data.processing_by}`, "text-red-500", data.processing_by);
-
-              socket.send(JSON.stringify({
-                action: "update_queue",
-                queue_id: queueId,
-                status: "processing",
-                processing_by: data.processing_by
-              }));
-
-              Swal.close();
-            } else {
-              throw new Error(data.message);
+              console.log(`Waiting for WebSocket confirmation to remove queue item ${queueId}`);
             }
           })
           .catch(error => {
-            console.error("❌ Fetch Error:", error);
-            Swal.fire({ title: "Error!", text: error.message, icon: "error", position: "top" });
+            console.error('Error:', error);
+            Toastify({
+              text: 'An error occurred. Please try again.',
+              duration: 3000,
+              close: true,
+              gravity: "top",
+              position: "right",
+              backgroundColor: "linear-gradient(to right, #FF5F6D, #FFC371)"
+            }).showToast();
+
+            // Re-enable button on error
+            button.disabled = false;
+            button.classList.remove("opacity-50", "cursor-not-allowed");
           });
       }
     });
+  </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const socket = new WebSocket("ws://localhost:8080");
 
-    function updateQueueStatus(queueId, statusText, textColor, processingBy, createdAt) {
-      let queueRow = document.querySelector(`#queue-item-${queueId}`);
-      if (!queueRow) {
-        console.warn(`⚠️ Queue row with ID ${queueId} not found!`);
-        return;
-      }
+      socket.onopen = function () {
+        console.log("✅ WebSocket connection established");
+      };
 
-      let statusTextElement = queueRow.querySelector(".status-text");
-      let proceedBtn = queueRow.querySelector(".proceed-btn");
-      let processingBtn = queueRow.querySelector(".processing-btn");
-      let createdAtElement = queueRow.querySelector(".queue-created-at");
+      socket.onmessage = function (event) {
+        try {
+          const data = JSON.parse(event.data);
+          console.log("📩 Received WebSocket Message:", data);
 
-      if (statusTextElement) {
-        statusTextElement.innerText = statusText;
-        statusTextElement.classList.remove("text-green-500", "text-yellow-500", "text-red-500");
-        statusTextElement.classList.add(textColor);
-      }
+          if (data.action === "update_queue") {
+            console.log(`Queue ${data.queue_id} marked as processing by ${data.processing_by}`);
+            updateQueueStatus(
+              data.queue_id,
+              `Processing by ${data.processing_by}`,
+              "text-red-500",
+              data.processing_by,
+              data.created_at
+            );
+          }
+        } catch (error) {
+          console.error("❌ WebSocket JSON Error:", error);
+        }
+      };
 
-      if (processingBtn) {
-        processingBtn.classList.add("opacity-50", "cursor-not-allowed");
-        processingBtn.setAttribute("disabled", "disabled");
-      }
+      socket.onerror = function (error) {
+        console.error("❌ WebSocket Error:", error);
+      };
 
-      if (createdAtElement) {
-        let formattedTime = createdAt ? new Date(createdAt).toLocaleString("en-US", {
-          month: "short",
-          day: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true
-        }) : "Unknown Time";
+      socket.onclose = function () {
+        console.log("⚠️ WebSocket connection closed");
+      };
 
-        createdAtElement.innerText = `Time Added: ${formattedTime}`;
-      }
+      document.body.addEventListener("click", function (e) {
+        const button = e.target.closest(".processing-btn");
 
-      console.log(`👤 Current User: ${currentUser}, Processing By: ${processingBy}`);
+        if (button) {
+          e.preventDefault();
+          const queueId = button.getAttribute("data-id");
 
-      if (proceedBtn) {
-        if (String(processingBy) === String(currentUser)) {
-          console.log(`✅ User ${currentUser} is processing Queue ${queueId}, enabling proceed button.`);
-          proceedBtn.classList.remove("opacity-50", "cursor-not-allowed");
-          proceedBtn.removeAttribute("disabled");
-        } else {
-          console.log(`❌ Queue ${queueId} is being processed by another user (${processingBy}). Disabling proceed button.`);
-          proceedBtn.classList.add("opacity-50", "cursor-not-allowed");
-          proceedBtn.setAttribute("disabled", "disabled");
+          if (!queueId) {
+            console.error("❌ Queue ID is undefined.");
+            Swal.fire({ title: "Error!", text: "Invalid queue ID.", icon: "error", position: "top" });
+            return;
+          }
+
+          fetch("<?= base_url('controller_queueing/mark_as_processing_backroom'); ?>", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({ queue_id: queueId }),
+          })
+            .then(response => response.json())
+            .then(data => {
+              if (data.status === "success") {
+                console.log("✅ Queue marked as processing:", data);
+
+                updateQueueStatus(queueId, `Processing by ${data.processing_by}`, "text-red-500", data.processing_by);
+
+                socket.send(JSON.stringify({
+                  action: "update_queue",
+                  queue_id: queueId,
+                  status: "processing",
+                  processing_by: data.processing_by
+                }));
+
+                Swal.close();
+              } else {
+                throw new Error(data.message);
+              }
+            })
+            .catch(error => {
+              console.error("❌ Fetch Error:", error);
+              Swal.fire({ title: "Error!", text: error.message, icon: "error", position: "top" });
+            });
+        }
+      });
+
+      function updateQueueStatus(queueId, statusText, textColor, processingBy, createdAt) {
+        let queueRow = document.querySelector(`#queue-item-${queueId}`);
+        if (!queueRow) {
+          console.warn(`⚠️ Queue row with ID ${queueId} not found!`);
+          return;
+        }
+
+        let statusTextElement = queueRow.querySelector(".status-text");
+        let proceedBtn = queueRow.querySelector(".proceed-btn");
+        let processingBtn = queueRow.querySelector(".processing-btn");
+        let createdAtElement = queueRow.querySelector(".queue-created-at");
+
+        if (statusTextElement) {
+          statusTextElement.innerText = statusText;
+          statusTextElement.classList.remove("text-green-500", "text-yellow-500", "text-red-500");
+          statusTextElement.classList.add(textColor);
+        }
+
+        if (processingBtn) {
+          processingBtn.classList.add("opacity-50", "cursor-not-allowed");
+          processingBtn.setAttribute("disabled", "disabled");
+        }
+
+        if (createdAtElement) {
+          let formattedTime = createdAt ? new Date(createdAt).toLocaleString("en-US", {
+            month: "short",
+            day: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true
+          }) : "Unknown Time";
+
+          createdAtElement.innerText = `Time Added: ${formattedTime}`;
+        }
+
+        console.log(`👤 Current User: ${currentUser}, Processing By: ${processingBy}`);
+
+        if (proceedBtn) {
+          if (String(processingBy) === String(currentUser)) {
+            console.log(`✅ User ${currentUser} is processing Queue ${queueId}, enabling proceed button.`);
+            proceedBtn.classList.remove("opacity-50", "cursor-not-allowed");
+            proceedBtn.removeAttribute("disabled");
+          } else {
+            console.log(`❌ Queue ${queueId} is being processed by another user (${processingBy}). Disabling proceed button.`);
+            proceedBtn.classList.add("opacity-50", "cursor-not-allowed");
+            proceedBtn.setAttribute("disabled", "disabled");
+          }
         }
       }
+
+      let currentUser = "<?= $currentUser; ?>";
+      console.log("📌 Current User (JavaScript):", currentUser);
+    });
+  </script>
+
+  <style>
+    .mt-3.grid.right {
+      position: absolute;
+      right: 10px;
     }
 
-    let currentUser = "<?= $currentUser; ?>";
-    console.log("📌 Current User (JavaScript):", currentUser);
-  });
-</script>
+    .swal-top-popup {
+      margin-top: 10px !important;
+      width: 300px !important;
+      box-shadow: none !important;
+      background: rgba(255, 255, 255, 0.9) !important;
+    }
+  </style>
 
-<style>
-  .mt-3.grid.right {
-    position: absolute;
-    right: 10px;
-  }
-
-  .swal-top-popup {
-    margin-top: 10px !important;
-    width: 300px !important;
-    box-shadow: none !important;
-    background: rgba(255, 255, 255, 0.9) !important;
-  }
-</style>
-
+</body>
 
 </html>

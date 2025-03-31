@@ -4,7 +4,7 @@ $left_items = array_slice($examiners, 0, 20);
 $right_items = array_slice($examiners, 20);
 $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 
-$currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
+$currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -15,14 +15,17 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Examiners Queue</title>
+  <link rel="stylesheet"
+    href="<?php echo base_url('assets/css/user_view_landtax.css?v=' . filemtime('assets/css/user_view_landtax.css')); ?>">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <style>
-    #queue-container {
-      height: 100vh;
+    html,
+    body {
+      overflow: hidden;
     }
   </style>
 
@@ -31,105 +34,154 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
 
 <body class="bg-gray-100">
   <nav class="bg-white text-cyan-700 fixed top-0 left-0 w-full shadow-lg z-10">
-    <div class=" px-4">
+    <div class="px-4">
       <div class="flex justify-between items-center py-4">
         <div class="flex items-center space-x-3">
           <span class="text-xl font-bold uppercase tracking-widest">Examiners Queue</span>
         </div>
 
-        <div class="hidden md:flex space-x-6 items-center">
-          <?php if ($this->session->userdata('logged_in')): ?>
-            <span class="text-lg font-semibold text-xs font-bold uppercase">Welcome,
-              <?= htmlspecialchars($this->session->userdata('username')); ?>!</span>
-          <?php else: ?>
-            <span class="text-lg font-semibold">Guest</span>
-          <?php endif; ?>
+
+
+        <!-- User Dropdown -->
+        <div class="relative flex ">
+          <div class="hidden md:flex space-x-6 items-center mx-5">
+            <?php if ($this->session->userdata('logged_in')): ?>
+              <span class="text-lg font-semibold text-xs font-bold uppercase">Welcome,
+                <?= htmlspecialchars($this->session->userdata('username')); ?>!</span>
+            <?php else: ?>
+              <span class="text-lg font-semibold">Guest</span>
+            <?php endif; ?>
+          </div>
+          <button id="user-menu-btn" class="focus:outline-none">
+            <i class="fas fa-user-circle text-2xl"></i>
+          </button>
+
+          <!-- Dropdown Menu -->
+          <div id="user-menu"
+            class="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg hidden">
+            <a href="<?= base_url('controller_admin_landing/logout'); ?>"
+              class="flex items-center px-4 py-2 text-red-600 hover:bg-gray-100">
+              <i class="fas fa-sign-out-alt mr-2"></i> Logout
+            </a>
+          </div>
         </div>
+
         <!-- Hamburger Button -->
         <button id="menu-btn" class="md:hidden focus:outline-none">
           <i class="fas fa-bars text-2xl"></i>
         </button>
       </div>
     </div>
-
-    <!-- Mobile Menu -->
-    <div id="mobile-menu" class="hidden md:hidden bg-blue-800 text-white py-2">
-      <a href="#" class="block px-4 py-2 hover:bg-blue-600">Home</a>
-      <a href="#" class="block px-4 py-2 hover:bg-blue-600">About</a>
-      <a href="#" class="block px-4 py-2 hover:bg-blue-600">Services</a>
-      <a href="<?= base_url('controller_admin_landing/logout'); ?>"
-        class="block px-4 py-2 bg-red-500 text-center hover:bg-red-600">
-        <i class="fas fa-sign-out-alt"></i> Logout
-      </a>
-    </div>
   </nav>
 
-  <div class="flex min-h-screen p-5 pt-20">
+  <!-- JavaScript for Dropdown -->
+  <script>
+    document.getElementById('user-menu-btn').addEventListener('click', function () {
+      document.getElementById('user-menu').classList.toggle('hidden');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function (event) {
+      const menu = document.getElementById('user-menu');
+      const button = document.getElementById('user-menu-btn');
+      if (!menu.contains(event.target) && !button.contains(event.target)) {
+        menu.classList.add('hidden');
+      }
+    });
+  </script>
+
+  <div class="flex h-screen p-5 pt-20">
     <!-- Left Section (Now Serving - Examiners) -->
-    <div class="flex-1 bg-white p-5 rounded-lg shadow-md">
-      <h2 class="text-2xl font-bold text-cyan-500 uppercase tracking-wider pb-5 text-center">Now Serving - Examiners
-      </h2>
-      <div id="queue-container" class="flex flex-wrap gap-1 bg-cyan-50 overflow-y-auto">
+    <div class="flex-1 bg-white p-5 h-[calc(100vh-100px)] rounded-lg shadow-md overflow-y-auto">
+      <div id="queue-container" class="flex flex-wrap gap-1 max-h-[calc(100vh-150px)] bg-cyan-100 overflow-y-auto">
         <?php if ($examiners): ?>
           <?php foreach ($left_items as $item): ?>
             <?php
             $isProcessingByCurrentUser = ($item->processing_by && strval($item->processing_by) === $currentUser);
             ?>
-            <div
-              class="flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center shadow-md"
+            <div class="flex flex-col flex-1 min-w-96 queue-item p-3 bg-white border rounded-lg m-1"
               id="queue-item-<?= $item->id; ?>" data-id="<?= $item->id; ?>">
+              <div class="flex flex-col flex-grow space-y-4 max-w-full">
+                <div class="flex justify-between">
+                  <p class="text-gray-800 text-[calc(.8vw)] font-semibold uppercase"><?= $item->reason; ?></p>
+                  <p class="text-gray-500 text-[calc(.8vw)] justify-end">
+                    <?= date('M d Y, h:i A', strtotime($item->created_at)); ?>
+                  </p>
+                </div>
+                <h3 class="flex flex-col justify-center items-center flex-grow">
+                  <span class="font-semibold text-[calc(6vw)] leading-none"><?= $item->queue_number; ?></span>
+                  <span class="text-gray-600 uppercase text-[calc(.7vw)]"><?= $item->name; ?></span>
+                </h3>
+              </div>
 
-              <h3 class="font-semibold text-xl"><?= $item->queue_number; ?> - <?= $item->name; ?></h3>
-              <p class="text-gray-500 text-sm">Reason: <?= $item->reason; ?></p>
-
-              <p class="text-gray-500 text-sm">
-                Time Added: <span class="font-semibold">
-                  <?= date("M d, Y, h:i A", strtotime($item->created_at)); ?>
-                </span>
-              </p>
-
-              <p class="text-gray-500 text-sm">
-                Status:
-                <span class="status-text <?= $item->processing_by ? 'text-red-500' : 'text-green-500'; ?> font-semibold">
+              <p class="text-gray-500 text-[calc(.7vw)] text-right pb-10">
+                <span class="status-text bg-cyan-100 text-cyan-500 rounded-full px-3 py-1 font-semibold">
                   <?= $item->processing_by ? "Processing by {$item->processing_by}" : "Examiners"; ?>
                 </span>
               </p>
 
-              <!-- Mark as Processing Button -->
-              <button
-                class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg <?= $item->processing_by ? 'opacity-50 cursor-not-allowed' : '' ?>"
-                data-id="<?= $item->id; ?>" data-type="examiners" <?= $item->processing_by ? 'disabled' : ''; ?>>
-                <i class="fa-solid fa-hourglass-half"></i>
-              </button>
-
-              <!-- Proceed Button (Disabled by Default) -->
-              <button
-                class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg <?= $isProcessingByCurrentUser ? '' : 'opacity-50 cursor-not-allowed' ?>"
-                data-id="<?= $item->id; ?>"
-                data-url="<?= base_url("controller_queueing/proceed_to_businesstax/{$item->id}") ?>"
-                <?= $isProcessingByCurrentUser ? '' : 'disabled'; ?>>
-                <i class="fa-solid fa-user-check text-2xl"></i>
-              </button>
-
+              <div class="flex justify-between items-center mt-auto pt-4 border-t">
+                <div class="flex space-x-2">
+                  <button
+                    class="proceed-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg <?= $isProcessingByCurrentUser ? '' : 'opacity-50 cursor-not-allowed' ?>"
+                    data-id="<?= $item->id; ?>"
+                    data-url="<?= base_url("controller_queueing/proceed_to_businesstax/{$item->id}") ?>"
+                    <?= $isProcessingByCurrentUser ? '' : 'disabled'; ?>>
+                    <i class="fa-solid fa-circle-check text-[calc(1.2vw)]"></i>
+                  </button>
+                  <button
+                    class="processing-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg <?= $item->processing_by ? 'opacity-50 cursor-not-allowed' : '' ?>"
+                    data-id="<?= $item->id; ?>" <?= $item->processing_by ? 'disabled' : ''; ?>>
+                    <i class="fa-solid fa-clock text-[calc(1.2vw)]"></i>
+                  </button>
+                </div>
+                <div>
+                  <button
+                    class="delete-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg"
+                    data-id="<?= $item->id; ?>" data-url="<?= base_url("controller_queueing/delete_queue/{$item->id}") ?>">
+                    <i class="fa-solid fa-trash-can text-[calc(1.2vw)]"></i>
+                  </button>
+                </div>
+              </div>
             </div>
           <?php endforeach; ?>
         <?php endif; ?>
       </div>
-
     </div>
 
     <!-- Right Section (Queue List & Add Form) -->
     <div class="ml-5 bg-white p-5 w-[400px] rounded-lg shadow-md flex flex-col">
-      <h2 class="text-2xl font-bold text-blue-900 text-center">Examiners Queue List</h2>
-      <ul class="mt-3 overflow-auto h-[600px] space-y-2" id="queueList">
+      <h2 class="text-2xl font-bold text-cyan-900 uppercase tracking-widest text-center">Examiners Queue List</h2>
+      <ul id="queueList" class="mt-3 overflow-auto h-[1000px] space-y-3 p-2 bg-white rounded-lg shadow-md border">
         <?php foreach ($right_items as $item): ?>
-          <li class="p-3 bg-gray-50 border rounded-lg" data-queue_id="<?= $item->id; ?>"
-            data-queue_number="<?= $item->queue_number; ?>" data-name="<?= $item->name; ?>"
-            data-reason="<?= $item->reason; ?>"
-            data-proceed_url="<?= base_url('controller_queueing/proceed_to_businesstax/' . $item->id); ?>">
-            <?= $item->queue_number; ?> - <?= $item->name; ?> (<?= $item->reason; ?>) <br>
-            <span class="text-gray-500 text-xs">Added on:
-              <?= date("M d, Y h:i A", strtotime($item->created_at)); ?></span>
+          <li class="p-5 bg-cyan-50 border border-cyan-400 rounded-xl shadow-md hover:shadow-lg 
+                    transition-all duration-300 hover:bg-cyan-50 flex flex-col space-y-4"
+            data-queue_id="<?= $item->id; ?>" data-queue_number="<?= $item->queue_number; ?>"
+            data-name="<?= $item->name; ?>" data-reason="<?= $item->reason; ?>"
+            data-created_at="<?= $item->created_at; ?>"
+            data-proceed_url="<?= base_url("controller_queueing/proceed_to_businesstax/{$item->id}") ?>"
+            data-processing_by="<?= $item->processing_by ? $item->processing_by : '' ?>">
+
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 flex items-center justify-center text-white font-bold text-xl 
+                            bg-cyan-600 rounded-full shadow-md">
+                <?= $item->queue_number; ?>
+              </div>
+              <div class="flex flex-col">
+                <div class="text-lg font-semibold text-cyan-900">
+                  <?= $item->name; ?>
+                </div>
+                <span class="text-xs text-gray-500">
+                  <?= date('M d, Y, h:i A', strtotime($item->created_at)); ?>
+                </span>
+              </div>
+            </div>
+
+            <div class="mt-3 flex justify-end">
+              <span class="text-sm px-4 py-2 rounded-full bg-cyan-100 text-cyan-800 font-medium shadow-sm">
+                <?= $item->reason; ?>
+              </span>
+            </div>
           </li>
         <?php endforeach; ?>
       </ul>
@@ -137,22 +189,15 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
       <!-- Add to Examiners Queue Form -->
       <form action="<?= base_url('controller_queueing/add_to_examiners'); ?>" method="post" class="mt-5">
         <input type="text" name="name" placeholder="Enter Name" required class="border p-2 w-full rounded" />
-        <select name="reason" required class="border p-2 w-full rounded mt-2">
-          <option value="Exam Scheduling">Exam Scheduling</option>
-          <option value="Exam Registration">Exam Registration</option>
+        <select name="reason" required class="border p-2 w-full rounded mt-2 text-cyan-800 font-semibold tracking-wide">
+          <option class="text-cyan-800 font-semibold tracking-wide" value="Exam Scheduling">Exam Scheduling</option>
+          <option class="text-cyan-800 font-semibold tracking-wide" value="Exam Registration">Exam Registration</option>
         </select>
         <button type="submit"
-          class="mt-2 w-full bg-blue-500 uppercase tracking-wider font-semibold text-white py-2 rounded">
+          class="mt-2 w-full bg-cyan-500 uppercase tracking-wider font-semibold text-white py-2 rounded">
           Add to Examiners Queue
         </button>
       </form>
-
-      <div class="mt-10">
-        <a href="<?= base_url('controller_admin_landing/logout'); ?>"
-          class="flex items-center justify-center bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
-          <i class="fas fa-sign-out-alt mr-2"></i> Logout
-        </a>
-      </div>
     </div>
   </div>
 
