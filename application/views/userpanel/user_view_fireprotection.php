@@ -80,13 +80,13 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
     });
   </script>
 
-  <div class="flex min-h-screen p-5 pt-20">
+  <div class="flex h-screen p-5 pt-20">
     <!-- Left Section (Now Serving - Fire Protection) -->
-    <div class="flex-1 bg-white p-5 rounded-lg shadow-md">
+    <div class="flex-1 bg-white p-5 h-[calc(100vh-100px)] rounded-lg shadow-md overflow-y-auto">
       <h2 class="text-2xl font-bold text-cyan-500 uppercase tracking-wider pb-5 text-center">
         Now Serving - Fire Protection
       </h2>
-      <div id="queue-container" class="flex flex-wrap gap-1 bg-cyan-50 overflow-y-auto">
+      <div id="queue-container" class="flex flex-wrap gap-1 max-h-[calc(100vh-150px)] bg-cyan-100 overflow-y-auto">
         <?php if ($fireprotection): ?>
           <?php foreach ($left_items as $item): ?>
             <?php
@@ -95,25 +95,25 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
             <div class="flex flex-col flex-1 min-w-96 queue-item p-3 bg-white border rounded-lg m-1 shadow-md"
               id="queue-item-<?= $item->id; ?>" data-id="<?= $item->id; ?>">
 
-              <div class="flex flex-col flex-grow space-y-4">
+              <div class="flex flex-col flex-grow space-y-4 max-w-full">
                 <div class="flex justify-between">
-                  <p class="text-gray-800 text-sm w-56 font-semibold uppercase"><?= $item->reason; ?></p>
-                  <p class="text-gray-500 text-xs"><?= date('M d Y, h:i A', strtotime($item->created_at)); ?></p>
+                  <p class="text-gray-800 text-[calc(.8vw)] font-semibold uppercase"><?= $item->reason; ?></p>
+                  <p class="text-gray-500 text-[calc(.8vw)] justify-end">
+                    <?= date('M d Y, h:i A', strtotime($item->created_at)); ?>
+                  </p>
                 </div>
-                <h3 class="flex flex-col justify-center items-center">
-                  <span class="mt-20 font-semibold text-8xl"><?= $item->queue_number; ?></span>
-                  <span class="text-gray-600"><?= $item->name; ?></span>
+                <h3 class="flex flex-col justify-center items-center flex-grow">
+                  <span class="font-semibold text-[calc(6vw)] leading-none"><?= $item->queue_number; ?></span>
+                  <span class="text-gray-600 uppercase text-[calc(.7vw)] "><?= $item->name; ?></span>
                 </h3>
               </div>
 
-              <div class="pt-2">
-                <p class="text-gray-500 text-sm text-right pb-10">
-                  <span
-                    class="status-text <?= $item->processing_by ? 'bg-cyan-100 text-red-500 rounded-full px-3 py-1' : 'bg-cyan-100 text-cyan-500 rounded-full px-3 py-1'; ?> font-semibold">
-                    <?= $item->processing_by ? "Processing by {$item->processing_by}" : "Fire Protection"; ?>
-                  </span>
-                </p>
-              </div>
+              <p class="text-gray-500 text-[calc(.7vw)] text-right pb-10">
+                <span
+                  class="status-text <?= $item->processing_by ? 'bg-cyan-100 text-red-500' : 'bg-cyan-100 text-cyan-500'; ?> rounded-full px-3 py-1 font-semibold">
+                  <?= $item->processing_by ? "Processing by {$item->processing_by}" : "Waiting"; ?>
+                </span>
+              </p>
 
               <div class="flex justify-between items-center mt-auto pt-4 border-t">
                 <div class="flex space-x-2">
@@ -122,19 +122,19 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
                     data-id="<?= $item->id; ?>"
                     data-url="<?= base_url("controller_queueing/proceed_to_releasing/{$item->id}") ?>"
                     <?= $isProcessingByCurrentUser ? '' : 'disabled'; ?>>
-                    <i class="fa-solid fa-circle-check text-2xl"></i>
+                    <i class="fa-solid fa-circle-check text-[calc(1.2vw)]"></i>
                   </button>
                   <button
                     class="processing-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg <?= $item->processing_by ? 'opacity-50 cursor-not-allowed' : '' ?>"
                     data-id="<?= $item->id; ?>" <?= $item->processing_by ? 'disabled' : ''; ?>>
-                    <i class="fa-solid fa-clock text-2xl"></i>
+                    <i class="fa-solid fa-clock text-[calc(1.2vw)]"></i>
                   </button>
                 </div>
                 <div>
                   <button
                     class="delete-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg"
                     data-id="<?= $item->id; ?>" data-url="<?= base_url("controller_queueing/delete_queue/{$item->id}") ?>">
-                    <i class="fa-solid fa-trash-can text-2xl"></i>
+                    <i class="fa-solid fa-trash-can text-[calc(1.2vw)]"></i>
                   </button>
                 </div>
               </div>
@@ -149,16 +149,17 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
       <h2 class="text-2xl font-bold text-cyan-900 uppercase tracking-widest text-center">Fire Protection Queue List</h2>
       <ul id="queueList" class="mt-3 overflow-auto h-[1000px] space-y-3 p-2 bg-white rounded-lg shadow-md border">
         <?php foreach ($right_items as $item): ?>
-          <li class="p-5 bg-white border border-cyan-400 rounded-xl shadow-md hover:shadow-lg 
-           transition-all duration-300 hover:bg-cyan-50 flex flex-col space-y-4" data-queue_id="<?= $item->id; ?>"
-            data-queue_number="<?= $item->queue_number; ?>" data-name="<?= $item->name; ?>"
-            data-reason="<?= $item->reason; ?>" data-created_at="<?= $item->created_at; ?>"
+          <li class="p-5 bg-cyan-50 border border-cyan-400 rounded-xl shadow-md hover:shadow-lg 
+                    transition-all duration-300 hover:bg-cyan-50 flex flex-col space-y-4"
+            data-queue_id="<?= $item->id; ?>" data-queue_number="<?= $item->queue_number; ?>"
+            data-name="<?= $item->name; ?>" data-reason="<?= $item->reason; ?>"
+            data-created_at="<?= $item->created_at; ?>"
             data-proceed_url="<?= base_url("controller_queueing/proceed_to_releasing/{$item->id}") ?>"
             data-processing_by="<?= $item->processing_by ? $item->processing_by : '' ?>">
 
             <div class="flex items-center gap-4">
               <div class="w-12 h-12 flex items-center justify-center text-white font-bold text-xl 
-                    bg-cyan-600 rounded-full shadow-md">
+                                bg-cyan-600 rounded-full shadow-md">
                 <?= $item->queue_number; ?>
               </div>
               <div class="flex flex-col">
@@ -172,7 +173,7 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
             </div>
 
             <div class="mt-3 flex justify-end">
-              <span class="text-sm px-4 py-2 rounded-lg bg-cyan-100 text-cyan-800 font-medium shadow-sm">
+              <span class="text-sm px-4 py-2 rounded-full bg-cyan-100 text-cyan-800 font-medium shadow-sm">
                 <?= $item->reason; ?>
               </span>
             </div>

@@ -6,7 +6,7 @@ $right_items = array_slice($backroom, 20);
 // Determine grid columns: if less than 5 items, use that number; otherwise, use 5 columns.
 $grid_cols = count($left_items) < 5 ? count($left_items) : 5;
 
-$currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
+$currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -32,103 +32,156 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
 
 <body class="bg-gray-100">
   <nav class="bg-white text-cyan-700 fixed top-0 left-0 w-full shadow-lg z-10">
-    <div class=" px-4">
+    <div class="px-4">
       <div class="flex justify-between items-center py-4">
         <div class="flex items-center space-x-3">
           <span class="text-xl font-bold uppercase tracking-widest">Backroom Queue</span>
         </div>
 
-        <div class="hidden md:flex space-x-6 items-center">
-          <?php if ($this->session->userdata('logged_in')): ?>
-            <span class="text-lg font-semibold text-xs font-bold uppercase">Welcome,
-              <?= htmlspecialchars($this->session->userdata('username')); ?>!</span>
-          <?php else: ?>
-            <span class="text-lg font-semibold">Guest</span>
-          <?php endif; ?>
+        <!-- User Dropdown -->
+        <div class="relative flex">
+          <div class="hidden md:flex space-x-6 items-center mx-5">
+            <?php if ($this->session->userdata('logged_in')): ?>
+              <span class="text-lg font-semibold text-xs font-bold uppercase">Welcome,
+                <?= htmlspecialchars($this->session->userdata('username')); ?>!</span>
+            <?php else: ?>
+              <span class="text-lg font-semibold">Guest</span>
+            <?php endif; ?>
+          </div>
+          <button id="user-menu-btn" class="focus:outline-none">
+            <i class="fas fa-user-circle text-2xl"></i>
+          </button>
+
+          <!-- Dropdown Menu -->
+          <div id="user-menu"
+            class="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg hidden">
+            <a href="<?= base_url('controller_admin_landing/logout'); ?>"
+              class="flex items-center px-4 py-2 text-red-600 hover:bg-gray-100">
+              <i class="fas fa-sign-out-alt mr-2"></i> Logout
+            </a>
+          </div>
         </div>
+
         <!-- Hamburger Button -->
         <button id="menu-btn" class="md:hidden focus:outline-none">
           <i class="fas fa-bars text-2xl"></i>
         </button>
       </div>
     </div>
-
-    <!-- Mobile Menu -->
-    <div id="mobile-menu" class="hidden md:hidden bg-blue-800 text-white py-2">
-      <a href="#" class="block px-4 py-2 hover:bg-blue-600">Home</a>
-      <a href="#" class="block px-4 py-2 hover:bg-blue-600">About</a>
-      <a href="#" class="block px-4 py-2 hover:bg-blue-600">Services</a>
-      <a href="<?= base_url('controller_admin_landing/logout'); ?>"
-        class="block px-4 py-2 bg-red-500 text-center hover:bg-red-600">
-        <i class="fas fa-sign-out-alt"></i> Logout
-      </a>
-    </div>
   </nav>
 
-  <div class="flex min-h-screen p-5 pt-20">
-    <!-- Left Section (Now Serving in Backroom) -->
-    <div class="flex-1 bg-white p-5 rounded-lg shadow-md">
-      <h2 class="text-2xl font-bold text-cyan-500 uppercase tracking-wider pb-5 text-center">Now Serving - Backroom</h2>
-      <div id="queue-container" class="flex flex-wrap gap-1 bg-cyan-50 overflow-y-auto">
+  <script>
+    document.getElementById('user-menu-btn').addEventListener('click', function () {
+      document.getElementById('user-menu').classList.toggle('hidden');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function (event) {
+      const menu = document.getElementById('user-menu');
+      const button = document.getElementById('user-menu-btn');
+      if (!menu.contains(event.target) && !button.contains(event.target)) {
+        menu.classList.add('hidden');
+      }
+    });
+  </script>
+
+  <div class="flex h-screen p-5 pt-20">
+    <!-- Left Section (Now Serving - Backroom) -->
+    <div class="flex-1 bg-white p-5 h-[calc(100vh-100px)] rounded-lg shadow-md overflow-y-auto">
+      <h2 class="text-2xl font-bold text-cyan-500 uppercase tracking-wider pb-5 text-center">
+        Now Serving - Backroom
+      </h2>
+      <div id="queue-container" class="flex flex-wrap gap-1 max-h-[calc(100vh-150px)] bg-cyan-100 overflow-y-auto">
         <?php if ($backroom): ?>
           <?php foreach ($left_items as $item): ?>
             <?php
             $isProcessingByCurrentUser = ($item->processing_by && strval($item->processing_by) === $currentUser);
             ?>
-            <div
-              class="flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center shadow-md"
+            <div class="flex flex-col flex-1 min-w-96 queue-item p-3 bg-white border rounded-lg m-1 shadow-md"
               id="queue-item-<?= $item->id; ?>" data-id="<?= $item->id; ?>">
 
-              <h3 class="font-semibold text-xl"><?= $item->queue_number; ?> - <?= $item->name; ?></h3>
-              <p class="text-gray-500 text-sm">Reason: <?= $item->reason; ?></p>
+              <div class="flex flex-col flex-grow space-y-4 max-w-full">
+                <div class="flex justify-between">
+                  <p class="text-gray-800 text-[calc(.8vw)] font-semibold uppercase"><?= $item->reason; ?></p>
+                  <p class="text-gray-500 text-[calc(.8vw)] justify-end">
+                    <?= date('M d Y, h:i A', strtotime($item->created_at)); ?>
+                  </p>
+                </div>
+                <h3 class="flex flex-col justify-center items-center flex-grow">
+                  <span class="font-semibold text-[calc(6vw)] leading-none"><?= $item->queue_number; ?></span>
+                  <span class="text-gray-600 uppercase text-[calc(.7vw)] "><?= $item->name; ?></span>
+                </h3>
+              </div>
 
-              <p class="text-gray-500 text-sm">
-                Time Added: <span class="font-semibold">
-                  <?= date("M d, Y, h:i A", strtotime($item->created_at)); ?>
+              <p class="text-gray-500 text-[calc(.7vw)] text-right pb-10">
+                <span
+                  class="status-text <?= $item->processing_by ? 'bg-cyan-100 text-red-500' : 'bg-cyan-100 text-cyan-500'; ?> rounded-full px-3 py-1 font-semibold">
+                  <?= $item->processing_by ? "Processing by {$item->processing_by}" : "Waiting"; ?>
                 </span>
               </p>
 
-              <p class="text-gray-500 text-sm">
-                Status:
-                <span class="status-text <?= $item->processing_by ? 'text-red-500' : 'text-green-500'; ?> font-semibold">
-                  <?= $item->processing_by ? "Processing by {$item->processing_by}" : "Backroom"; ?>
-                </span>
-              </p>
-
-              <!-- Mark as Processing Button -->
-              <button
-                class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg <?= $item->processing_by ? 'opacity-50 cursor-not-allowed' : '' ?>"
-                data-id="<?= $item->id; ?>" data-type="backroom" <?= $item->processing_by ? 'disabled' : ''; ?>>
-                <i class="fa-solid fa-hourglass-half"></i>
-              </button>
-
-              <!-- Proceed Button (Disabled by Default) -->
-              <button
-                class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 hover:bg-gray-50 rounded-full border border-blue-50 shadow-lg <?= $isProcessingByCurrentUser ? '' : 'opacity-50 cursor-not-allowed' ?>"
-                data-id="<?= $item->id; ?>"
-                data-url="<?= base_url("controller_queueing/proceed_to_examiners/{$item->id}") ?>"
-                <?= $isProcessingByCurrentUser ? '' : 'disabled'; ?>>
-                <i class="fa-solid fa-user-check text-2xl"></i>
-              </button>
-
+              <div class="flex justify-between items-center mt-auto pt-4 border-t">
+                <div class="flex space-x-2">
+                  <button
+                    class="proceed-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg <?= $isProcessingByCurrentUser ? '' : 'opacity-50 cursor-not-allowed' ?>"
+                    data-id="<?= $item->id; ?>"
+                    data-url="<?= base_url("controller_queueing/proceed_to_examiners/{$item->id}") ?>"
+                    <?= $isProcessingByCurrentUser ? '' : 'disabled'; ?>>
+                    <i class="fa-solid fa-circle-check text-[calc(1.2vw)]"></i>
+                  </button>
+                  <button
+                    class="processing-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg <?= $item->processing_by ? 'opacity-50 cursor-not-allowed' : '' ?>"
+                    data-id="<?= $item->id; ?>" <?= $item->processing_by ? 'disabled' : ''; ?>>
+                    <i class="fa-solid fa-clock text-[calc(1.2vw)]"></i>
+                  </button>
+                </div>
+                <div>
+                  <button
+                    class="delete-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg"
+                    data-id="<?= $item->id; ?>" data-url="<?= base_url("controller_queueing/delete_queue/{$item->id}") ?>">
+                    <i class="fa-solid fa-trash-can text-[calc(1.2vw)]"></i>
+                  </button>
+                </div>
+              </div>
             </div>
           <?php endforeach; ?>
         <?php endif; ?>
       </div>
     </div>
 
-    <!-- Right Section (Overflow Queue List + Add to Backroom Queue Form) -->
+    <!-- Right Section (Backroom Queue List) -->
     <div class="ml-5 bg-white p-5 w-[400px] rounded-lg shadow-md flex flex-col">
-      <h2 class="text-2xl font-bold text-blue-900 text-center">Backroom Queue List</h2>
-      <ul class="mt-3 overflow-auto h-[600px] space-y-2" id="queueList">
+      <h2 class="text-2xl font-bold text-cyan-900 uppercase tracking-widest text-center">Backroom Queue List</h2>
+      <ul id="queueList" class="mt-3 overflow-auto h-[1000px] space-y-3 p-2 bg-white rounded-lg shadow-md border">
         <?php foreach ($right_items as $item): ?>
-          <li class="p-3 bg-gray-50 border rounded-lg" data-queue_id="<?= $item->id; ?>"
-            data-queue_number="<?= $item->queue_number; ?>" data-name="<?= $item->name; ?>"
-            data-reason="<?= $item->reason; ?>"
-            data-proceed_url="<?= base_url('controller_queueing/proceed_to_examiners/' . $item->id); ?>">
-            <?= $item->queue_number; ?> - <?= $item->name; ?> (<?= $item->reason; ?>) <br>
-            <span class="text-gray-500 text-xs">Added on:
-              <?= date("M d, Y h:i A", strtotime($item->created_at)); ?></span>
+          <li class="p-5 bg-cyan-50 border border-cyan-400 rounded-xl shadow-md hover:shadow-lg 
+                    transition-all duration-300 hover:bg-cyan-50 flex flex-col space-y-4"
+            data-queue_id="<?= $item->id; ?>" data-queue_number="<?= $item->queue_number; ?>"
+            data-name="<?= $item->name; ?>" data-reason="<?= $item->reason; ?>"
+            data-created_at="<?= $item->created_at; ?>"
+            data-proceed_url="<?= base_url("controller_queueing/proceed_to_examiners/{$item->id}") ?>"
+            data-processing_by="<?= $item->processing_by ? $item->processing_by : '' ?>">
+
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 flex items-center justify-center text-white font-bold text-xl 
+                                bg-cyan-600 rounded-full shadow-md">
+                <?= $item->queue_number; ?>
+              </div>
+              <div class="flex flex-col">
+                <div class="text-lg font-semibold text-cyan-900">
+                  <?= $item->name; ?>
+                </div>
+                <span class="text-xs text-gray-500">
+                  <?= date('M d, Y, h:i A', strtotime($item->created_at)); ?>
+                </span>
+              </div>
+            </div>
+
+            <div class="mt-3 flex justify-end">
+              <span class="text-sm px-4 py-2 rounded-full bg-cyan-100 text-cyan-800 font-medium shadow-sm">
+                <?= $item->reason; ?>
+              </span>
+            </div>
           </li>
         <?php endforeach; ?>
       </ul>
@@ -136,32 +189,33 @@ $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : '';
       <!-- Add to Backroom Queue Form -->
       <form action="<?= base_url('controller_queueing/add_to_backroom'); ?>" method="post" class="mt-5">
         <input type="text" name="name" placeholder="Enter Name" required class="border p-2 w-full rounded" />
-        <select name="reason" required class="border p-2 w-full rounded mt-2">
-          <option value="Social Security System">Social Security System</option>
-          <option value="Business Permit">Business Permit</option>
-          <option value="Driver’s License Renewal">Driver’s License Renewal</option>
-          <option value="Building Permit">Building Permit</option>
-          <option value="Real Estate Tax">Real Estate Tax</option>
-          <option value="Community Tax Certificate">Community Tax Certificate</option>
-          <option value="Barangay Clearance">Barangay Clearance</option>
-          <option value="Passport Processing">Passport Processing</option>
-          <option value="Police Clearance">Police Clearance</option>
-          <option value="Birth Certificate Request">Birth Certificate Request</option>
-          <option value="Marriage License">Marriage License</option>
+        <select name="reason" required class="border p-2 w-full rounded mt-2 text-cyan-800 font-semibold tracking-wide">
+          <option class="text-cyan-800 font-semibold tracking-wide" value="Social Security System">Social Security
+            System</option>
+          <option class="text-cyan-800 font-semibold tracking-wide" value="Business Permit">Business Permit</option>
+          <option class="text-cyan-800 font-semibold tracking-wide" value="Driver’s License Renewal">Driver’s License
+            Renewal</option>
+          <option class="text-cyan-800 font-semibold tracking-wide" value="Building Permit">Building Permit</option>
+          <option class="text-cyan-800 font-semibold tracking-wide" value="Real Estate Tax">Real Estate Tax</option>
+          <option class="text-cyan-800 font-semibold tracking-wide" value="Community Tax Certificate">Community Tax
+            Certificate</option>
+          <option class="text-cyan-800 font-semibold tracking-wide" value="Barangay Clearance">Barangay Clearance
+          </option>
+          <option class="text-cyan-800 font-semibold tracking-wide" value="Passport Processing">Passport Processing
+          </option>
+          <option class="text-cyan-800 font-semibold tracking-wide" value="Police Clearance">Police Clearance</option>
+          <option class="text-cyan-800 font-semibold tracking-wide" value="Birth Certificate Request">Birth Certificate
+            Request</option>
+          <option class="text-cyan-800 font-semibold tracking-wide" value="Marriage License">Marriage License</option>
         </select>
         <button type="submit"
-          class="mt-2 w-full bg-blue-500 uppercase tracking-wider font-semibold text-white py-2 rounded">Add to Backroom
-          Queue</button>
+          class="mt-2 w-full bg-cyan-500 uppercase tracking-wider font-semibold text-white py-2 rounded">
+          Add to Backroom Queue
+        </button>
       </form>
-
-      <div class="mt-10">
-        <a href="<?= base_url('controller_admin_landing/logout'); ?>"
-          class="flex items-center justify-center bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
-          <i class="fas fa-sign-out-alt mr-2"></i> Logout
-        </a>
-      </div>
     </div>
   </div>
+
 </body>
 
 <script>

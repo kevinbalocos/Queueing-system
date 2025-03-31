@@ -314,9 +314,12 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
       <!-- Button Container -->
       <div class="flex justify-between items-center mt-auto pt-4 border-t">
         <div class="flex space-x-2">
-          <button class="proceed-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg ${data.processing_by === currentUser ? '' : 'opacity-50 cursor-not-allowed'}" 
-                  data-id="${data.queue_id}" data-url="${data.proceed_url}" ${data.processing_by === currentUser ? '' : 'disabled'}>
-            <i class="fa-solid fa-circle-check text-[calc(1.2vw)]"></i>
+          <button class="proceed-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg 
+              ${data.processing_by ? '' : 'opacity-50 cursor-not-allowed'}" 
+              data-id="${data.queue_id}" 
+              data-url="${data.proceed_url || `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_backroom/${data.queue_id}`}" 
+              ${data.processing_by ? '' : 'disabled'}>
+              <i class="fa-solid fa-circle-check text-[calc(1.2vw)]"></i>
           </button>
           <button class="processing-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg ${data.processing_by ? 'opacity-50 cursor-not-allowed' : ''}" 
                   data-id="${data.queue_id}" ${data.processing_by ? 'disabled' : ''}>
@@ -325,7 +328,8 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
         </div>
         <div>
           <button class="delete-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg" 
-                  data-id="${data.queue_id}" data-url="${data.delete_url}">
+            data-id="${data.queue_id}" 
+            data-url="${data.delete_url || `http://localhost/OJT/queueing-system/index.php/controller_queueing/delete_queue/${data.queue_id}`}">
             <i class="fa-solid fa-trash-can text-[calc(1.2vw)]"></i>
           </button>
         </div>
@@ -394,7 +398,7 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
         // Set the proceed and delete URLs.
         const proceedUrl = data.proceed_url ? data.proceed_url :
           `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_backroom/${data.queue_id}`;
-        const deleteUrl = data.delete_url ? data.delete_url :
+        const deleteUrl = data.delete_url ||
           `http://localhost/OJT/queueing-system/index.php/controller_queueing/delete_queue/${data.queue_id}`;
 
         const isProcessing = data.processing_by ? true : false;
@@ -513,14 +517,28 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
         const proceedBtn = e.target.closest(".proceed-btn");
         if (!proceedBtn) return;
         e.preventDefault();
-        const url = proceedBtn.dataset.url;
-        if (!url) {
-          console.error("Error: No URL found for proceed action.");
-          Swal.fire({ title: "Error!", text: "No proceed URL found. Please refresh or contact support.", icon: "error", position: "top" });
+
+        const url = proceedBtn.getAttribute("data-url"); // Use getAttribute instead of dataset
+        const queueId = proceedBtn.getAttribute("data-id"); // Ensure queue_id is available
+
+        if (!url || url.trim() === "undefined" || url.trim() === "") {
+          console.error("Error: No valid URL found for proceed action.", { url, queueId });
+          Swal.fire({
+            title: "Error!",
+            text: "No proceed URL found. Please refresh or contact support.",
+            icon: "error",
+            position: "top"
+          });
           return;
         }
+
         fetch(url, { method: 'GET' })
-          .then(response => response.json())
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+          })
           .then(data => {
             if (data.status === 'success') {
               Toastify({
@@ -531,8 +549,8 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
                 position: "right",
                 style: { background: "linear-gradient(to right, #00b09b, rgb(17, 69, 183))" }
               }).showToast();
-              // Find the item using its dataset.
-              const queueItem = document.querySelector(`[data-queue_id="${data.queue_id}"]`);
+
+              const queueItem = document.querySelector(`[data-queue_id="${queueId}"]`);
               if (queueItem) {
                 queueItem.remove();
                 moveFirstRightItemToLeft();
