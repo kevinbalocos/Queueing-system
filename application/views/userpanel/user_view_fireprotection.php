@@ -14,15 +14,12 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fire Protection Queue</title>
   <link rel="stylesheet"
-  href="<?php echo base_url('assets/css/user_view_landtax.css?v=' . filemtime('assets/css/user_view_landtax.css')); ?>">
+    href="<?php echo base_url('assets/css/user_view_landtax.css?v=' . filemtime('assets/css/user_view_landtax.css')); ?>">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-  <style>
-   
-  </style>
 </head>
 
 <body class="bg-gray-100">
@@ -110,7 +107,7 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
 
               <p class="text-gray-500 text-[calc(.7vw)] text-right pb-10">
                 <span
-                  class="status-text <?= $item->processing_by ? 'bg-cyan-100 text-red-500' : 'bg-cyan-100 text-cyan-500'; ?> rounded-full px-3 py-1 font-semibold">
+                  class="status-text <?= $item->processing_by ? 'bg-cyan-100 text-cyan-500' : 'bg-cyan-100 text-cyan-500'; ?> rounded-full px-3 py-1 font-semibold">
                   <?= $item->processing_by ? "Processing by {$item->processing_by}" : "Fire Protection"; ?>
                 </span>
               </p>
@@ -239,13 +236,13 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
     }
 
     function createQueueItem(data, currentUser) {
-      // Format created_at timestamp
+      // Format timestamp
       const formattedCreatedAt = new Date(data.created_at).toLocaleString('en-US', {
         month: 'short', day: '2-digit', year: 'numeric',
         hour: '2-digit', minute: '2-digit', hour12: true
       });
 
-      // Set proceed and delete URLs
+      // Set URLs
       const proceedUrl = `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_releasing/${data.queue_id}`;
       const deleteUrl = `http://localhost/OJT/queueing-system/index.php/controller_queueing/delete_queue/${data.queue_id}`;
 
@@ -253,71 +250,67 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
       const isProcessingByCurrentUser = data.processing_by && String(data.processing_by) === String(currentUser);
       const isProcessing = !!data.processing_by;
       const processingText = isProcessing ? `Processing by ${data.processing_by}` : "Fire Protection";
-      const statusColorClass = isProcessing ? "bg-cyan-100 text-red-500" : "bg-cyan-100 text-cyan-500";
+      const statusColorClass = "bg-cyan-100 text-cyan-500"; // Same color for both states
       const processingClass = isProcessing ? "opacity-50 cursor-not-allowed" : "";
 
       return `
-   
-    <div class="flex flex-col flex-grow space-y-4">
+        <!-- Queue Item -->
+        <div id="queue-item-${data.queue_id}" data-id="${data.queue_id}" 
+            class="flex flex-col flex-1 min-w-96 queue-item p-3 bg-white border rounded-lg m-1 shadow-md">
+            
+            <!-- Header: Reason & Timestamp -->
+            <div class="flex justify-between">
+                <p class="text-gray-800 text-[calc(.8vw)] font-semibold uppercase">${data.reason}</p>
+                <p class="text-gray-500 text-[calc(.8vw)]">${formattedCreatedAt}</p>
+            </div>
 
-      <!-- Header: Reason & Timestamp -->
-      <div class="flex justify-between">
-        <p class="text-gray-800 text-sm font-semibold uppercase">${data.reason}</p>
-        <p class="text-gray-500 text-xs">${formattedCreatedAt}</p>
-      </div>
+            <!-- Queue Number & Name -->
+            <h3 class="flex flex-col justify-center items-center flex-grow">
+                <span class="font-semibold text-[calc(6vw)] leading-none">${data.queue_number}</span>
+                <span class="text-gray-600 uppercase text-[calc(.7vw)]">${data.name}</span>
+            </h3>
 
+            <!-- Status -->
+            <p class="text-gray-500 text-[calc(.7vw)] text-right pb-10">
+                <span class="status-text ${statusColorClass} rounded-full px-3 py-1 font-semibold">
+                    ${processingText}
+                </span>
+            </p>
 
-        <h3 class="flex flex-col justify-center items-center">
-          <span class="mt-20 font-semibold text-8xl">${data.queue_number}</span>
-          <span class="text-gray-600">${data.name}</span>
-        </h3>
-      </div>
-     </div>
+            <!-- Action Buttons -->
+            <div class="flex justify-between items-center mt-auto pt-4 border-t">
+                <div class="flex space-x-2">
+                    <button class="proceed-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg 
+                            ${isProcessingByCurrentUser ? '' : 'opacity-50 cursor-not-allowed'}"
+                            data-id="${data.queue_id}" data-url="${proceedUrl}" ${isProcessingByCurrentUser ? '' : 'disabled'}>
+                        <i class="fa-solid fa-circle-check text-[calc(1.2vw)]"></i>
+                    </button>
 
-              
-    <div class="pt-2">
-      <p class="text-gray-500 text-sm text-right pb-10">
-        <span
-          class="status-text ${statusColorClass ? 'bg-cyan-100 text-cyan-500 rounded-full px-3 py-1' : 'bg-cyan-100 text-cyan-500 rounded-full px-3 py-1'} font-semibold">
-          ${processingText ? ` ${processingText}` : "Fire Protection"}
-        </span>
-      </p>
-    </div>
+                    <button class="processing-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg 
+                            ${processingClass}" data-id="${data.queue_id}" ${isProcessing ? 'disabled' : ''}>
+                        <i class="fa-solid fa-clock text-[calc(1.2vw)]"></i>
+                    </button>
+                </div>
 
-      <!-- Action Buttons -->
-      <div class="flex justify-between items-center mt-auto pt-4 border-t">
-        <div class="flex space-x-2">
-          <!-- Proceed Button -->
-          <button class="proceed-btn bg-white p-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-md ${isProcessingByCurrentUser ? '' : 'opacity-50 cursor-not-allowed'}"
-                  data-id="${data.queue_id}" data-url="${proceedUrl}"
-                  ${isProcessingByCurrentUser ? '' : 'disabled'}>
-            <i class="fa-solid fa-circle-check text-2xl"></i>
-          </button>
-
-          <!-- Processing Button -->
-          <button class="processing-btn bg-white p-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-md ${processingClass}"
-                  data-id="${data.queue_id}" ${isProcessing ? 'disabled' : ''}>
-            <i class="fa-solid fa-clock text-2xl"></i>
-          </button>
+                <button class="delete-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg"
+                        data-id="${data.queue_id}" data-url="${deleteUrl}">
+                    <i class="fa-solid fa-trash-can text-[calc(1.2vw)]"></i>
+                </button>
+            </div>
         </div>
-
-        <!-- Delete Button -->
-        <button class="delete-btn bg-white p-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-md"
-                data-id="${data.queue_id}" data-url="${deleteUrl}">
-          <i class="fa-solid fa-trash-can text-2xl"></i>
-        </button>
-      </div>
-
-    </div>
-  `;
+    `;
     }
 
     function addQueueItem(data, defaultStatus) {
       const queueContainer = document.getElementById("queue-container");
       const queueList = document.getElementById("queueList");
 
-      if (!queueContainer || !queueList) {
-        console.error("Error: Queue containers not found.");
+      if (!queueContainer) {
+        console.error("Error: Queue container not found.");
+        return;
+      }
+      if (!queueList) {
+        console.error("Error: Queue list not found.");
         return;
       }
 
@@ -327,46 +320,42 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
         return;
       }
 
-      const isProcessing = data.processing_by ? true : false;
-      const statusText = isProcessing ? `Processing by ${data.processing_by}` : defaultStatus;
-      const statusColor = isProcessing ? "text-red-500" : "text-green-500";
-      const processingDisabled = isProcessing ? "opacity-50 cursor-not-allowed" : "";
-
-      const listItem = document.createElement("li");
-      listItem.id = queueId;
-      listItem.className = "flex flex-col flex-1 min-w-96 queue-item p-3 bg-white border rounded-lg m-1 shadow-md";
-      listItem.dataset.queue_id = data.queue_id;
-      listItem.innerHTML = createQueueItem(data, statusText, statusColor, processingDisabled);
+      const listItem = document.createElement("div");
 
       if (queueContainer.children.length < 20) {
-        queueContainer.appendChild(listItem);
+        // Default queue item design for the first 20 items in queueContainer
+        listItem.innerHTML = createQueueItem(data, defaultStatus);
+        // Append only the generated element from createQueueItem
+        queueContainer.appendChild(listItem.firstElementChild);
       } else {
-        listItem.className = "p-5 bg-white border border-cyan-400 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:bg-cyan-50 flex flex-col space-y-4";
+        // Alternative design for items exceeding 20, appended to queueList
+        listItem.className = "p-5 bg-cyan-50 border border-cyan-400 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:bg-cyan-50 flex flex-col space-y-4";
         listItem.innerHTML = `
-    <div class="flex items-center gap-4">
-      <!-- Queue Number -->
-      <div class="w-12 h-12 flex items-center justify-center text-white font-bold text-xl bg-cyan-600 rounded-full shadow-md">
-        ${data.queue_number}
-      </div>
-
-      <!-- User Info -->
-      <div class="flex flex-col">
-        <div class="text-lg font-semibold text-cyan-900">
-          ${data.name}
-        </div>
-        <span class="text-xs text-gray-500">
-          ${new Date(data.created_at).toLocaleString()}
-        </span>
-      </div>
-    </div>
-
-    <!-- Queue Reason Badge -->
-    <div class="mt-3 flex justify-end">
-      <span class="text-sm px-4 py-2 rounded-lg bg-cyan-100 text-cyan-800 font-medium shadow-sm">
-        ${data.reason}
-      </span>
-    </div>
-  `;
+            <div class="flex items-center gap-4">
+                <!-- Queue Number -->
+                <div class="w-12 h-12 flex items-center justify-center text-white font-bold text-xl bg-cyan-600 rounded-full shadow-md">
+                    ${data.queue_number}
+                </div>
+                <!-- User Info -->
+                <div class="flex flex-col">
+                    <div class="text-lg font-semibold text-cyan-900">
+                        ${data.name}
+                    </div>
+                    <span class="text-xs text-gray-500">
+                        ${new Date(data.created_at).toLocaleString('en-US', {
+          month: 'short', day: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit', hour12: true
+        })}
+                    </span>
+                </div>
+            </div>
+            <!-- Queue Reason Badge -->
+            <div class="mt-3 flex justify-end">
+                <span class="text-sm px-4 py-2 rounded-full bg-cyan-100 text-cyan-800 font-medium shadow-sm">
+                    ${data.reason}
+                </span>
+            </div>
+        `;
 
         // Store data attributes explicitly for later retrieval
         listItem.setAttribute("data-queue_id", data.queue_id);
@@ -374,13 +363,10 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
         listItem.setAttribute("data-name", data.name);
         listItem.setAttribute("data-reason", data.reason);
         listItem.setAttribute("data-created_at", data.created_at);
-        listItem.setAttribute("data-proceed_url", data.proceed_url || `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_releasing/${data.queue_id}`);
-
+        listItem.setAttribute("data-proceed_url", `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_releasing/${data.queue_id}`);
 
         queueList.appendChild(listItem);
       }
-
-      updateGridLayout();
     }
 
     function removeQueueItem(queueId) {
@@ -408,13 +394,15 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
           return;
         }
 
+        // Extract data attributes from the right item
         const queueData = {
           queue_id: firstRightItem.getAttribute("data-queue_id") || null,
           queue_number: firstRightItem.getAttribute("data-queue_number") || "N/A",
           name: firstRightItem.getAttribute("data-name") || "Unknown",
           reason: firstRightItem.getAttribute("data-reason") || "No reason provided",
-          created_at: firstRightItem.getAttribute("data-created_at") || new Date().toISOString(),
-          proceed_url: firstRightItem.getAttribute("data-proceed_url") || `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_releasing/${firstRightItem.getAttribute("data-queue_id")}`
+          created_at: firstRightItem.getAttribute("data-created_at"), // Use the original created_at
+          proceed_url: firstRightItem.getAttribute("data-proceed_url") ||
+            `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_releasing/${firstRightItem.getAttribute("data-queue_id")}`
         };
 
         if (!queueData.queue_id) {
@@ -422,24 +410,27 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
           return;
         }
 
-        const movedTimestamp = new Date().toLocaleString();
+        // Removed updating the created_at timestamp:
+        // const movedTimestamp = new Date().toLocaleString();
+        // queueData.created_at = movedTimestamp;
 
-        queueData.created_at = movedTimestamp;
+        // Use a temporary container to generate the new queue item via createQueueItem
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = createQueueItem(queueData, "Fire Protection");
 
-        const newQueueItem = document.createElement("div");
-        newQueueItem.id = firstRightItem.id;
-        newQueueItem.className = "flex flex-col flex-1 min-w-96 queue-item p-3 bg-white border rounded-lg m-1 shadow-md";
+        // Get the generated element (which already has the correct className from createQueueItem)
+        const newQueueItem = tempDiv.firstElementChild;
 
+        // Reapply data attributes for consistency
         Object.keys(queueData).forEach(key => {
           newQueueItem.dataset[key] = queueData[key];
         });
 
-        newQueueItem.innerHTML = createQueueItem(queueData, "Fire Protection", "text-green-500", "");
-
+        // Remove the item from the right queue list and append the new item to the left queue container
         firstRightItem.remove();
         queueContainer.appendChild(newQueueItem);
 
-        console.log(`✅ Moved queue item (ID: ${queueData.queue_id}) to the left with timestamp: ${movedTimestamp}`);
+        console.log(`✅ Moved queue item (ID: ${queueData.queue_id}) to the left preserving original timestamp: ${queueData.created_at}`);
       }
     }
 
@@ -559,7 +550,7 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
             updateFireProtectionQueueStatus(
               data.queue_id,
               `Processing by ${data.processing_by}`,
-              "text-red-500",
+              "text-cyan-500",
               data.processing_by
             );
           }
@@ -599,7 +590,7 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
               if (data.status === "success") {
                 console.log("✅ Fire Protection queue marked as processing:", data);
 
-                updateFireProtectionQueueStatus(queueId, `Processing by ${data.processing_by}`, "text-red-500", data.processing_by);
+                updateFireProtectionQueueStatus(queueId, `Processing by ${data.processing_by}`, "text-cyan-500", data.processing_by);
 
                 socket.send(JSON.stringify({
                   action: "update_fireprotection_queue",
@@ -660,6 +651,102 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
       let currentUser = "<?= $currentUser; ?>";
       console.log("📌 Current User (JavaScript):", currentUser);
     });
+  </script>
+  <script>
+    document.addEventListener("click", function (e) {
+      let deleteBtn = e.target.closest(".delete-btn");
+      if (!deleteBtn) return;
+
+      e.preventDefault();
+
+      let queueItem = deleteBtn.closest(".queue-item"); // Find the parent queue item
+      let queueId = deleteBtn.dataset.id;
+      let url = deleteBtn.dataset.url;
+
+      if (!url) {
+        console.error("Error: No URL found for delete action.");
+        return;
+      }
+
+      Swal.fire({
+        title: "Are you sure?",
+        text: "This will permanently delete this record.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Yes, delete it!",
+        cancelButtonText: "Cancel"
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch(url, { method: "POST" }) // Ensure the request is handled correctly in CodeIgniter
+            .then(response => response.text()) // First, get raw response
+            .then(text => {
+              console.log("Raw Response:", text); // Debugging
+
+              let data;
+              try {
+                data = JSON.parse(text.trim()); // Ensure valid JSON
+              } catch (error) {
+                console.error("JSON Parse Error:", error, "Response Text:", text);
+                Swal.fire("Error", "Invalid server response. Please try again.", "error");
+                return;
+              }
+
+              if (data.status === "success") {
+                Toastify({
+                  text: data.message,
+                  duration: 3000,
+                  close: true,
+                  gravity: "top",
+                  position: "right",
+                  style: { background: "linear-gradient(to right, #000, #d008af)" }
+                }).showToast();
+
+                if (queueItem) {
+                  queueItem.remove();
+                  updateGridLayout(); // Ensure the layout updates properly
+                  handleQueueShift(); // Move the next queue item if needed
+                }
+              } else {
+                Swal.fire("Error", data.message, "error");
+              }
+            })
+            .catch(error => {
+              console.error("Delete Error:", error);
+              Swal.fire("Error", "An error occurred. Please try again.", "error");
+            });
+        }
+      });
+    });
+
+    function handleQueueShift() {
+      let leftContainer = document.getElementById("queue-container");
+      let rightList = document.getElementById("queueList");
+
+      if (leftContainer.children.length < 20) {
+        let firstRightItem = rightList.querySelector("li");
+        if (firstRightItem) {
+          firstRightItem.remove(); // Remove from the right section
+          leftContainer.appendChild(firstRightItem); // Move to the left section
+          updateGridLayout();
+        }
+      }
+    }
+
+    function updateGridLayout() {
+      const queueContainer = document.getElementById("queue-container");
+      const queueList = document.getElementById("queueList");
+
+      if (!queueContainer || !queueList) {
+        console.warn("updateGridLayout: Queue elements not found.");
+        return;
+      }
+
+      const leftItems = queueContainer.children.length;
+      const rightItems = queueList.children.length;
+
+      queueContainer.style.gridTemplateColumns = `repeat(${leftItems < 5 ? leftItems : 5}, 1fr)`;
+      queueList.style.gridTemplateColumns = `repeat(${rightItems < 5 ? rightItems : 5}, 1fr)`;
+    }
   </script>
 </body>
 

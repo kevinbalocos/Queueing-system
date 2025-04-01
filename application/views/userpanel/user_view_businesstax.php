@@ -20,13 +20,6 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-  <style>
-    html,
-    body {
-      overflow: hidden;
-    }
-  </style>
-
 </head>
 
 <body class="bg-gray-100">

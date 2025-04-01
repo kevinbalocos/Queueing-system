@@ -24,9 +24,6 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-  <style>
-
-  </style>
 </head>
 
 <body class="bg-gray-100">
