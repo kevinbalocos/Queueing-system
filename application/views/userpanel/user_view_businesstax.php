@@ -196,19 +196,20 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
   <script>
     const socket = new WebSocket("ws://localhost:8080");
 
-    socket.onopen = function () {
-      console.log("Connected to WebSocket server (Business Tax)");
-    };
+    socket.onopen = () => console.log("Connected to WebSocket server (Business Tax)");
 
-    socket.onmessage = function (event) {
+    socket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
 
         if (data.action === "proceed_to_businesstax") {
           console.log("New Business Tax queue item received:", data);
-          addNewBusinessTaxQueue(data);
+          addQueueItem(data, "Business Tax");
         } else if (data.action === "proceed_to_payment") {
           console.log("Queue item moved to Payment:", data);
+          removeQueueItem(data.queue_id);
+        } else if (data.action === "delete_queue") {
+          console.log(`Queue ID ${data.queue_id} deleted.`);
           removeQueueItem(data.queue_id);
         }
       } catch (error) {
@@ -216,15 +217,66 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
       }
     };
 
-    socket.onerror = function (error) {
-      console.error("WebSocket Error: ", error);
-    };
+    socket.onerror = (error) => console.error("WebSocket Error: ", error);
+    socket.onclose = () => console.log("Disconnected from WebSocket server");
 
-    socket.onclose = function () {
-      console.log("Disconnected from WebSocket server");
-    };
+    function createQueueItem(data, currentStatus) {
+      const formattedCreatedAt = new Date(data.created_at).toLocaleString('en-US', {
+        month: 'short', day: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', hour12: true
+      });
 
-    function addNewBusinessTaxQueue(data) {
+      const proceedUrl = `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_payment/${data.queue_id}`;
+      const deleteUrl = `http://localhost/OJT/queueing-system/index.php/controller_queueing/delete_queue/${data.queue_id}`;
+
+      const isProcessing = !!data.processing_by;
+      const processingText = isProcessing ? `Processing by ${data.processing_by}` : "Business Tax";
+      const statusColorClass = "bg-cyan-100 text-cyan-500";
+      const processingClass = isProcessing ? "opacity-50 cursor-not-allowed" : "";
+
+      return `
+    <div id="queue-item-${data.queue_id}" data-id="${data.queue_id}" 
+        class="flex flex-col flex-1 min-w-96 queue-item p-3 bg-white border rounded-lg m-1 shadow-md">
+        
+        <div class="flex justify-between">
+            <p class="text-gray-800 text-[calc(.8vw)] font-semibold uppercase">${data.reason}</p>
+            <p class="text-gray-500 text-[calc(.8vw)]">${formattedCreatedAt}</p>
+        </div>
+
+        <h3 class="flex flex-col justify-center items-center flex-grow">
+            <span class="font-semibold text-[calc(6vw)] leading-none">${data.queue_number}</span>
+            <span class="text-gray-600 uppercase text-[calc(.7vw)]">${data.name}</span>
+        </h3>
+
+        <p class="text-gray-500 text-[calc(.7vw)] text-right pb-10">
+            <span class="status-text ${statusColorClass} rounded-full px-3 py-1 font-semibold">
+                ${processingText}
+            </span>
+        </p>
+
+        <div class="flex justify-between items-center mt-auto pt-4 border-t">
+            <div class="flex space-x-2">
+                <button class="proceed-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg"
+                        data-id="${data.queue_id}" data-url="${proceedUrl}">
+                    <i class="fa-solid fa-circle-check text-[calc(1.2vw)]"></i>
+                </button>
+
+                <button class="processing-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg 
+                        ${processingClass}" data-id="${data.queue_id}" ${isProcessing ? 'disabled' : ''}>
+                    <i class="fa-solid fa-clock text-[calc(1.2vw)]"></i>
+                </button>
+            </div>
+
+            <button class="delete-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg"
+                    data-id="${data.queue_id}" data-url="${deleteUrl}">
+                <i class="fa-solid fa-trash-can text-[calc(1.2vw)]"></i>
+            </button>
+        </div>
+    </div>
+  `;
+    }
+
+    function addQueueItem(data, defaultStatus) {
       const queueContainer = document.getElementById("queue-container");
       const queueList = document.getElementById("queueList");
 
@@ -239,91 +291,40 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
         return;
       }
 
-      let timestamp = "Invalid Date";
-
-      if (data.created_at) {
-        let createdAt = new Date(data.created_at);
-        if (!isNaN(createdAt.getTime())) {
-          timestamp = createdAt.toLocaleString("en-US", {
-            month: "short",
-            day: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true
-          });
-        } else {
-          console.error("⚠️ Invalid Date format received:", data.created_at);
-        }
-      } else {
-        console.error("⚠️ Missing created_at value:", data.created_at);
-      }
-
-      const listItem = document.createElement("li");
-      listItem.id = queueId;
-      listItem.dataset.queue_id = data.queue_id;
-      listItem.dataset.queue_number = data.queue_number;
-      listItem.dataset.name = data.name;
-      listItem.dataset.reason = data.reason;
-      listItem.dataset.proceed_url = data.proceed_url
-        ? data.proceed_url
-        : `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_payment/${data.queue_id}`;
-
-      listItem.className =
-        "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center shadow-md";
-
-      let isProcessing = data.processing_by ? true : false;
-      let statusText = isProcessing ? `Processing by ${data.processing_by}` : "Business Tax";
-      let statusColor = isProcessing ? "text-red-500" : "text-green-500";
-      let proceedDisabled = isProcessing ? "disabled opacity-50 cursor-not-allowed" : "";
-      let processingDisabled = isProcessing ? "opacity-50 cursor-not-allowed" : "";
-
-      listItem.innerHTML = `
-      <h3 class="font-semibold text-xl">${data.queue_number} - ${data.name}</h3>
-      <p class="text-gray-500 text-sm">Reason: ${data.reason}</p>
-      <p class="text-gray-500 text-sm">
-          Time Added: <span class="font-semibold">${timestamp}</span>
-      </p>
-      <p class="text-gray-500 text-sm">
-          Status: <span class="status-text ${statusColor} font-semibold">${statusText}</span>
-      </p>
-
-      <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg ${processingDisabled}"
-          data-id="${data.queue_id}" data-type="businesstax" ${isProcessing ? "disabled" : ""}>
-          <i class="fa-solid fa-hourglass-half"></i>
-      </button>
-
-      <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 rounded-full border border-blue-50 shadow-lg opacity-50 cursor-not-allowed"
-          data-id="${data.queue_id}"
-          data-url="${listItem.dataset.proceed_url}"
-          disabled>
-          <i class="fa-solid fa-user-check text-2xl"></i>
-      </button>
-    `;
+      const listItem = document.createElement("div");
 
       if (queueContainer.children.length < 20) {
-        queueContainer.appendChild(listItem);
+        listItem.innerHTML = createQueueItem(data, defaultStatus);
+        queueContainer.appendChild(listItem.firstElementChild);
       } else {
-        listItem.className = "p-3 bg-gray-50 border rounded-lg";
-
-        let timestamp = new Date().toLocaleString("en-US", {
-          month: "short",
-          day: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true
-        });
-
+        listItem.className = "p-5 bg-cyan-50 border border-cyan-400 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:bg-cyan-50 flex flex-col space-y-4";
         listItem.innerHTML = `
-        ${data.queue_number} - ${data.name} (${data.reason})<br>
-        <span class="text-gray-500 text-xs">Added on: ${timestamp}</span>
-      `;
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 flex items-center justify-center text-white font-bold text-xl bg-cyan-600 rounded-full shadow-md">
+                ${data.queue_number}
+            </div>
+            <div class="flex flex-col">
+                <div class="text-lg font-semibold text-cyan-900">
+                    ${data.name}
+                </div>
+                <span class="text-xs text-gray-500">
+                    ${new Date(data.created_at).toLocaleString('en-US', {
+          month: 'short', day: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit', hour12: true
+        })}
+                </span>
+            </div>
+        </div>
+        <div class="mt-3 flex justify-end">
+            <span class="text-sm px-4 py-2 rounded-full bg-cyan-100 text-cyan-800 font-medium shadow-sm">
+                ${data.reason}
+            </span>
+        </div>
+    `;
 
+        listItem.setAttribute("data-queue_id", data.queue_id);
         queueList.appendChild(listItem);
       }
-
-      updateGridLayout();
     }
 
     function removeQueueItem(queueId) {
@@ -332,7 +333,6 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
       if (queueItem) {
         queueItem.remove();
         console.log(`Queue ID ${queueId} removed from UI.`);
-
         moveFirstRightItemToLeft();
         updateGridLayout();
       } else {
@@ -347,63 +347,39 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
       if (queueContainer.children.length < 20 && queueList.children.length > 0) {
         const firstRightItem = queueList.children[0];
 
-        const queueId = firstRightItem.dataset.queue_id || null;
-        if (!queueId) {
+        if (!firstRightItem) {
+          console.error("❌ No item found in the queue list!");
+          return;
+        }
+
+        const queueData = {
+          queue_id: firstRightItem.getAttribute("data-queue_id") || null,
+          queue_number: firstRightItem.getAttribute("data-queue_number") || "N/A",
+          name: firstRightItem.getAttribute("data-name") || "Unknown",
+          reason: firstRightItem.getAttribute("data-reason") || "No reason provided",
+          created_at: firstRightItem.getAttribute("data-created_at"),
+          proceed_url: firstRightItem.getAttribute("data-proceed_url")
+        };
+
+        if (!queueData.queue_id) {
           console.error("❌ Queue ID is undefined. Cannot move item.");
           return;
         }
 
-        let movedTimestamp = new Date().toLocaleString("en-US", {
-          month: "short",
-          day: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        });
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = createQueueItem(queueData, "Business Tax");
 
-        const processingBy = firstRightItem.dataset.processing_by || "";
-        const isProcessing = processingBy ? true : false;
-        const processingText = isProcessing ? `Processing by ${processingBy}` : "Business Tax";
-        const statusColor = isProcessing ? "text-red-500" : "text-green-500";
-
-        const newQueueItem = document.createElement("div");
-        newQueueItem.id = firstRightItem.id;
-        newQueueItem.className =
-          "flex-1 min-w-56 queue-item p-3 bg-white border rounded-lg flex flex-col justify-center m-1 items-center shadow-md";
-        newQueueItem.dataset.queue_id = queueId;
-
-        newQueueItem.innerHTML = `
-      <h3 class="font-semibold text-xl">${firstRightItem.dataset.queue_number} - ${firstRightItem.dataset.name}</h3>
-      <p class="text-gray-500 text-sm">Reason: ${firstRightItem.dataset.reason}</p>
-      <p class="text-gray-500 text-sm">Time Added: <span class="font-semibold">${movedTimestamp}</span></p>
-      <p class="text-gray-500 text-sm">
-          Status: <span class="status-text ${statusColor} font-semibold">${processingText}</span>
-      </p>
-      <button class="processing-btn mt-3 bg-blue-500 py-2 px-3 text-white hover:bg-blue-600 rounded-full shadow-lg ${isProcessing ? "opacity-50 cursor-not-allowed" : ""
-          }" data-id="${queueId}" ${isProcessing ? "disabled" : ""}>
-          <i class="fa-solid fa-hourglass-half"></i>
-      </button>
-      <button class="proceed-btn mt-3 bg-white py-3 px-3 text-blue-900 rounded-full border border-blue-50 shadow-lg opacity-50 cursor-not-allowed"
-          data-id="${queueId}"
-          data-url="${firstRightItem.dataset.proceed_url}"
-          disabled>
-          <i class="fa-solid fa-user-check text-2xl"></i>
-      </button>
-    `;
-
+        const newQueueItem = tempDiv.firstElementChild;
         firstRightItem.remove();
         queueContainer.appendChild(newQueueItem);
-        console.log(`✅ Moved queue item (ID: ${queueId}) to the left with timestamp: ${movedTimestamp}`);
+
+        console.log(`✅ Moved queue item (ID: ${queueData.queue_id}) to the left.`);
       }
     }
 
     function updateGridLayout() {
       const queueContainer = document.getElementById("queue-container");
-      const queueList = document.getElementById("queueList");
-
-      queueContainer.style.gridTemplateColumns = `repeat(${queueContainer.children.length < 5 ? queueContainer.children.length : 5}, 1fr)`;
-      queueList.style.gridTemplateColumns = `repeat(${queueList.children.length < 5 ? queueList.children.length : 5}, 1fr)`;
+      queueContainer.style.gridTemplateColumns = `repeat(${Math.min(queueContainer.children.length, 5)}, 1fr)`;
     }
   </script>
 
@@ -517,7 +493,7 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
             updateQueueStatus(
               data.queue_id,
               `Processing by ${data.processing_by}`,
-              "text-red-500",
+              "text-cyan-500",
               data.processing_by,
               data.created_at
             );
@@ -558,7 +534,7 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
               if (data.status === "success") {
                 console.log("✅ Queue marked as processing:", data);
 
-                updateQueueStatus(queueId, `Processing by ${data.processing_by}`, "text-red-500", data.processing_by);
+                updateQueueStatus(queueId, `Processing by ${data.processing_by}`, "text-cyan-500", data.processing_by);
 
                 socket.send(JSON.stringify({
                   action: "update_queue",
@@ -633,6 +609,102 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
       let currentUser = "<?= $currentUser; ?>";
       console.log("📌 Current User (JavaScript):", currentUser);
     });
+  </script>
+  <script>
+    document.addEventListener("click", function (e) {
+      let deleteBtn = e.target.closest(".delete-btn");
+      if (!deleteBtn) return;
+
+      e.preventDefault();
+
+      let queueItem = deleteBtn.closest(".queue-item"); // Find the parent queue item
+      let queueId = deleteBtn.dataset.id;
+      let url = deleteBtn.dataset.url;
+
+      if (!url) {
+        console.error("Error: No URL found for delete action.");
+        return;
+      }
+
+      Swal.fire({
+        title: "Are you sure?",
+        text: "This will permanently delete this record.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Yes, delete it!",
+        cancelButtonText: "Cancel"
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch(url, { method: "POST" }) // Ensure the request is handled correctly in CodeIgniter
+            .then(response => response.text()) // First, get raw response
+            .then(text => {
+              console.log("Raw Response:", text); // Debugging
+
+              let data;
+              try {
+                data = JSON.parse(text.trim()); // Ensure valid JSON
+              } catch (error) {
+                console.error("JSON Parse Error:", error, "Response Text:", text);
+                Swal.fire("Error", "Invalid server response. Please try again.", "error");
+                return;
+              }
+
+              if (data.status === "success") {
+                Toastify({
+                  text: data.message,
+                  duration: 3000,
+                  close: true,
+                  gravity: "top",
+                  position: "right",
+                  style: { background: "linear-gradient(to right, #000, #d008af)" }
+                }).showToast();
+
+                if (queueItem) {
+                  queueItem.remove();
+                  updateGridLayout(); // Ensure the layout updates properly
+                  handleQueueShift(); // Move the next queue item if needed
+                }
+              } else {
+                Swal.fire("Error", data.message, "error");
+              }
+            })
+            .catch(error => {
+              console.error("Delete Error:", error);
+              Swal.fire("Error", "An error occurred. Please try again.", "error");
+            });
+        }
+      });
+    });
+
+    function handleQueueShift() {
+      let leftContainer = document.getElementById("queue-container");
+      let rightList = document.getElementById("queueList");
+
+      if (leftContainer.children.length < 20) {
+        let firstRightItem = rightList.querySelector("li");
+        if (firstRightItem) {
+          firstRightItem.remove(); // Remove from the right section
+          leftContainer.appendChild(firstRightItem); // Move to the left section
+          updateGridLayout();
+        }
+      }
+    }
+
+    function updateGridLayout() {
+      const queueContainer = document.getElementById("queue-container");
+      const queueList = document.getElementById("queueList");
+
+      if (!queueContainer || !queueList) {
+        console.warn("updateGridLayout: Queue elements not found.");
+        return;
+      }
+
+      const leftItems = queueContainer.children.length;
+      const rightItems = queueList.children.length;
+
+      queueContainer.style.gridTemplateColumns = `repeat(${leftItems < 5 ? leftItems : 5}, 1fr)`;
+      queueList.style.gridTemplateColumns = `repeat(${rightItems < 5 ? rightItems : 5}, 1fr)`;
+    }
   </script>
 </body>
 

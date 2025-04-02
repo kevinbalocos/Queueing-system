@@ -209,6 +209,9 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
         } else if (data.action === "proceed_to_businesstax") {
           console.log("Queue item moved to Business Tax:", data);
           removeQueueItem(data.queue_id);
+        } else if (data.action === "delete_queue") {
+          console.log(`Queue ID ${data.queue_id} deleted.`);
+          removeQueueItem(data.queue_id);
         }
       } catch (error) {
         console.error("Error parsing WebSocket data:", error);
