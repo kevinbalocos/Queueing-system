@@ -1,14 +1,18 @@
 body.dark {
     --body-color: #1e1e2e;
     --sidebar-color: #2a2a3b;
-    --primary-color: #0ea5e9;
+    --primary-color: white;
     --primary-color-light: #334155;
     --toggle-color: #e2e8f0;
     --text-color: #dde1e3;
-    --text-light-color: #bae6fd;
-    --hover-color: #0284c7;
+    --text-light-color: white;
+    --hover-color: #0a212c;
     --table-header-color: #3f3f46;
     --border-color: #ffffff3a;
+}
+body.dark #queue-container
+{
+    background-color: #1e1e2e;
 }
 
 body.dark h5
@@ -126,8 +130,11 @@ body.dark a:hover {
 body.dark button {
     color: var(--text-light-color) !important;
     background-color: var(--primary-color-light) !important;
-    padding: 10px;
-    border-radius: 10px;
+    border: none;
+}
+body.dark .toggle
+{
+    color: black !important;
 }
 
 body.dark button:hover {

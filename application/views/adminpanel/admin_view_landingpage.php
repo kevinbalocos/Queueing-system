@@ -65,31 +65,31 @@
                 </li>
 
                 <li class="nav-link">
-    <a href="#" class="sidebar-link" data-view="LandTax">
-        <i class='bx bx-home-alt icon'></i>
-        <span class="text nav-text">Landtax</span>
-    </a>
-</li>
+                    <a href="#" class="sidebar-link" data-view="LandTax">
+                        <i class='bx bx-home-alt icon'></i>
+                        <span class="text nav-text">Landtax</span>
+                    </a>
+                </li>
 
-<li class="nav-link">
-    <a href="#" class="sidebar-link" data-view="BackRoom">
-        <i class='bx bx-briefcase icon'></i>
-        <span class="text nav-text">Backroom</span>
-    </a>
-</li>
-<li class="nav-link">
+                <li class="nav-link">
+                    <a href="#" class="sidebar-link" data-view="BackRoom">
+                        <i class='bx bx-briefcase icon'></i>
+                        <span class="text nav-text">Backroom</span>
+                    </a>
+                </li>
+                <li class="nav-link">
                     <a href="#" class="sidebar-link" data-view="Examiners">
                         <i class='bx bx-credit-card icon'></i>
                         <span class="text nav-text">Examiners</span>
                     </a>
                 </li>
 
-<li class="nav-link">
-    <a href="#" class="sidebar-link" data-view="BusinessTax">
-        <i class='bx bx-cart icon'></i>
-        <span class="text nav-text">Businesstax</span>
-    </a>
-</li>
+                <li class="nav-link">
+                    <a href="#" class="sidebar-link" data-view="BusinessTax">
+                        <i class='bx bx-cart icon'></i>
+                        <span class="text nav-text">Businesstax</span>
+                    </a>
+                </li>
 
 
                 <li class="nav-link">
@@ -159,53 +159,53 @@
     </section>
 
     <script>
-   document.addEventListener("DOMContentLoaded", () => {
-    const sidebar = document.querySelector(".sidebar");
-    const toggle = document.querySelector(".toggle");
-    const modeSwitch = document.querySelector(".toggle-switch");
-    const modeText = document.querySelector(".mode-text");
+        document.addEventListener("DOMContentLoaded", () => {
+            const sidebar = document.querySelector(".sidebar");
+            const toggle = document.querySelector(".toggle");
+            const modeSwitch = document.querySelector(".toggle-switch");
+            const modeText = document.querySelector(".mode-text");
 
-    // Function to toggle dark mode
-    function toggleDarkMode() {
-        document.body.classList.toggle("dark");
+            // Function to toggle dark mode
+            function toggleDarkMode() {
+                document.body.classList.toggle("dark");
 
-        if (document.body.classList.contains("dark")) {
-            modeText.innerText = "Light Mode";
-            localStorage.setItem('darkMode', true);
-        } else {
-            modeText.innerText = "Dark Mode";
-            localStorage.setItem('darkMode', false);
-        }
-    }
+                if (document.body.classList.contains("dark")) {
+                    modeText.innerText = "Light Mode";
+                    localStorage.setItem('darkMode', true);
+                } else {
+                    modeText.innerText = "Dark Mode";
+                    localStorage.setItem('darkMode', false);
+                }
+            }
 
-    // Sidebar toggle and state persistence
-    toggle.addEventListener("click", () => {
-        sidebar.classList.toggle("close");
-        const sidebarState = sidebar.classList.contains("close") ? "closed" : "open";
-        localStorage.setItem("sidebarState", sidebarState);
-    });
+            // Sidebar toggle and state persistence
+            toggle.addEventListener("click", () => {
+                sidebar.classList.toggle("close");
+                const sidebarState = sidebar.classList.contains("close") ? "closed" : "open";
+                localStorage.setItem("sidebarState", sidebarState);
+            });
 
-    // Check and apply sidebar state on page load
-    const sidebarState = localStorage.getItem("sidebarState");
-    if (sidebarState === "open") {
-        sidebar.classList.remove("close");
-    } else {
-        sidebar.classList.add("close");
-    }
+            // Check and apply sidebar state on page load
+            const sidebarState = localStorage.getItem("sidebarState");
+            if (sidebarState === "open") {
+                sidebar.classList.remove("close");
+            } else {
+                sidebar.classList.add("close");
+            }
 
-    // Dark mode toggle functionality
-    modeSwitch.addEventListener("click", toggleDarkMode);
+            // Dark mode toggle functionality
+            modeSwitch.addEventListener("click", toggleDarkMode);
 
-    // Set dark mode preference on page load
-    const darkModePreference = localStorage.getItem('darkMode');
-    if (darkModePreference === 'true') {
-        document.body.classList.add("dark");
-        modeText.innerText = "Light Mode";
-    } else {
-        document.body.classList.remove("dark");
-        modeText.innerText = "Dark Mode";
-    }
-});
+            // Set dark mode preference on page load
+            const darkModePreference = localStorage.getItem('darkMode');
+            if (darkModePreference === 'true') {
+                document.body.classList.add("dark");
+                modeText.innerText = "Light Mode";
+            } else {
+                document.body.classList.remove("dark");
+                modeText.innerText = "Dark Mode";
+            }
+        });
 
 
 
@@ -237,19 +237,19 @@
         });
     </script>
     <script>
-      $(document).ready(function () {
-    // Function to load the page using AJAX
-    function loadPage(view, updateUrl = true) {
-    $.ajax({
-        url: "<?= base_url('controller_admin_landing/loadView/'); ?>" + view,
-        type: "GET",
-        dataType: "html",
-        beforeSend: function () {
-            // Get the current mode (light or dark)
-            const isDarkMode = document.body.classList.contains('dark');
-            
-            // Update the loading screen
-            $("#content").html(`
+        $(document).ready(function () {
+            // Function to load the page using AJAX
+            function loadPage(view, updateUrl = true) {
+                $.ajax({
+                    url: "<?= base_url('controller_admin_landing/loadView/'); ?>" + view,
+                    type: "GET",
+                    dataType: "html",
+                    beforeSend: function () {
+                        // Get the current mode (light or dark)
+                        const isDarkMode = document.body.classList.contains('dark');
+
+                        // Update the loading screen
+                        $("#content").html(`
                 <div class="flex items-center justify-center w-full h-screen absolute top-0 left-0 z-50 ${isDarkMode ? 'bg-body-color/90' : 'bg-gray-50/90'}">
                     <div class="flex flex-col items-center justify-center space-y-4 p-6 rounded-lg shadow-lg ${isDarkMode ? 'bg-sidebar-color' : 'bg-white'}">
                         <div class="animate-spin border-t-4 ${isDarkMode ? 'border-primary-color' : 'border-primary-color'} w-16 h-16 border-solid rounded-full"></div>
@@ -257,43 +257,43 @@
                     </div>
                 </div>
             `);
-        },
-        success: function (response) {
-            $("#content").html(response);
+                    },
+                    success: function (response) {
+                        $("#content").html(response);
 
-            // Update the URL without reloading the page
-            if (updateUrl) {
-                history.pushState({ view: view }, "", "<?= base_url('admin/'); ?>" + view);
+                        // Update the URL without reloading the page
+                        if (updateUrl) {
+                            history.pushState({ view: view }, "", "<?= base_url('admin/'); ?>" + view);
+                        }
+                    },
+                    error: function () {
+                        $("#content").html('<div class="text-red-500">Failed to load content.</div>');
+                    }
+                });
             }
-        },
-        error: function () {
-            $("#content").html('<div class="text-red-500">Failed to load content.</div>');
-        }
-    });
-}
 
 
 
-    // Prevent the default link behavior and load the corresponding content
-    $(".sidebar-link").click(function (e) {
-        e.preventDefault(); // Prevent page refresh
-        let view = $(this).data("view"); // Get the view name from the data-view attribute
-        loadPage(view); // Load the content dynamically
-    });
+            // Prevent the default link behavior and load the corresponding content
+            $(".sidebar-link").click(function (e) {
+                e.preventDefault(); // Prevent page refresh
+                let view = $(this).data("view"); // Get the view name from the data-view attribute
+                loadPage(view); // Load the content dynamically
+            });
 
-    // Handle browser back/forward navigation
-    window.onpopstate = function (event) {
-        if (event.state && event.state.view) {
-            loadPage(event.state.view, false);
-        }
-    };
+            // Handle browser back/forward navigation
+            window.onpopstate = function (event) {
+                if (event.state && event.state.view) {
+                    loadPage(event.state.view, false);
+                }
+            };
 
-    // Load the correct page on refresh if a state exists
-    let currentView = window.location.pathname.split("/").pop();
-    if (currentView) {
-        loadPage(currentView, false);
-    }
-});
+            // Load the correct page on refresh if a state exists
+            let currentView = window.location.pathname.split("/").pop();
+            if (currentView) {
+                loadPage(currentView, false);
+            }
+        });
 
     </script>
 
