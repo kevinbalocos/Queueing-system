@@ -97,7 +97,7 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
             <?php
             $isProcessingByCurrentUser = ($item->processing_by && strval($item->processing_by) === $currentUser);
             ?>
-            <div class="flex flex-col flex-1 min-w-96 queue-item p-3 bg-white border rounded-lg m-1"
+            <div class="flex flex-col flex-1 min-w-96 queue-item p-3 bg-white  rounded-lg m-1 "
               id="queue-item-<?= $item->id; ?>" data-id="<?= $item->id; ?>">
               <!-- Main Content Container (for reason, queue number, and name) -->
               <div class="flex flex-col flex-grow space-y-4 max-w-full ">
