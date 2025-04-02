@@ -39,19 +39,18 @@
             margin-bottom: 1rem;
         }
 
-        .queue-grid {
-            flex-grow: 1;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Ensures no empty spaces */
-            grid-auto-rows: 1fr; /* Makes all items equal height */
+        .queue-row {
+            display: flex;
+            flex-wrap: wrap;
             gap: 10px;
             padding: 1rem;
-            background: #f9fafb;
             border-radius: 10px;
-            overflow: hidden;
+            margin-bottom: 1rem;
+            background: #f9fafb;
         }
 
         .queue-item {
+            flex: 1 1 250px; /* Ensures equal width */
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -72,37 +71,46 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
+        .sector-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
     </style>
 </head>
 
 <body>
 
-    <div class="queue-container">
+    <div class="queue-container overflow-y-auto">Z`
         <h2 class="queue-header">Queue Display</h2>
 
-        <div class="queue-grid">
-            <!-- Waiting Queue -->
+        <!-- Waiting Queue -->
+        <div class="queue-row ">
+            <h3 class="sector-title text-green-600 w-full">Waiting Queue</h3>
             <?php foreach (array_slice($queue, 0, 10) as $item): ?>
-                <div class="queue-item bg-green-100 border-l-4 border-green-600">
-                    <span class="font-bold text-green-600 uppercase">Waiting</span>
+                <div class="queue-item bg-green-100 border-l-4 border-green-600 ">
                     <h3><?= $item->queue_number; ?></h3>
                     <p><?= $item->name; ?></p>
                 </div>
             <?php endforeach; ?>
+        </div>
 
-            <!-- Other Sectors -->
-            <?php 
-            $sectors = ['backroom' => 'teal', 'examiners' => 'yellow', 'businesstax' => 'purple', 'payment' => 'blue', 'fireprotection' => 'orange'];
-            foreach ($sectors as $sector => $color): 
-                foreach (array_slice($$sector, 0, 10) as $item): ?>
+        <!-- Other Sectors -->
+        <?php 
+        $sectors = ['backroom' => 'teal', 'examiners' => 'yellow', 'businesstax' => 'purple', 'payment' => 'blue', 'fireprotection' => 'orange'];
+        foreach ($sectors as $sector => $color): ?>
+            <div class="queue-row ">
+                <h3 class="sector-title text-<?= $color ?>-600 w-full"><?= ucfirst($sector) ?></h3>
+                <?php foreach (array_slice($$sector, 0, 10) as $item): ?>
                     <div class="queue-item bg-<?= $color ?>-100 border-l-4 border-<?= $color ?>-600">
-                        <span class="font-bold text-<?= $color ?>-600 uppercase"><?= ucfirst($sector) ?></span>
                         <h3><?= $item->queue_number; ?></h3>
                         <p><?= $item->name; ?></p>
                     </div>
-                <?php endforeach; 
-            endforeach; ?>
-        </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endforeach; ?>
+
     </div>
 
     <script>

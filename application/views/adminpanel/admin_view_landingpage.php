@@ -20,47 +20,7 @@
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> <!-- BOXICONS-->
 
-    <script>
-        //? Function to set the active link in the local storage
-        function setActiveLink(linkName) {
-            localStorage.setItem('activeLink', linkName);
-        }
 
-        //? Function to load the content based on the active link from the local storage
-        function loadContent() {
-            var activeLink = localStorage.getItem('activeLink');
-
-            //?Add logic to load content based on the active link
-            switch (activeLink) {
-                case 'Home':
-                    loadHomeContent();
-                    break;
-                case 'Order':
-                    loadOrderContent();
-                    break;
-                case 'Notifications':
-                    loadCLientNotification();
-                    break;
-                case 'Cart':
-                    loadClientOrderContent();
-                    break;
-                case 'Profile':
-                    loadProfileContent();
-                    break;
-            }
-        }
-
-        function handleLinkClick(linkName) {
-            setActiveLink(linkName);
-            loadContent();
-        }
-
-        //? Add an event listener to window.onload to load the content when the page loads
-        window.onload = loadContent;
-    </script>
-    <style>
-
-    </style>
 </head>
 
 <body>
@@ -96,46 +56,59 @@
         </header>
         <div class="menu-bar">
             <div class="menu">
-                <li class="search-box">
-                    <i class='bx bx-search-alt icon'></i>
-                    <input class="text-left text-small font-semibold text-center tracking-wider" type="search"
-                        id="search-bar" placeholder="SEARCH" oninput="filterData()">
+
+                <li class="search-box flex items-center gap-2 bg-gray-100 rounded-lg p-2">
+                    <i class='bx bx-search text-gray-600 icon'></i>
+                    <input
+                        class="text-left text-sm font-semibold text-center tracking-wider bg-transparent outline-none"
+                        type="search" id="search-bar" placeholder="SEARCH" oninput="filterData()">
                 </li>
+
                 <li class="nav-link">
-                    <a href="<?= base_url('controller_admin_landing/loadView/LandTax'); ?>">
-                        <i class='bx bx-home-alt icon'></i>
-                        <span class="text nav-text">Landtax</span>
+    <a href="#" class="sidebar-link" data-view="LandTax">
+        <i class='bx bx-home-alt icon'></i>
+        <span class="text nav-text">Landtax</span>
+    </a>
+</li>
+
+<li class="nav-link">
+    <a href="#" class="sidebar-link" data-view="BackRoom">
+        <i class='bx bx-briefcase icon'></i>
+        <span class="text nav-text">Backroom</span>
+    </a>
+</li>
+<li class="nav-link">
+                    <a href="#" class="sidebar-link" data-view="Examiners">
+                        <i class='bx bx-credit-card icon'></i>
+                        <span class="text nav-text">Examiners</span>
                     </a>
                 </li>
+
+<li class="nav-link">
+    <a href="#" class="sidebar-link" data-view="BusinessTax">
+        <i class='bx bx-cart icon'></i>
+        <span class="text nav-text">Businesstax</span>
+    </a>
+</li>
+
+
                 <li class="nav-link">
-                    <a href="<?= base_url('controller_admin_landing/loadView/BackRoom'); ?>">
-                        <i class='bx bx-purchase-tag icon'></i>
-                        <span class="text nav-text">Backroom</span>
+                    <a href="#" class="sidebar-link" data-view="Payment">
+                        <i class='bx bx-credit-card icon'></i>
+                        <span class="text nav-text">Payment</span>
                     </a>
                 </li>
 
                 <li class="nav-link">
-                    <a href="<?= base_url('controller_admin_landing/loadView/BusinessTax'); ?>">
-                        <i class='bx bx-cart icon'></i>
-                        <span class="text nav-text">Businesstax</span>
-                    </a>
-                </li>
-                <li class="nav-link">
-                    <a href="<?= base_url('controller_admin_landing/loadView/Payment'); ?>">
-                        <i class='bx bxs-user-badge icon'></i>
-                        <span class="text nav-text">Payment</span>
-                    </a>
-                </li>
-                <li class="nav-link">
-                    <a href="<?= base_url('controller_admin_landing/loadView/FireProtection'); ?>">
-                        <i class='bx bxs-user-badge icon'></i>
+                    <a href="#" class="sidebar-link" data-view="FireProtection">
+                        <i class='bx bx-credit-card icon'></i>
                         <span class="text nav-text">Fire Protection</span>
                     </a>
                 </li>
 
                 <li class="nav-link">
-                    <a href="<?= base_url('controller_admin_landing/loadView/Releasing'); ?>">
-                        <i class='bx bxs-user-badge icon'></i>
+                    <a href="#" class="sidebar-link" data-view="Releasing">
+                        <i class='bx bx-credit-card icon'></i>
                         <span class="text nav-text">Releasing</span>
                     </a>
                 </li>
@@ -186,50 +159,53 @@
     </section>
 
     <script>
-        const body = document.querySelector("body"),
-            sidebar = body.querySelector(".sidebar"),
-            toggle = body.querySelector(".toggle"),
-            searchBtn = body.querySelector(".search-box"),
-            modeSwitch = body.querySelector(".toggle-switch"),
-            modeText = body.querySelector(".mode-text");
+   document.addEventListener("DOMContentLoaded", () => {
+    const sidebar = document.querySelector(".sidebar");
+    const toggle = document.querySelector(".toggle");
+    const modeSwitch = document.querySelector(".toggle-switch");
+    const modeText = document.querySelector(".mode-text");
 
-        // Function to set the dark mode preference in local storage
-        function setDarkModePreference(isDarkMode) {
-            localStorage.setItem('darkMode', isDarkMode);
+    // Function to toggle dark mode
+    function toggleDarkMode() {
+        document.body.classList.toggle("dark");
+
+        if (document.body.classList.contains("dark")) {
+            modeText.innerText = "Light Mode";
+            localStorage.setItem('darkMode', true);
+        } else {
+            modeText.innerText = "Dark Mode";
+            localStorage.setItem('darkMode', false);
         }
+    }
 
-        // Function to toggle dark mode
-        function toggleDarkMode() {
-            body.classList.toggle("dark");
+    // Sidebar toggle and state persistence
+    toggle.addEventListener("click", () => {
+        sidebar.classList.toggle("close");
+        const sidebarState = sidebar.classList.contains("close") ? "closed" : "open";
+        localStorage.setItem("sidebarState", sidebarState);
+    });
 
-            if (body.classList.contains("dark")) {
-                modeText.innerText = "Light Mode";
-                setDarkModePreference(true);
-            } else {
-                modeText.innerText = "Dark Mode";
-                setDarkModePreference(false);
-            }
-        }
+    // Check and apply sidebar state on page load
+    const sidebarState = localStorage.getItem("sidebarState");
+    if (sidebarState === "open") {
+        sidebar.classList.remove("close");
+    } else {
+        sidebar.classList.add("close");
+    }
 
-        toggle.addEventListener("click", () => {
-            sidebar.classList.toggle("close");
-        });
+    // Dark mode toggle functionality
+    modeSwitch.addEventListener("click", toggleDarkMode);
 
-        modeSwitch.addEventListener("click", toggleDarkMode);
-
-        // Check for dark mode preference in local storage on page load
-        document.addEventListener("DOMContentLoaded", () => {
-            const darkModePreference = localStorage.getItem('darkMode');
-            if (darkModePreference === 'true') {
-                body.classList.add("dark");
-                modeText.innerText = "Light Mode";
-            } else {
-                body.classList.remove("dark");
-                modeText.innerText = "Dark Mode";
-            }
-        });
-
-
+    // Set dark mode preference on page load
+    const darkModePreference = localStorage.getItem('darkMode');
+    if (darkModePreference === 'true') {
+        document.body.classList.add("dark");
+        modeText.innerText = "Light Mode";
+    } else {
+        document.body.classList.remove("dark");
+        modeText.innerText = "Dark Mode";
+    }
+});
 
 
 
@@ -261,48 +237,64 @@
         });
     </script>
     <script>
-        $(document).ready(function () {
-            function loadPage(view, updateUrl = true) {
-                $.ajax({
-                    url: "<?= base_url('controller_admin_landing/loadView/'); ?>" + view,
-                    type: "GET",
-                    dataType: "html",
-                    beforeSend: function () {
-                        $("#content").html('<div class="text-center text-gray-600">Loading...</div>');
-                    },
-                    success: function (response) {
-                        $("#content").html(response);
+      $(document).ready(function () {
+    // Function to load the page using AJAX
+    function loadPage(view, updateUrl = true) {
+    $.ajax({
+        url: "<?= base_url('controller_admin_landing/loadView/'); ?>" + view,
+        type: "GET",
+        dataType: "html",
+        beforeSend: function () {
+            // Get the current mode (light or dark)
+            const isDarkMode = document.body.classList.contains('dark');
+            
+            // Update the loading screen
+            $("#content").html(`
+                <div class="flex items-center justify-center w-full h-screen absolute top-0 left-0 z-50 ${isDarkMode ? 'bg-body-color/90' : 'bg-gray-50/90'}">
+                    <div class="flex flex-col items-center justify-center space-y-4 p-6 rounded-lg shadow-lg ${isDarkMode ? 'bg-sidebar-color' : 'bg-white'}">
+                        <div class="animate-spin border-t-4 ${isDarkMode ? 'border-primary-color' : 'border-primary-color'} w-16 h-16 border-solid rounded-full"></div>
+                        <p class="${isDarkMode ? 'text-text-light-color' : 'text-text-color'} text-xl font-semibold">Loading...</p>
+                    </div>
+                </div>
+            `);
+        },
+        success: function (response) {
+            $("#content").html(response);
 
-                        // Update the URL without reloading the page
-                        if (updateUrl) {
-                            history.pushState({ view: view }, "", "<?= base_url('admin/'); ?>" + view);
-                        }
-                    },
-                    error: function () {
-                        $("#content").html('<div class="text-red-500">Failed to load content.</div>');
-                    }
-                });
+            // Update the URL without reloading the page
+            if (updateUrl) {
+                history.pushState({ view: view }, "", "<?= base_url('admin/'); ?>" + view);
             }
+        },
+        error: function () {
+            $("#content").html('<div class="text-red-500">Failed to load content.</div>');
+        }
+    });
+}
 
-            // Handle sidebar clicks
-            $(".sidebar-link").click(function () {
-                let view = $(this).data("view");
-                loadPage(view);
-            });
 
-            // Handle browser back/forward navigation
-            window.onpopstate = function (event) {
-                if (event.state && event.state.view) {
-                    loadPage(event.state.view, false);
-                }
-            };
 
-            // Load the correct page on refresh if a state exists
-            let currentView = window.location.pathname.split("/").pop();
-            if (currentView) {
-                loadPage(currentView, false);
-            }
-        });
+    // Prevent the default link behavior and load the corresponding content
+    $(".sidebar-link").click(function (e) {
+        e.preventDefault(); // Prevent page refresh
+        let view = $(this).data("view"); // Get the view name from the data-view attribute
+        loadPage(view); // Load the content dynamically
+    });
+
+    // Handle browser back/forward navigation
+    window.onpopstate = function (event) {
+        if (event.state && event.state.view) {
+            loadPage(event.state.view, false);
+        }
+    };
+
+    // Load the correct page on refresh if a state exists
+    let currentView = window.location.pathname.split("/").pop();
+    if (currentView) {
+        loadPage(currentView, false);
+    }
+});
+
     </script>
 
 

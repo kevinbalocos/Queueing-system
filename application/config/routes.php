@@ -53,3 +53,4 @@ $route['default_controller'] = 'controller_login';
 $route['SuperAdmin'] = 'SuperAdmin/index';
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;
+$route['admin/(:any)'] = 'controller_admin_landing/loadView/$1';
