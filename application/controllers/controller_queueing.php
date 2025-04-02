@@ -1067,7 +1067,7 @@ class controller_queueing extends CI_Controller
         header('Content-Type: application/json');
 
         $queue_id = $this->input->post('queue_id', TRUE);
-        $user_id = $this->session->userdata('user_id');
+        $username = $this->session->userdata('username');
 
         if (!$queue_id) {
             echo json_encode(['status' => 'error', 'message' => 'Queue ID is missing']);
@@ -1085,7 +1085,7 @@ class controller_queueing extends CI_Controller
 
         // ✅ Assign the queue to the current examiner (user_id)
         $this->db->where('id', $queue_id);
-        $update = $this->db->update('queue', ['processing_by' => $user_id]);
+        $update = $this->db->update('queue', ['processing_by' => $username]);
 
         if ($update) {
             $updatedQueue = $this->db->select('id, queue_number, name, reason, created_at, processing_by')
@@ -1103,7 +1103,7 @@ class controller_queueing extends CI_Controller
                 'name' => $updatedQueue->name ?? '',
                 'reason' => $updatedQueue->reason ?? '',
                 'status_text' => 'processing',
-                'processing_by' => $user_id,
+                'processing_by' => $username,
                 'created_at' => !empty($updatedQueue->created_at) ? $updatedQueue->created_at : date("Y-m-d H:i:s") // Ensure fallback timestamp
             ]);
 
@@ -1113,7 +1113,7 @@ class controller_queueing extends CI_Controller
                 'status' => 'success',
                 'message' => 'Queue marked as processing by examiner',
                 'queue_id' => $queue_id,
-                'processing_by' => $user_id,
+                'processing_by' => $username,
                 'created_at' => $updatedQueue->created_at ?? date("Y-m-d H:i:s") // Ensure fallback
             ]);
             return;

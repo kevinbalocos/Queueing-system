@@ -660,9 +660,6 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
     });
   </script>
 
-
-
-
   <script>
     document.querySelector('form').addEventListener('submit', function (e) {
       e.preventDefault();
