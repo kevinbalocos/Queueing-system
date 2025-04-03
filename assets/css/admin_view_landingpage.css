@@ -181,6 +181,8 @@
             color: var(--sidebar-color);
             font-size: 22px;
             transition: var(--tran-03);
+            cursor: pointer;
+
         }
 
         .sidebar .menu {
@@ -309,6 +311,8 @@
             border-radius: 25px;
             background: var(--toggle-color);
             transition: var(--tran-05);
+            cursor: pointer;
+
         }
 
         .switch::before {
