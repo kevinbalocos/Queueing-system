@@ -9,7 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <style>
-        html, body {
+        html,
+        body {
             width: 100vw;
             height: 100vh;
             overflow: hidden;
@@ -50,7 +51,8 @@
         }
 
         .queue-item {
-            flex: 1 1 250px; /* Ensures equal width */
+            flex: 1 1 250px;
+            /* Ensures equal width */
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -82,46 +84,116 @@
 
 <body>
 
-    <div class="queue-container overflow-y-auto">Z`
+    <div id="queue-container" class="queue-container overflow-y-auto">
         <h2 class="queue-header">Queue Display</h2>
 
-        <!-- Waiting Queue -->
-        <div class="queue-row ">
-            <h3 class="sector-title text-green-600 w-full">Waiting Queue</h3>
-            <?php foreach (array_slice($queue, 0, 10) as $item): ?>
-                <div class="queue-item bg-green-100 border-l-4 border-green-600 ">
-                    <h3><?= $item->queue_number; ?></h3>
-                    <p><?= $item->name; ?></p>
-                </div>
-            <?php endforeach; ?>
-        </div>
-
-        <!-- Other Sectors -->
-        <?php 
-        $sectors = ['backroom' => 'teal', 'examiners' => 'yellow', 'businesstax' => 'purple', 'payment' => 'blue', 'fireprotection' => 'orange'];
+        <!-- Sectors -->
+        <?php
+        $sectors = [
+            'landtax' => 'green',
+            'backroom' => 'teal',
+            'examiners' => 'yellow',
+            'businesstax' => 'purple',
+            'payment' => 'blue',
+            'fireprotection' => 'orange',
+            'releasing' => 'green'
+        ];
         foreach ($sectors as $sector => $color): ?>
-            <div class="queue-row ">
+            <div id="<?= $sector ?>-queue" class="queue-row">
                 <h3 class="sector-title text-<?= $color ?>-600 w-full"><?= ucfirst($sector) ?></h3>
-                <?php foreach (array_slice($$sector, 0, 10) as $item): ?>
-                    <div class="queue-item bg-<?= $color ?>-100 border-l-4 border-<?= $color ?>-600">
-                        <h3><?= $item->queue_number; ?></h3>
-                        <p><?= $item->name; ?></p>
-                    </div>
-                <?php endforeach; ?>
+                <?php if (!empty($$sector)): ?>
+                    <?php foreach (array_slice($$sector, 0, 10) as $item): ?>
+                        <div id="queue-item-<?= htmlspecialchars($item->queue_id ?? $item->id); ?>"
+                            class="queue-item bg-<?= $color ?>-100 border-l-4 border-<?= $color ?>-600 p-2">
+                            <h3><?= htmlspecialchars($item->queue_number ?? 'N/A'); ?></h3>
+                            <p><?= htmlspecialchars($item->name ?? 'Unknown'); ?></p>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                <?php endif; ?>
             </div>
         <?php endforeach; ?>
-
     </div>
 
     <script>
-        // Auto-refresh queue data without full page reload
-        setInterval(() => {
-            fetch(window.location.href)
-                .then(response => response.text())
-                .then(html => {
-                    document.body.innerHTML = html;
-                });
-        }, 3000);
+        // Initialize WebSocket connection
+        const socket = new WebSocket("ws://localhost:8080");
+
+        socket.onopen = () => console.log("✅ Connected to WebSocket server");
+
+        socket.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                console.log("📩 Received WebSocket Data: ", data);
+
+                // Check the action and process accordingly
+                if (data.action === "add_to_queue") {
+                    addQueueItem(data);
+                } else if (data.action === "delete_queue") {
+                    removeQueueItem(data.queue_id);
+                }
+            } catch (error) {
+                console.error("⚠️ Error parsing WebSocket data:", error);
+            }
+        };
+
+        socket.onerror = (error) => console.error("❌ WebSocket Error: ", error);
+        socket.onclose = () => console.log("🔴 Disconnected from WebSocket server");
+
+        // Function to create the queue item HTML structure
+        function createQueueItem(data) {
+            return `
+            <div id="queue-item-${data.queue_id}" class="queue-item bg-gray-50 border-l-4 border-gray-600 p-4 rounded-lg shadow">
+                <h3>${data.queue_number}</h3>
+                <p>${data.name}</p>
+            </div>`;
+        }
+
+        // Function to add a queue item to the respective sector
+        function addQueueItem(data) {
+            // Get the correct sector container using `data.status`
+            const sectorQueue = document.getElementById(`queue-container`);
+
+            if (!sectorQueue) {
+                console.error(`⚠️ Error: Queue container for sector ${data.status} not found.`);
+                return;
+            }
+
+            // Find the container for queue items inside the sector
+            const queueItemsContainer = sectorQueue.querySelector('.queue-row');
+            if (!queueItemsContainer) {
+                console.error(`⚠️ Error: Queue items container for ${data.status} not found.`);
+                return;
+            }
+
+            // Check if the queue item already exists
+            const queueId = `queue-item-${data.queue_id}`;
+            if (document.getElementById(queueId)) {
+                console.warn(`⚠️ Queue item ${queueId} already exists.`);
+                return;
+            }
+
+            // Create the new queue item and append it
+            const newQueueItemHTML = createQueueItem(data);
+            queueItemsContainer.insertAdjacentHTML('beforeend', newQueueItemHTML);
+
+            // Ensure the number of items in the sector is limited to 10
+            const items = queueItemsContainer.querySelectorAll('.queue-item');
+            if (items.length > 10) {
+                items[0].remove(); // Remove the oldest item if there are more than 10
+            }
+        }
+
+        // Function to remove a queue item
+        function removeQueueItem(queueId) {
+            const queueItem = document.getElementById(`queue-item-${queueId}`);
+            if (queueItem) {
+                queueItem.remove();
+                console.log(`✅ Queue ID ${queueId} removed from UI.`);
+            } else {
+                console.warn(`⚠️ Queue item ${queueId} not found.`);
+            }
+        }
     </script>
 
 </body>

@@ -220,7 +220,7 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
     socket.onerror = (error) => console.error("WebSocket Error: ", error);
     socket.onclose = () => console.log("Disconnected from WebSocket server");
 
-    function createQueueItem(data, currentStatus) {
+    function createQueueItem(data, currentUser) {
       const formattedCreatedAt = new Date(data.created_at).toLocaleString('en-US', {
         month: 'short', day: '2-digit', year: 'numeric',
         hour: '2-digit', minute: '2-digit', hour12: true
@@ -229,6 +229,7 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
       const proceedUrl = `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_payment/${data.queue_id}`;
       const deleteUrl = `http://localhost/OJT/queueing-system/index.php/controller_queueing/delete_queue/${data.queue_id}`;
 
+      const isProcessingByCurrentUser = data.processing_by && String(data.processing_by) === String(currentUser);
       const isProcessing = !!data.processing_by;
       const processingText = isProcessing ? `Processing by ${data.processing_by}` : "Business Tax";
       const statusColorClass = "bg-cyan-100 text-cyan-500";
@@ -256,8 +257,9 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
 
         <div class="flex justify-between items-center mt-auto pt-4 border-t">
             <div class="flex space-x-2">
-                <button class="proceed-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg"
-                        data-id="${data.queue_id}" data-url="${proceedUrl}">
+                <button class="proceed-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg 
+                        ${isProcessingByCurrentUser ? '' : 'opacity-50 cursor-not-allowed'}"
+                        data-id="${data.queue_id}" data-url="${proceedUrl}" ${isProcessingByCurrentUser ? '' : 'disabled'}>
                     <i class="fa-solid fa-circle-check text-[calc(1.2vw)]"></i>
                 </button>
 
@@ -299,30 +301,36 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
       } else {
         listItem.className = "p-5 bg-cyan-50 border border-cyan-400 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:bg-cyan-50 flex flex-col space-y-4";
         listItem.innerHTML = `
-        <div class="flex items-center gap-4">
-            <div class="w-12 h-12 flex items-center justify-center text-white font-bold text-xl bg-cyan-600 rounded-full shadow-md">
-                ${data.queue_number}
-            </div>
-            <div class="flex flex-col">
-                <div class="text-lg font-semibold text-cyan-900">
-                    ${data.name}
-                </div>
-                <span class="text-xs text-gray-500">
-                    ${new Date(data.created_at).toLocaleString('en-US', {
+      <div class="flex items-center gap-4">
+          <div class="w-12 h-12 flex items-center justify-center text-white font-bold text-xl bg-cyan-600 rounded-full shadow-md">
+              ${data.queue_number}
+          </div>
+          <div class="flex flex-col">
+              <div class="text-lg font-semibold text-cyan-900">
+                  ${data.name}
+              </div>
+              <span class="text-xs text-gray-500">
+                  ${new Date(data.created_at).toLocaleString('en-US', {
           month: 'short', day: '2-digit', year: 'numeric',
           hour: '2-digit', minute: '2-digit', hour12: true
         })}
-                </span>
-            </div>
-        </div>
-        <div class="mt-3 flex justify-end">
-            <span class="text-sm px-4 py-2 rounded-full bg-cyan-100 text-cyan-800 font-medium shadow-sm">
-                ${data.reason}
-            </span>
-        </div>
+              </span>
+          </div>
+      </div>
+      <div class="mt-3 flex justify-end">
+          <span class="text-sm px-4 py-2 rounded-full bg-cyan-100 text-cyan-800 font-medium shadow-sm">
+              ${data.reason}
+          </span>
+      </div>
     `;
 
         listItem.setAttribute("data-queue_id", data.queue_id);
+        listItem.setAttribute("data-queue_number", data.queue_number);
+        listItem.setAttribute("data-name", data.name);
+        listItem.setAttribute("data-reason", data.reason);
+        listItem.setAttribute("data-created_at", data.created_at);
+        listItem.setAttribute("data-proceed_url", `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_payment/${data.queue_id}`);
+
         queueList.appendChild(listItem);
       }
     }
@@ -358,7 +366,7 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
           name: firstRightItem.getAttribute("data-name") || "Unknown",
           reason: firstRightItem.getAttribute("data-reason") || "No reason provided",
           created_at: firstRightItem.getAttribute("data-created_at"),
-          proceed_url: firstRightItem.getAttribute("data-proceed_url")
+          proceed_url: `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_payment/${firstRightItem.getAttribute("data-queue_id")}`
         };
 
         if (!queueData.queue_id) {
@@ -368,12 +376,12 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
 
         const tempDiv = document.createElement("div");
         tempDiv.innerHTML = createQueueItem(queueData, "Business Tax");
-
         const newQueueItem = tempDiv.firstElementChild;
+
         firstRightItem.remove();
         queueContainer.appendChild(newQueueItem);
 
-        console.log(`✅ Moved queue item (ID: ${queueData.queue_id}) to the left.`);
+        console.log(`✅ Moved queue item (ID: ${queueData.queue_id}) to the left preserving original timestamp: ${queueData.created_at}`);
       }
     }
 

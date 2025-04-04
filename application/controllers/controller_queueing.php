@@ -98,16 +98,15 @@ class controller_queueing extends CI_Controller
     }
     public function BigScreen()
     {
-        $data['queue'] = $this->model_queueing->get_queue();
-        $data['first'] = $this->model_queueing->get_first_in_queue();
-        $data['backroom'] = $this->model_queueing->get_backroom();
-        $data['examiners'] = $this->model_queueing->get_examiners();
-        $data['businesstax'] = $this->model_queueing->get_businesstax();
-        $data['payment'] = $this->model_queueing->get_payment();
-        $data['fireprotection'] = $this->model_queueing->get_fireprotection();
-
+        $sectors = ['landtax', 'backroom', 'examiners', 'businesstax', 'payment', 'fireprotection', 'releasing'];
+    
+        foreach ($sectors as $sector) {
+            $data[$sector] = $this->model_queueing->get_queue_by_sector($sector);
+        }
+    
         $this->load->view('adminpanel/admin_view_bigscreen', $data);
     }
+    
 
 
 

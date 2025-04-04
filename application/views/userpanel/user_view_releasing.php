@@ -14,7 +14,7 @@
         <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">Releasing Queue</h2>
 
         <!-- Responsive Grid Layout -->
-        <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        <div id="queue-container" class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             <?php foreach ($releasing as $r): ?>
                 <div class="p-4 bg-gray-50 border rounded-lg shadow flex flex-col items-center">
                     <span class="text-gray-700 font-medium text-lg"><?= $r->name; ?></span>
@@ -36,6 +36,91 @@
             </a>
         </div>
     </div>
+
+    <script>
+        // WebSocket initialization
+        const socket = new WebSocket("ws://localhost:8080");
+
+        socket.onopen = () => console.log("Connected to WebSocket server (Releasing)"); 
+
+        socket.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+
+                if (data.action === "proceed_to_releasing") {
+                    console.log("New Releasing queue item received:", data);
+                    addQueueItem(data, "Releasing");
+                } else if (data.action === "delete_queue") {
+                    console.log(`Queue ID ${data.queue_id} deleted.`);
+                    removeQueueItem(data.queue_id);
+                }
+            } catch (error) {
+                console.error("Error parsing WebSocket data:", error);
+            }
+        };
+
+        socket.onerror = (error) => console.error("WebSocket Error: ", error);
+        socket.onclose = () => console.log("Disconnected from WebSocket server");
+
+        function createQueueItem(data, currentUser) {
+            // Format timestamp
+            const formattedCreatedAt = new Date(data.created_at).toLocaleString('en-US', {
+                month: 'short', day: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', hour12: true
+            });
+
+            // Set URLs
+            const proceedUrl = `http://localhost/OJT/queueing-system/index.php/controller_queueing/proceed_to_releasing/${data.queue_id}`;
+            const deleteUrl = `http://localhost/OJT/queueing-system/index.php/controller_queueing/delete_queue/${data.queue_id}`;
+
+            // Determine processing state
+            const isProcessingByCurrentUser = data.processing_by && String(data.processing_by) === String(currentUser);
+            const isProcessing = !!data.processing_by;
+            const processingText = isProcessing ? `Processing by ${data.processing_by}` : "Completed";
+            const statusColorClass = "bg-cyan-100 text-cyan-500"; // Same color for both states
+            const processingClass = isProcessing ? "opacity-50 cursor-not-allowed" : "";
+
+            return `
+                <!-- Queue Item -->
+                <div id="queue-item-${data.queue_id}" class="p-4 bg-gray-50 border rounded-lg shadow flex flex-col items-center" data-id="${data.queue_id}">
+                    <span class="text-gray-700 font-medium text-lg">${data.name}</span>
+                    <span class="text-green-600 font-bold mt-2">${processingText}</span>
+                    <button class="delete-btn bg-white py-3 px-3 text-cyan-900 hover:bg-gray-50 rounded-full border border-cyan-50 shadow-lg" data-id="${data.queue_id}" data-url="${deleteUrl}">
+                        <i class="fa-solid fa-trash-can text-[calc(1.2vw)]"></i>
+                    </button>
+                </div>
+            `;
+        }
+
+        function addQueueItem(data, defaultStatus) {
+            const queueContainer = document.getElementById("queue-container");
+
+            if (!queueContainer) {
+                console.error("Error: Queue container not found.");
+                return;
+            }
+
+            const queueId = `queue-item-${data.queue_id}`;
+            if (document.getElementById(queueId)) {
+                console.warn(`Queue item ${queueId} already exists.`);
+                return;
+            }
+
+            const newQueueItemHTML = createQueueItem(data, defaultStatus);
+            queueContainer.insertAdjacentHTML('beforeend', newQueueItemHTML);
+        }
+
+        function removeQueueItem(queueId) {
+            const queueItem = document.getElementById(`queue-item-${queueId}`);
+
+            if (queueItem) {
+                queueItem.remove();
+                console.log(`Queue ID ${queueId} removed from UI.`);
+            } else {
+                console.warn(`Queue item ${queueId} not found.`);
+            }
+        }
+    </script>
 
 </body>
 

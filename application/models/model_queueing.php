@@ -37,7 +37,7 @@ class model_queueing extends CI_Model
     public function delete_queue($id)
     {
         $this->db->where('id', $id);
-        return $this->db->delete('queue'); 
+        return $this->db->delete('queue');
     }
 
 
@@ -156,11 +156,11 @@ class model_queueing extends CI_Model
         // Get the last queue number (ensuring sequence consistency)
         $last_queue = $this->db->select_max('queue_number')->get('queue')->row();
         $new_queue_number = $last_queue->queue_number ? $last_queue->queue_number + 1 : 1;
-    
+
         // Get the highest position in the Fire Protection queue
         $max_position = $this->db->select_max('position')->where('status', 'fireprotection')->get('queue')->row()->position;
         $new_position = $max_position ? $max_position + 1 : 1; // Append to the end
-    
+
         $data = array(
             'queue_number' => $new_queue_number,
             'name' => $name,
@@ -168,12 +168,12 @@ class model_queueing extends CI_Model
             'status' => 'fireprotection',  // Set status to Fire Protection
             'position' => $new_position, // Maintain correct queue order in Fire Protection
         );
-    
+
         if ($this->db->insert('queue', $data)) {
             return $new_queue_number;
         }
         return false;
-    }    
+    }
 
     // Get the first in queue
     public function get_first_in_queue()
@@ -186,6 +186,14 @@ class model_queueing extends CI_Model
     {
         $this->db->where('id', $id)->update('queue', ['status' => $new_status]);
     }
+    public function get_queue_by_sector($sector)
+    {
+        return $this->db->where('status', $sector)
+            ->order_by('position', 'ASC')
+            ->get('queue')
+            ->result();
+    }
+
     // Get all queueing people
     public function get_queue()
     {
