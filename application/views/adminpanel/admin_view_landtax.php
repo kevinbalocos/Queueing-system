@@ -91,7 +91,7 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
     <!-- Left Section (Now Serving) -->
     <div class="flex-1 bg-white p-5 h-[calc(100vh-100px)] rounded-lg shadow-md overflow-y-auto ">
       <!-- <h2 class="text-2xl font-bold text-cyan-500 uppercase tracking-wider pb-5 text-center">Now Serving</h2> -->
-      <div id="queue-container" class="flex flex-wrap gap-1 max-h-[calc(100vh-150px)]  bg-cyan-100 overflow-y-auto">
+      <div id="queue-container" class="flex flex-wrap max-h-[calc(100vh-150px)]  bg-cyan-100 overflow-y-auto">
         <?php if ($queue): ?>
           <?php foreach ($left_items as $item): ?>
             <?php
@@ -181,7 +181,7 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
 
               <!-- User Info -->
               <div class="flex flex-col">
-                <div class="text-lg font-semibold text-cyan-900">
+                <div class="text-lg font-semibold">
                   <?= $item->name; ?>
                 </div>
                 <span class="text-xs text-gray-500">

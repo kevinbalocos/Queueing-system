@@ -302,6 +302,8 @@
             cursor: pointer;
             border-radius: 6px;
             background: var(--primary-color-light);
+            cursor: pointer;
+
         }
 
         .toggle-switch .switch {
@@ -326,6 +328,7 @@
             transform: translateY(-50%);
             background: var(--sidebar-color);
             transition: var(--tran-03);
+            background: white;
         }
 
         body.dark .switch::before {
@@ -423,19 +426,17 @@ body {
 }
 
 
+/* For WebKit browsers (Chrome, Safari, Edge) */
 ::-webkit-scrollbar {
-    width:5px;
-    width: 100%;
+    display: none;
 }
 
-::-webkit-scrollbar-thumb {
-    background-color: #66cdaa; 
-    border-radius: 10px;
+/* For Firefox */
+body {
+    scrollbar-width: none; /* Hides scrollbar */
+    -ms-overflow-style: none; /* IE and Edge */
 }
 
-::-webkit-scrollbar-track {
-    background-color: #66cdaa;
-}
 @media screen and (max-width: 768px) {
     .sidebar {
         width: 88px;
@@ -468,6 +469,7 @@ body {
     .sidebar.close .toggle {
         right: -30px;
         top: 15px;
+        
 
     }
 

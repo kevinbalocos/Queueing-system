@@ -1,18 +1,40 @@
 body.dark {
-    --body-color: #1e1e2e;
-    --sidebar-color: #2a2a3b;
-    --primary-color: white;
-    --primary-color-light: #334155;
-    --toggle-color: #e2e8f0;
-    --text-color: #dde1e3;
-    --text-light-color: white;
-    --hover-color: #0a212c;
-    --table-header-color: #3f3f46;
-    --border-color: #ffffff3a;
+    --body-color: #0f172a;                  /* Deep dark navy background for main body */
+    --sidebar-color: #1e293b;               /* Darker shade for sidebar */
+    --primary-color: #f8fafc;               /* Light primary content color */
+    --primary-color-light: #334155;         /* Muted card/section backgrounds */
+    --toggle-color: #0f172a;                /* Cyan accent for toggles or buttons */
+    --text-color: #94a3b8;
+                    /* Main readable text */
+    --text-light-color: #f1f5f9;            /* Subtext or lighter contrast text */
+    --hover-color: #1e40af;                 /* Blue hover effect for buttons/elements */
+    --table-header-color: #475569;          /* Table headers and separators */
+    --border-color: rgba(255, 255, 255, 0.1); /* Subtle border effect for dividers */
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); /* Deep shadow for cards */
+    --input-bg: #1e293b;                    /* Inputs and form fields */
+    --input-text: #f8fafc;                  /* Text inside inputs */
+    --scrollbar-thumb: #334155;             /* Scrollbar styling */
+    --scrollbar-track: #0f172a;
+    --accent-color: #0ea5e9;                /* Vibrant blue accents for active states */
 }
+* 
+  body.dark ::-webkit-scrollbar {
+    width: 10px;
+  }
+  
+  body.dark ::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+  
+  body.dark ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 10px;
+  }
+ 
+    
 body.dark #queue-container
 {
-    background-color: #1e1e2e;
+    background-color: #0f172a;
 }
 
 body.dark h5
@@ -25,6 +47,11 @@ body.dark .searcbox_darkmode
   
     
 }
+body.dark .switch::before {
+  
+    background: #475569 !important;
+}
+
 body.dark .hover_darkmode_gray:hover {
     background-color: var(--hover-color) !important;
     color: var(--text-light-color) !important;

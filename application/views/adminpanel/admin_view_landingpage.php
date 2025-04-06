@@ -1,10 +1,18 @@
+<?php
+
+// Determine how many items go to the left section (maximum 20)
+
+$currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
+
+// $currentUser = isset($_SESSION['user_id']) ? strval($_SESSION['user_id']) : ''; // Ensure it's a string
+?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>viewHome</title>
+    <title>Landing Page</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
@@ -46,8 +54,12 @@
                     <span class="name">
                     </span>
 
-                    <span class="profession">QUEUEING SYSTEM</span>
-
+                   <?php if ($this->session->userdata('logged_in')): ?>
+              <span class="profession">Welcome,
+                <?= htmlspecialchars($this->session->userdata('username')); ?>!</span>
+            <?php else: ?>
+              <span class="text-lg font-semibold">Guest</span>
+            <?php endif; ?>
                 </div>
             </div>
 
@@ -145,7 +157,7 @@
     <section class="home">
         <!-- Main Content -->
         <div id="content-container" class="flex-1 px-6">
-            <div id="content" class="bg-white p-4 shadow-md rounded-md">
+            <div id="content" class="">
                 <?php if ($this->session->flashdata('success')): ?>
                     <div class="bg-green-200 text-green-800 p-3 rounded mb-4 text-center">
                         <?= $this->session->flashdata('success'); ?>
