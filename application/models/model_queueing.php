@@ -243,4 +243,12 @@ class model_queueing extends CI_Model
         return $this->db->update('queue', ['processing_by' => $user_id]);
     }
 
+    public function get_top_queue($sector, $limit = 10) {
+        $this->db->where('status', $sector);
+        $this->db->order_by('id', 'ASC');
+        $this->db->limit($limit);
+        return $this->db->get('queue')->result(); // adjust table name if needed
+    }
+    
+
 }

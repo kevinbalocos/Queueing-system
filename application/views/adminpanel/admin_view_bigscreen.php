@@ -99,14 +99,12 @@
             'releasing' => 'green'
         ];
         foreach ($sectors as $sector => $color): ?>
-            <div id="queue-row" class="queue-row">
-                <h3 class="sector-title text-<?= htmlspecialchars($color); ?>-600 w-full"><?= ucfirst($sector) ?></h3>
+            <div id="<?= $sector ?>-queue" class="queue-row">
+                <h3 class="sector-title text-<?= $color ?>-600 w-full"><?= ucfirst($sector) ?></h3>
                 <?php if (!empty($$sector)): ?>
-                    <?php foreach (array_slice(array_filter($$sector, function ($item) {
-                        return $item->status === 'processing';
-                    }), 0, 10) as $item): ?>
+                    <?php foreach (array_slice($$sector, 0, 10) as $item): ?>
                         <div id="queue-item-<?= htmlspecialchars($item->queue_id ?? $item->id); ?>"
-                            class="queue-item bg-<?= htmlspecialchars($color); ?>-100 border-l-4 border-<?= htmlspecialchars($color); ?>-600 p-2">
+                            class="queue-item bg-<?= $color ?>-100 border-l-4 border-<?= $color ?>-600 p-2">
                             <h3><?= htmlspecialchars($item->queue_number ?? 'N/A'); ?></h3>
                             <p><?= htmlspecialchars($item->name ?? 'Unknown'); ?></p>
                         </div>
@@ -117,7 +115,47 @@
     </div>
 
     <script>
-        // Sector color map based on PHP array
+        const socket = new WebSocket("ws://localhost:8080");
+
+        socket.onopen = () => console.log("✅ Connected to WebSocket server");
+
+        socket.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                console.log("📩 Received WebSocket Data: ", data);
+
+                // Normalize sector
+                data.status = data.status_text || data.status;
+
+                // Handle various actions
+                switch (data.action) {
+                    case "add_to_queue":
+                    case "proceed_to_backroom":
+                    case "proceed_to_examiners":
+                    case "proceed_to_payment":
+                    case "proceed_to_fireprotection":
+                    case "proceed_to_businesstax":
+                    case "proceed_to_releasing":
+                        addQueueItem(data);
+                        break;
+
+                    case "delete_queue":
+                        removeQueueItem(data.queue_id);
+                        break;
+
+                    default:
+                        console.warn("⚠️ Unknown WebSocket action:", data.action);
+                }
+
+            } catch (error) {
+                console.error("⚠️ Error parsing WebSocket data:", error);
+            }
+        };
+
+
+        socket.onerror = (error) => console.error("❌ WebSocket Error: ", error);
+        socket.onclose = () => console.log("🔴 Disconnected from WebSocket server");
+
         const sectorColors = {
             landtax: 'green',
             backroom: 'teal',
@@ -128,48 +166,28 @@
             releasing: 'green'
         };
 
-        // Initialize WebSocket connection
-        const socket = new WebSocket("ws://localhost:8080");
 
-        socket.onopen = () => console.log("✅ Connected to WebSocket server");
-
-        socket.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                console.log("📩 Received WebSocket Data: ", data);
-
-                // Only display when marked as processing
-                if (data.action === "update_queue" && data.status_text === "processing") {
-                    addQueueItem(data);
-                } else if (data.action === "delete_queue") {
-                    removeQueueItem(data.queue_id);
-                }
-            } catch (error) {
-                console.error("⚠️ Error parsing WebSocket data:", error);
-            }
-        };
-
-        socket.onerror = (error) => console.error("❌ WebSocket Error: ", error);
-        socket.onclose = () => console.log("🔴 Disconnected from WebSocket server");
-
-        // Create the queue item HTML structure
+        // Function to create the queue item HTML structure
         function createQueueItem(data) {
-            const color = sectorColors[data.status] || 'gray';
+            const sector = data.status_text || data.status;
+            const color = sectorColors[sector] || 'gray'; // fallback to gray if not found
+
             return `
         <div id="queue-item-${data.queue_id}" class="queue-item bg-${color}-100 border-l-4 border-${color}-600 p-2">
-            <h3>Queue #: ${data.queue_number}</h3>
-            <p>Name: ${data.name}</p>
-            <p>Reason: ${data.reason}</p>
+            <h3>${data.queue_number || 'N/A'}</h3>
+            <p>${data.name || 'Unknown'}</p>
         </div>`;
         }
 
-        // Add a queue item to the correct sector only when processing
+
+        // Function to add a queue item to the respective sector
         function addQueueItem(data) {
-            const sectorId = `queue-row`;  // Adjusted for sector
+            const sector = data.status_text || data.status;
+            const sectorId = `${sector}-queue`;
             const sectorQueue = document.getElementById(sectorId);
 
             if (!sectorQueue) {
-                console.error(`⚠️ Error: Sector container for "${data.status}" not found.`);
+                console.warn(`⚠️ Skipping unknown sector "${sector}"`);
                 return;
             }
 
@@ -179,18 +197,17 @@
                 return;
             }
 
-            // Append item
             const newQueueItemHTML = createQueueItem(data);
             sectorQueue.insertAdjacentHTML('beforeend', newQueueItemHTML);
 
-            // Limit to 10 items per sector
             const items = sectorQueue.querySelectorAll('.queue-item');
             if (items.length > 10) {
                 items[0].remove();
             }
         }
 
-        // Remove item by ID
+
+        // Function to remove a queue item
         function removeQueueItem(queueId) {
             const queueItem = document.getElementById(`queue-item-${queueId}`);
             if (queueItem) {
@@ -201,6 +218,8 @@
             }
         }
     </script>
+
+
 
 </body>
 
