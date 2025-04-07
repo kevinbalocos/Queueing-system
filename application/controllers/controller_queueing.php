@@ -98,16 +98,23 @@ class controller_queueing extends CI_Controller
     }
     public function BigScreen()
     {
-        $sectors = ['landtax', 'backroom', 'examiners', 'businesstax', 'payment', 'fireprotection', 'releasing'];
-    
-        foreach ($sectors as $sector) {
-            $data[$sector] = $this->model_queueing->get_queue_by_sector($sector);
+        $sectors = [
+            'landtax' => 'landtax',
+            'backroom' => 'backroom',
+            'examiners' => 'examiner', // keep key as 'examiners' for frontend
+            'businesstax' => 'businesstax',
+            'payment' => 'payment',
+            'fireprotection' => 'fireprotection',
+            'releasing' => 'releasing'
+        ];
+
+        $data = [];
+        foreach ($sectors as $frontendKey => $dbValue) {
+            $data[$frontendKey] = $this->model_queueing->get_queue_by_sector($dbValue);
         }
-    
+
         $this->load->view('adminpanel/admin_view_bigscreen', $data);
     }
-    
-
 
 
     //
