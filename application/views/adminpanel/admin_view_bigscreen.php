@@ -182,17 +182,22 @@
         }
 
         // Function to create the queue item HTML structure
-        function createQueueItem(data, isMoved = false) {
-            const sector = data.status;
+        function createQueueItem(data) {
+            const sector = (data.status || '').toLowerCase(); // normalize
             const color = sectorColors[sector] || 'gray';
-            const movedTag = isMoved ? `<span class="text-xs text-${color}-700 font-semibold ml-2">(Moved)</span>` : "";
 
             return `
-        <div id="queue-item-${data.queue_id}" class="queue-item bg-${color}-100 border-l-4 border-${color}-600 p-2">
-            <h3>${data.queue_number || 'N/A'} ${movedTag}</h3>
-            <p>${data.name || 'Unknown'}</p>
-        </div>`;
-        }
+                <div id="queue-item-${data.queue_id}" 
+                    class="queue-item bg-${color}-100 border-l-4 border-${color}-600 p-4 rounded shadow-sm mb-2">
+                    <h3 class="font-bold text-${color}-900 text-lg">
+                        ${data.queue_number || 'N/A'}
+                    </h3>
+                    <p class="text-sm text-${color}-800">
+                        ${data.name || 'Unknown'}
+                    </p>
+                </div>
+            `;
+        }   
 
         // Function to add a queue item to the respective sector
         function addQueueItem(data, isMoved = false) {
