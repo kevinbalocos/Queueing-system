@@ -79,6 +79,10 @@
             font-weight: bold;
             margin-bottom: 0.5rem;
         }
+
+        .queue-item {
+            transition: all 0.3s ease-in-out;
+        }
     </style>
 </head>
 
@@ -104,9 +108,9 @@
                 <?php if (!empty($$sector)): ?>
                     <?php foreach (array_slice($$sector, 0, 10) as $item): ?>
                         <div id="queue-item-<?= htmlspecialchars($item->queue_id ?? $item->id); ?>"
-                            class="queue-item bg-<?= $color ?>-100 border-l-4 border-<?= $color ?>-600 p-2">
-                            <h3><?= htmlspecialchars($item->queue_number ?? 'N/A'); ?></h3>
-                            <p><?= htmlspecialchars($item->name ?? 'Unknown'); ?></p>
+                            class="queue-item bg-<?= $color ?>-100 border-l-4 border-<?= $color ?>-600">
+                            <h3 class="text-<?= $color ?>-900"><?= htmlspecialchars($item->queue_number ?? 'N/A'); ?></h3>
+                            <p class="text-<?= $color ?>-800"><?= htmlspecialchars($item->name ?? 'Unknown'); ?></p>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -115,191 +119,177 @@
     </div>
 
     <script>
-        const socket = new WebSocket("ws://localhost:8080");
+    const socket = new WebSocket("ws://localhost:8080");
 
-        socket.onopen = () => console.log("✅ Connected to WebSocket server");
+    socket.onopen = () => console.log("✅ Connected to WebSocket server");
 
-        socket.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                console.log("📩 Received WebSocket Data: ", data);
+    socket.onmessage = (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            console.log("📩 Received WebSocket Data: ", data);
 
-                // Infer target sector if status is missing
-                const fallbackSector = getSectorFromAction(data.action);
-                const rawStatus = data.status_text || data.status || fallbackSector;
-                data.status = normalizeSector(rawStatus);
+            const fallbackSector = getSectorFromAction(data.action);
+            const rawStatus = data.status_text || data.status || fallbackSector;
 
-                // Handle various actions
-                switch (data.action) {
-                    case "add_to_queue":
-                        handleAddOrMove(data, false); // false = not moved
-                        break;
+            data.status = normalizeSector(rawStatus);
+            data.status_text = data.status;
 
-                    case "proceed_to_backroom":
-                    case "proceed_to_examiners":
-                    case "proceed_to_payment":
-                    case "proceed_to_fireprotection":
-                    case "proceed_to_businesstax":
-                    case "proceed_to_releasing":
-                        handleAddOrMove(data, true); // true = moved
-                        break;
+            switch (data.action) {
+                case "add_to_queue":
+                    handleAddOrMove(data, false);
+                    break;
 
-                    case "delete_queue":
-                        removeQueueItem(data.queue_id);
-                        break;
+                case "proceed_to_backroom":
+                case "proceed_to_examiners":
+                case "proceed_to_payment":
+                case "proceed_to_fireprotection":
+                case "proceed_to_businesstax":
+                case "proceed_to_releasing":
+                    handleAddOrMove(data, true);
+                    break;
 
-                    default:
-                        console.warn("⚠️ Unknown WebSocket action:", data.action);
-                }
+                case "delete_queue":
+                    removeQueueItem(data.queue_id);
+                    break;
 
-            } catch (error) {
-                console.error("⚠️ Error parsing WebSocket data:", error);
+                default:
+                    console.warn("⚠️ Unknown WebSocket action:", data.action);
             }
+
+        } catch (error) {
+            console.error("⚠️ Error parsing WebSocket data:", error);
+        }
+    };
+
+    socket.onerror = (error) => console.error("❌ WebSocket Error: ", error);
+    socket.onclose = () => console.log("🔴 Disconnected from WebSocket server");
+
+    const sectorColors = {
+        landtax: 'green',
+        backroom: 'teal',
+        examiners: 'yellow',
+        businesstax: 'purple',
+        payment: 'blue',
+        fireprotection: 'orange',
+        releasing: 'green'
+    };
+
+    const sectorAlias = {
+        examiner: "examiners"
+    };
+
+    function normalizeSector(sector) {
+        return sectorAlias[sector] || sector;
+    }
+
+    function capitalize(word) {
+        return word.charAt(0).toUpperCase() + word.slice(1);
+    }
+
+    function getSectorFromAction(action) {
+        const map = {
+            proceed_to_backroom: 'backroom',
+            proceed_to_examiners: 'examiner',
+            proceed_to_payment: 'payment',
+            proceed_to_fireprotection: 'fireprotection',
+            proceed_to_businesstax: 'businesstax',
+            proceed_to_releasing: 'releasing'
         };
+        return map[action] || null;
+    }
 
-        socket.onerror = (error) => console.error("❌ WebSocket Error: ", error);
-        socket.onclose = () => console.log("🔴 Disconnected from WebSocket server");
+    function handleAddOrMove(data, isMoved = false) {
+        removeQueueItem(data.queue_id);
+        addQueueItem(data, isMoved);
+    }
 
-        const sectorColors = {
-            landtax: 'green',
-            backroom: 'teal',
-            examiners: 'yellow',
-            businesstax: 'purple',
-            payment: 'blue',
-            fireprotection: 'orange',
-            releasing: 'green'
-        };
+    function createQueueItem(data) {
+        const sector = (data.status || '').toLowerCase();
+        const color = sectorColors[sector] || 'gray';
 
-        // Function to handle adding or moving a queue item
-        function handleAddOrMove(data, isMoved = false) {
-            const currentSector = data.status;
+        return `
+            <div id="queue-item-${data.queue_id}" 
+                class="queue-item bg-${color}-100 border-l-4 border-${color}-600">
+                <h3 class="text-${color}-900">${data.queue_number || 'N/A'}</h3>
+                <p class="text-${color}-800">${data.name || 'Unknown'}</p>
+            </div>
+        `;
+    }
 
-            // Remove item from its current sector (if it exists)
-            removeQueueItem(data.queue_id);
+    function addQueueItem(data, isMoved = false) {
+        const currentSector = normalizeSector(data.status);
+        const sectorId = `${currentSector}-queue`;
+        let sectorQueue = document.getElementById(sectorId);
 
-            // After removal, add to the new sector
-            addQueueItem(data, isMoved);
+        if (!sectorQueue) {
+            console.warn(`⚠️ Sector "${sectorId}" does not exist. Creating a new container.`);
+            sectorQueue = document.createElement('div');
+            sectorQueue.id = sectorId;
+            sectorQueue.className = 'queue-row';
+            sectorQueue.innerHTML = `<h3 class="sector-title text-${sectorColors[currentSector] || 'gray'}-600 w-full">${capitalize(currentSector)}</h3>`;
+            document.getElementById("queue-container").appendChild(sectorQueue);
         }
 
-        // Function to create the queue item HTML structure
-        function createQueueItem(data) {
-            const sector = (data.status || '').toLowerCase(); // normalize
-            const color = sectorColors[sector] || 'gray';
-
-            return `
-                <div id="queue-item-${data.queue_id}" 
-                    class="queue-item bg-${color}-100 border-l-4 border-${color}-600 p-4 rounded shadow-sm mb-2">
-                    <h3 class="font-bold text-${color}-900 text-lg">
-                        ${data.queue_number || 'N/A'}
-                    </h3>
-                    <p class="text-sm text-${color}-800">
-                        ${data.name || 'Unknown'}
-                    </p>
-                </div>
-            `;
-        }   
-
-        // Function to add a queue item to the respective sector
-        function addQueueItem(data, isMoved = false) {
-            const currentSector = data.status; // This will be the sector the queue item is currently in
-            const sectorId = `${currentSector}-queue`; // Determine the sector container ID dynamically
-            let sectorQueue = document.getElementById(sectorId);
-
-            // Check if the sector queue exists, if not, create it
-            if (!sectorQueue) {
-                console.warn(`⚠️ Sector "${sectorId}" does not exist. Creating a new container.`);
-                // Create a new container dynamically
-                sectorQueue = document.createElement('div');
-                sectorQueue.id = sectorId;
-                sectorQueue.className = 'sector-queue'; // Optional: add classes for styling
-                document.body.appendChild(sectorQueue);  // You might want to append this to a specific container
-            }
-
-            const queueId = `queue-item-${data.queue_id}`;
-            if (document.getElementById(queueId)) {
-                console.warn(`⚠️ Queue item ${queueId} already exists.`);
-                return;
-            }
-
-            // Create the queue item HTML
-            const newQueueItemHTML = createQueueItem(data, isMoved);
-            sectorQueue.insertAdjacentHTML('beforeend', newQueueItemHTML);
-
-            // Optional: Limit the number of items in the sector
-            const items = sectorQueue.querySelectorAll('.queue-item');
-            if (items.length > 10) {
-                items[0].remove();
-            }
-
-            // Move the queue item if it's proceeding to a new sector
-            if (isMoved) {
-                const newSector = getSectorFromAction(data.action);
-                if (newSector && newSector !== currentSector) {
-                    moveQueueItemToNewSector(data, newSector);
-                }
-            }
+        const queueId = `queue-item-${data.queue_id}`;
+        if (document.getElementById(queueId)) {
+            console.warn(`⚠️ Queue item ${queueId} already exists.`);
+            return;
         }
 
-        // Function to remove a queue item
-        function removeQueueItem(queueId) {
-            const queueItem = document.getElementById(`queue-item-${queueId}`);
-            if (queueItem) {
-                queueItem.remove();
-                console.log(`✅ Queue ID ${queueId} removed from UI.`);
-            } else {
-                console.warn(`⚠️ Queue item ${queueId} not found.`);
+        const newQueueItemHTML = createQueueItem(data);
+        sectorQueue.insertAdjacentHTML('beforeend', newQueueItemHTML);
+
+        const items = sectorQueue.querySelectorAll('.queue-item');
+        if (items.length > 10) {
+            items[0].remove();
+        }
+
+        if (isMoved) {
+            const rawNewSector = getSectorFromAction(data.action);
+            const newSector = normalizeSector(rawNewSector);
+            if (newSector && newSector !== currentSector) {
+                moveQueueItemToNewSector(data, newSector);
             }
         }
+    }
 
-        // Function to move a queue item to a new sector
-        function moveQueueItemToNewSector(data, newSector) {
-            const currentSectorId = `${data.status}-queue`;
-            const currentSectorQueue = document.getElementById(currentSectorId);
-            const queueItem = document.getElementById(`queue-item-${data.queue_id}`);
+    function removeQueueItem(queueId) {
+        const queueItem = document.getElementById(`queue-item-${queueId}`);
+        if (queueItem) {
+            queueItem.remove();
+            console.log(`✅ Queue ID ${queueId} removed from UI.`);
+        } else {
+            console.warn(`⚠️ Queue item ${queueId} not found.`);
+        }
+    }
 
-            if (queueItem) {
-                // Remove the queue item from its current sector
-                currentSectorQueue.removeChild(queueItem);
-                console.log(`✅ Queue ID ${data.queue_id} moved from ${data.status} to ${newSector}.`);
+    function moveQueueItemToNewSector(data, newSectorRaw) {
+        const newSector = normalizeSector(newSectorRaw);
+        const currentSectorId = `${normalizeSector(data.status)}-queue`;
+        const currentSectorQueue = document.getElementById(currentSectorId);
+        const queueItem = document.getElementById(`queue-item-${data.queue_id}`);
 
-                // Update the queue item data's sector status
-                data.status = newSector; // Update the sector to the new one
-                data.status_text = newSector; // Optional: Update status text
+        if (queueItem && currentSectorQueue) {
+            currentSectorQueue.removeChild(queueItem);
+            console.log(`✅ Queue ID ${data.queue_id} moved from ${data.status} to ${newSector}.`);
 
-                // Add the queue item to the new sector
-                const newSectorQueue = document.getElementById(`${newSector}-queue`);
-                if (!newSectorQueue) {
-                    console.warn(`⚠️ New sector "${newSector}" not found. Creating a new container.`);
-                    const newQueueContainer = document.createElement('div');
-                    newQueueContainer.id = `${newSector}-queue`;
-                    document.body.appendChild(newQueueContainer);
-                }
-                newSectorQueue.appendChild(queueItem); // Move the item to the new sector
+            data.status = newSector;
+            data.status_text = newSector;
+
+            let newSectorQueue = document.getElementById(`${newSector}-queue`);
+            if (!newSectorQueue) {
+                console.warn(`⚠️ New sector "${newSector}" not found. Creating a new container.`);
+                newSectorQueue = document.createElement('div');
+                newSectorQueue.id = `${newSector}-queue`;
+                newSectorQueue.className = 'queue-row';
+                newSectorQueue.innerHTML = `<h3 class="sector-title text-${sectorColors[newSector] || 'gray'}-600 w-full">${capitalize(newSector)}</h3>`;
+                document.getElementById("queue-container").appendChild(newSectorQueue);
             }
+            newSectorQueue.appendChild(queueItem);
         }
+    }
+</script>
 
-        // Helper function to handle the status of moving a queue item
-        function getSectorFromAction(action) {
-            const map = {
-                proceed_to_backroom: 'backroom',
-                proceed_to_examiners: 'examiner',
-                proceed_to_payment: 'payment',
-                proceed_to_fireprotection: 'fireprotection',
-                proceed_to_businesstax: 'businesstax',
-                proceed_to_releasing: 'releasing'
-            };
-            return map[action] || null;
-        }
-
-        // Normalize sector names
-        const sectorAlias = {
-            examiner: "examiners"
-        };
-
-        function normalizeSector(sector) {
-            return sectorAlias[sector] || sector;
-        }
-    </script>
 
 </body>
 
