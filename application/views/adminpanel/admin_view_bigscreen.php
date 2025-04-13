@@ -314,6 +314,18 @@
                 currentSectorQueue.removeChild(queueItem);
                 console.log(`✅ Queue ID ${data.queue_id} moved from ${data.status} to ${newSector}.`);
 
+                // 👇 ADJUST current sector after removal (like in delete)
+                const visibleItems = currentSectorQueue.querySelectorAll('.queue-item:not(.hidden)');
+                const hiddenItems = currentSectorQueue.querySelectorAll('.queue-item.hidden');
+                const needed = 10 - visibleItems.length;
+
+                for (let i = 0; i < needed && i < hiddenItems.length; i++) {
+                    const hiddenItem = hiddenItems[i];
+                    hiddenItem.classList.remove("hidden");
+                    currentSectorQueue.appendChild(hiddenItem);
+                }
+
+                // 👉 Now proceed to move the queue item to the new sector
                 data.status = newSector;
                 data.status_text = newSector;
 
@@ -325,6 +337,14 @@
                     newSectorQueue.className = 'queue-row';
                     newSectorQueue.innerHTML = `<h3 class="sector-title text-${sectorColors[newSector] || 'gray'}-600 w-full">${capitalize(newSector)}</h3>`;
                     document.getElementById("queue-container").appendChild(newSectorQueue);
+                }
+
+                // Append moved item to new sector (respect the 10 limit)
+                const newVisible = newSectorQueue.querySelectorAll('.queue-item:not(.hidden)');
+                if (newVisible.length < 10) {
+                    queueItem.classList.remove("hidden");
+                } else {
+                    queueItem.classList.add("hidden");
                 }
                 newSectorQueue.appendChild(queueItem);
             }
