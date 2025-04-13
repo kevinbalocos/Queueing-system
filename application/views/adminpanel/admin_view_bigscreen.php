@@ -83,6 +83,10 @@
         .queue-item {
             transition: all 0.3s ease-in-out;
         }
+
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 
@@ -119,200 +123,213 @@
     </div>
 
     <script>
-    const socket = new WebSocket("ws://localhost:8080");
+        const socket = new WebSocket("ws://localhost:8080");
 
-    socket.onopen = () => console.log("✅ Connected to WebSocket server");
+        socket.onopen = () => console.log("✅ Connected to WebSocket server");
 
-    socket.onmessage = (event) => {
-        try {
-            const data = JSON.parse(event.data);
-            console.log("📩 Received WebSocket Data: ", data);
+        socket.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                console.log("📩 Received WebSocket Data: ", data);
 
-            const fallbackSector = getSectorFromAction(data.action);
-            const rawStatus = data.status_text || data.status || fallbackSector;
+                const fallbackSector = getSectorFromAction(data.action);
+                const rawStatus = data.status_text || data.status || fallbackSector;
 
-            data.status = normalizeSector(rawStatus);
-            data.status_text = data.status;
+                data.status = normalizeSector(rawStatus);
+                data.status_text = data.status;
 
-            switch (data.action) {
-                case "add_to_queue":
-                    handleAddOrMove(data, false);
-                    break;
+                switch (data.action) {
+                    case "add_to_queue":
+                        handleAddOrMove(data, false);
+                        break;
 
-                case "proceed_to_backroom":
-                case "proceed_to_examiners":
-                case "proceed_to_payment":
-                case "proceed_to_fireprotection":
-                case "proceed_to_businesstax":
-                case "proceed_to_releasing":
-                    handleAddOrMove(data, true);
-                    break;
+                    case "proceed_to_backroom":
+                    case "proceed_to_examiners":
+                    case "proceed_to_payment":
+                    case "proceed_to_fireprotection":
+                    case "proceed_to_businesstax":
+                    case "proceed_to_releasing":
+                        handleAddOrMove(data, true);
+                        break;
 
-                case "delete_queue":
-                    removeQueueItem(data.queue_id);
-                    break;
+                    case "delete_queue":
+                        removeQueueItem(data.queue_id);
+                        break;
 
-                default:
-                    console.warn("⚠️ Unknown WebSocket action:", data.action);
+                    default:
+                        console.warn("⚠️ Unknown WebSocket action:", data.action);
+                }
+
+            } catch (error) {
+                console.error("⚠️ Error parsing WebSocket data:", error);
             }
+        };
 
-        } catch (error) {
-            console.error("⚠️ Error parsing WebSocket data:", error);
+        socket.onerror = (error) => console.error("❌ WebSocket Error: ", error);
+        socket.onclose = () => console.log("🔴 Disconnected from WebSocket server");
+
+        const sectorColors = {
+            landtax: 'green',
+            backroom: 'teal',
+            examiners: 'yellow', // Ensure yellow is used for examiners
+            businesstax: 'purple',
+            payment: 'blue',
+            fireprotection: 'orange',
+            releasing: 'green'
+        };
+
+        const sectorAlias = {
+            examiner: "examiners",
+            backroom: "backroom",
+            businesstax: "businesstax",
+            fireprotection: "fireprotection",
+            releasing: "releasing",
+            payment: "payment"
+        };
+
+        function normalizeSector(sector) {
+            const mapping = {
+                success: 'backroom',
+                'landtax': 'landtax',
+                'bfp/fire': 'fireprotection',
+                payment: 'payment',
+                'business tax': 'businesstax',
+                examiners: 'examiners',
+                examiner: 'examiners',
+                backroom: 'backroom',
+                releasing: 'releasing'
+            };
+            const normalized = mapping[sector] || sector;
+            return normalized === 'success' ? 'backroom' : normalized;
         }
-    };
 
-    socket.onerror = (error) => console.error("❌ WebSocket Error: ", error);
-    socket.onclose = () => console.log("🔴 Disconnected from WebSocket server");
+        function capitalize(word) {
+            return word.charAt(0).toUpperCase() + word.slice(1);
+        }
 
-    const sectorColors = {
-        landtax: 'green',
-        backroom: 'teal',
-        examiners: 'yellow', // Ensure yellow is used for examiners
-        businesstax: 'purple',
-        payment: 'blue',
-        fireprotection: 'orange',
-        releasing: 'green'
-    };
+        function getSectorFromAction(action) {
+            const map = {
+                proceed_to_backroom: 'backroom',
+                proceed_to_examiners: 'examiners',
+                proceed_to_payment: 'payment',
+                proceed_to_fireprotection: 'fireprotection',
+                proceed_to_businesstax: 'businesstax',
+                proceed_to_releasing: 'releasing'
+            };
+            return map[action] || null;
+        }
 
-    const sectorAlias = {
-        examiner: "examiners",
-        backroom: "backroom",
-        businesstax: "businesstax",
-        fireprotection: "fireprotection",
-        releasing: "releasing",
-        payment: "payment"
-    };
+        function handleAddOrMove(data, isMoved = false) {
+            removeQueueItem(data.queue_id);
+            addQueueItem(data, isMoved);
+        }
 
-    function normalizeSector(sector) {
-        const mapping = {
-            success: 'backroom',
-            'landtax': 'landtax',
-            'bfp/fire': 'fireprotection',
-            payment: 'payment',
-            'business tax': 'businesstax',
-            examiners: 'examiners',
-            examiner: 'examiners',
-            backroom: 'backroom',
-            releasing: 'releasing'
-        };
-        const normalized = mapping[sector] || sector;
-        return normalized === 'success' ? 'backroom' : normalized;
-    }
+        function createQueueItem(data) {
+            const sector = (data.status || '').toLowerCase();
+            const color = sectorColors[sector] || 'gray'; // Ensure color is selected properly based on sector
 
-    function capitalize(word) {
-        return word.charAt(0).toUpperCase() + word.slice(1);
-    }
-
-    function getSectorFromAction(action) {
-        const map = {
-            proceed_to_backroom: 'backroom',
-            proceed_to_examiners: 'examiners',
-            proceed_to_payment: 'payment',
-            proceed_to_fireprotection: 'fireprotection',
-            proceed_to_businesstax: 'businesstax',
-            proceed_to_releasing: 'releasing'
-        };
-        return map[action] || null;
-    }
-
-    function handleAddOrMove(data, isMoved = false) {
-        removeQueueItem(data.queue_id);
-        addQueueItem(data, isMoved);
-    }
-
-    function createQueueItem(data) {
-        const sector = (data.status || '').toLowerCase();
-        const color = sectorColors[sector] || 'gray'; // Ensure color is selected properly based on sector
-
-        return `
+            return `
         <div id="queue-item-${data.queue_id}" 
             class="queue-item bg-${color}-100 border-l-4 border-${color}-600">
             <h3 class="text-${color}-900">${data.queue_number || 'N/A'}</h3>
             <p class="text-${color}-800">${data.name || 'Unknown'}</p>
         </div>
     `;
-    }
-
-    function addQueueItem(data, isMoved = false) {
-        const currentSector = normalizeSector(data.status);
-
-        // 🛑 If normalization still results in "success", block it here
-        if (currentSector === "success") {
-            console.warn(`❌ Prevented creation of invalid sector "success".`);
-            return;
         }
 
-        const sectorId = `${currentSector}-queue`;
-        let sectorQueue = document.getElementById(sectorId);
+        function addQueueItem(data, isMoved = false) {
+            const currentSector = normalizeSector(data.status);
 
-        if (!sectorQueue) {
-            console.warn(`⚠️ Sector "${sectorId}" does not exist. Creating a new container.`);
-            sectorQueue = document.createElement('div');
-            sectorQueue.id = sectorId;
-            sectorQueue.className = 'queue-row';
-            sectorQueue.innerHTML = `<h3 class="sector-title text-${sectorColors[currentSector] || 'gray'}-600 w-full">${capitalize(currentSector)}</h3>`;
-            document.getElementById("queue-container").appendChild(sectorQueue);
-        }
+            if (currentSector === "success") return;
 
-        const queueId = `queue-item-${data.queue_id}`;
-        if (document.getElementById(queueId)) {
-            console.warn(`⚠️ Queue item ${queueId} already exists.`);
-            return;
-        }
+            const sectorId = `${currentSector}-queue`;
+            let sectorQueue = document.getElementById(sectorId);
 
-        const newQueueItemHTML = createQueueItem(data);
-        sectorQueue.insertAdjacentHTML('beforeend', newQueueItemHTML);
+            if (!sectorQueue) {
+                sectorQueue = document.createElement('div');
+                sectorQueue.id = sectorId;
+                sectorQueue.className = 'queue-row';
+                sectorQueue.innerHTML = `<h3 class="sector-title text-${sectorColors[currentSector] || 'gray'}-600 w-full">${capitalize(currentSector)}</h3>`;
+                document.getElementById("queue-container").appendChild(sectorQueue);
+            }
 
-        const items = sectorQueue.querySelectorAll('.queue-item');
-        if (items.length > 10) {
-            items[0].remove();
-        }
+            const queueId = `queue-item-${data.queue_id}`;
+            if (document.getElementById(queueId)) return;
 
-        if (isMoved) {
-            const rawNewSector = getSectorFromAction(data.action);
-            const newSector = normalizeSector(rawNewSector);
-            if (newSector && newSector !== currentSector) {
-                moveQueueItemToNewSector(data, newSector);
+            const newQueueItemHTML = createQueueItem(data);
+
+            const tempDiv = document.createElement("div");
+            tempDiv.innerHTML = newQueueItemHTML;
+            const newQueueElement = tempDiv.firstElementChild;
+
+            // Add a hidden class if more than 10 exist already
+            const items = sectorQueue.querySelectorAll('.queue-item');
+            if (items.length >= 10) {
+                newQueueElement.classList.add("hidden");
+            }
+
+            sectorQueue.appendChild(newQueueElement);
+
+            // Only handle movement logic if it's a transfer between sectors
+            if (isMoved) {
+                const rawNewSector = getSectorFromAction(data.action);
+                const newSector = normalizeSector(rawNewSector);
+                if (newSector && newSector !== currentSector) {
+                    moveQueueItemToNewSector(data, newSector);
+                }
             }
         }
-    }
 
-    function removeQueueItem(queueId) {
-        const queueItem = document.getElementById(`queue-item-${queueId}`);
-        if (queueItem) {
-            queueItem.remove();
-            console.log(`✅ Queue ID ${queueId} removed from UI.`);
-        } else {
-            console.warn(`⚠️ Queue item ${queueId} not found.`);
-        }
-    }
 
-    function moveQueueItemToNewSector(data, newSectorRaw) {
-        const newSector = normalizeSector(newSectorRaw);
-        const currentSectorId = `${normalizeSector(data.status)}-queue`;
-        const currentSectorQueue = document.getElementById(currentSectorId);
-        const queueItem = document.getElementById(`queue-item-${data.queue_id}`);
+        function removeQueueItem(queueId) {
+            const queueItem = document.getElementById(`queue-item-${queueId}`);
+            if (queueItem) {
+                const sectorQueue = queueItem.parentElement;
 
-        if (queueItem && currentSectorQueue) {
-            currentSectorQueue.removeChild(queueItem);
-            console.log(`✅ Queue ID ${data.queue_id} moved from ${data.status} to ${newSector}.`);
+                queueItem.remove();
+                console.log(`✅ Queue ID ${queueId} removed from UI.`);
 
-            data.status = newSector;
-            data.status_text = newSector;
+                // Adjust the queue so 10 items are visible
+                const visibleItems = sectorQueue.querySelectorAll('.queue-item:not(.hidden)');
+                const hiddenItems = sectorQueue.querySelectorAll('.queue-item.hidden');
 
-            let newSectorQueue = document.getElementById(`${newSector}-queue`);
-            if (!newSectorQueue) {
-                console.warn(`⚠️ New sector "${newSector}" not found. Creating a new container.`);
-                newSectorQueue = document.createElement('div');
-                newSectorQueue.id = `${newSector}-queue`;
-                newSectorQueue.className = 'queue-row';
-                newSectorQueue.innerHTML = `<h3 class="sector-title text-${sectorColors[newSector] || 'gray'}-600 w-full">${capitalize(newSector)}</h3>`;
-                document.getElementById("queue-container").appendChild(newSectorQueue);
+                const needed = 10 - visibleItems.length;
+                for (let i = 0; i < needed && i < hiddenItems.length; i++) {
+                    const hiddenItem = hiddenItems[i];
+                    hiddenItem.classList.remove("hidden");
+                    sectorQueue.appendChild(hiddenItem); // Move it to the end
+                }
+            } else {
+                console.warn(`⚠️ Queue item ${queueId} not found.`);
             }
-            newSectorQueue.appendChild(queueItem);
         }
-    }
-</script>
+
+        function moveQueueItemToNewSector(data, newSectorRaw) {
+            const newSector = normalizeSector(newSectorRaw);
+            const currentSectorId = `${normalizeSector(data.status)}-queue`;
+            const currentSectorQueue = document.getElementById(currentSectorId);
+            const queueItem = document.getElementById(`queue-item-${data.queue_id}`);
+
+            if (queueItem && currentSectorQueue) {
+                currentSectorQueue.removeChild(queueItem);
+                console.log(`✅ Queue ID ${data.queue_id} moved from ${data.status} to ${newSector}.`);
+
+                data.status = newSector;
+                data.status_text = newSector;
+
+                let newSectorQueue = document.getElementById(`${newSector}-queue`);
+                if (!newSectorQueue) {
+                    console.warn(`⚠️ New sector "${newSector}" not found. Creating a new container.`);
+                    newSectorQueue = document.createElement('div');
+                    newSectorQueue.id = `${newSector}-queue`;
+                    newSectorQueue.className = 'queue-row';
+                    newSectorQueue.innerHTML = `<h3 class="sector-title text-${sectorColors[newSector] || 'gray'}-600 w-full">${capitalize(newSector)}</h3>`;
+                    document.getElementById("queue-container").appendChild(newSectorQueue);
+                }
+                newSectorQueue.appendChild(queueItem);
+            }
+        }
+    </script>
 
 
 </body>
