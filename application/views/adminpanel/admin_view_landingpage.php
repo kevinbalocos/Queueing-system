@@ -93,8 +93,7 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
                 <li class="nav-link">
                     <a href="#" class="sidebar-link" data-view="Examiners">
                         <i class='bx bx-credit-card icon'></i>
-                        <span class="text nav-text">Exam
-                            iners</span>
+                        <span class="text nav-text">Examiners</span>
                     </a>
                 </li>
 
