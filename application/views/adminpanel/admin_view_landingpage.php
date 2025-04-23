@@ -49,72 +49,112 @@
 
             <i class='bx bx-chevron-right toggle'></i>
         </header>
-        <div class="menu-bar">
-            <div class="menu">
-                <li class="search-box flex items-center gap-2 bg-gray-100 rounded-lg p-2">
-                    <i class='bx bx-search text-gray-600 icon'></i>
+        <div class="menu-bar overflow-y-auto h-[calc(100%-64px)]">
+            <div class="menu px-2 py-4">
+                <div
+                    class="search-box flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg px-3 py-2 mb-6 mx-2">
+                    <i class='bx bx-search text-gray-500 dark:text-gray-400'></i>
                     <input
-                        class="text-left text-sm font-semibold text-center tracking-wider bg-transparent outline-none"
-                        type="search" id="search-bar" placeholder="SEARCH" oninput="filterData()">
-                </li>
+                        class="w-full bg-transparent border-none outline-none text-sm text-gray-700 dark:text-gray-300"
+                        type="search" id="search-bar" placeholder="Search..." oninput="filterData()">
+                </div>
 
-                <li class="nav-link">
-                    <a href="<?= base_url('controller_admin_landing/loadView/LandTax'); ?>" 
-                       class="sidebar-link <?= $active_view == 'LandTax' ? 'active' : ''; ?>">
-                        <i class='bx bx-home-alt icon'></i>
-                        <span class="text nav-text">Landtax</span>
-                    </a>
-                </li>
+                <div class="mb-2 px-4 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Main Menu</div>
 
-                <li class="nav-link">
-                    <a href="<?= base_url('controller_admin_landing/loadView/BackRoom'); ?>" 
-                       class="sidebar-link <?= $active_view == 'BackRoom' ? 'active' : ''; ?>">
-                        <i class='bx bx-briefcase icon'></i>
-                        <span class="text nav-text">Backroom</span>
-                    </a>
-                </li>
-                
-                <li class="nav-link">
-                    <a href="<?= base_url('controller_admin_landing/loadView/Examiners'); ?>" 
-                       class="sidebar-link <?= $active_view == 'Examiners' ? 'active' : ''; ?>">
-                        <i class='bx bx-credit-card icon'></i>
-                        <span class="text nav-text">Examiners</span>
-                    </a>
-                </li>
+                <ul class="space-y-1">
+                    <li>
+                        <a href="<?= base_url('controller_admin_landing/dashboard'); ?>"
+                            class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                            <i class='bx bxs-dashboard text-xl'></i>
+                            <span class="text">Dashboard</span>
+                        </a>
+                    </li>
 
-                <li class="nav-link">
-                    <a href="<?= base_url('controller_admin_landing/loadView/BusinessTax'); ?>" 
-                       class="sidebar-link <?= $active_view == 'BusinessTax' ? 'active' : ''; ?>">
-                        <i class='bx bx-cart icon'></i>
-                        <span class="text nav-text">Businesstax</span>
-                    </a>
-                </li>
+                    <li>
+                        <a href="<?= base_url('controller_admin_landing/loadView/LandTax'); ?>"
+                            class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors <?= $active_view == 'LandTax' ? 'active' : ''; ?>">
+                            <i class='bx bx-home-alt text-xl'></i>
+                            <span class="text">Land Tax</span>
+                        </a>
+                    </li>
 
-                <li class="nav-link">
-                    <a href="<?= base_url('controller_admin_landing/loadView/Payment'); ?>" 
-                       class="sidebar-link <?= $active_view == 'Payment' ? 'active' : ''; ?>">
-                        <i class='bx bx-credit-card icon'></i>
-                        <span class="text nav-text">Payment</span>
-                    </a>
-                </li>
+                    <li>
+                        <a href="<?= base_url('controller_admin_landing/loadView/BackRoom'); ?>"
+                            class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors <?= $active_view == 'BackRoom' ? 'active' : ''; ?>">
+                            <i class='bx bx-briefcase text-xl'></i>
+                            <span class="text">Backroom</span>
+                        </a>
+                    </li>
 
-                <li class="nav-link">
-                    <a href="<?= base_url('controller_admin_landing/loadView/FireProtection'); ?>" 
-                       class="sidebar-link <?= $active_view == 'FireProtection' ? 'active' : ''; ?>">
-                        <i class='bx bx-credit-card icon'></i>
-                        <span class="text nav-text">Fire Protection</span>
-                    </a>
-                </li>
+                    <li>
+                        <a href="<?= base_url('controller_admin_landing/loadView/Examiners'); ?>"
+                            class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors <?= $active_view == 'Examiners' ? 'active' : ''; ?>">
+                            <i class='bx bx-analyse text-xl'></i>
+                            <span class="text">Examiners</span>
+                        </a>
+                    </li>
 
-                <li class="nav-link">
-                    <a href="<?= base_url('controller_admin_landing/loadView/Releasing'); ?>" 
-                       class="sidebar-link <?= $active_view == 'Releasing' ? 'active' : ''; ?>">
-                        <i class='bx bx-credit-card icon'></i>
-                        <span class="text nav-text">Releasing</span>
-                    </a>
-                </li>
-                
+                    <li>
+                        <a href="<?= base_url('controller_admin_landing/loadView/BusinessTax'); ?>"
+                            class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors <?= $active_view == 'BusinessTax' ? 'active' : ''; ?>">
+                            <i class='bx bx-store text-xl'></i>
+                            <span class="text">Business Tax</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="my-2 px-4 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 pt-4">
+                    Transactions</div>
+
+                <ul class="space-y-1">
+                    <li>
+                        <a href="<?= base_url('controller_admin_landing/loadView/Payment'); ?>"
+                            class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors <?= $active_view == 'Payment' ? 'active' : ''; ?>">
+                            <i class='bx bx-credit-card text-xl'></i>
+                            <span class="text">Payment</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="<?= base_url('controller_admin_landing/loadView/FireProtection'); ?>"
+                            class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors <?= $active_view == 'FireProtection' ? 'active' : ''; ?>">
+                            <i class='bx bx-shield-quarter text-xl'></i>
+                            <span class="text">Fire Protection</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="<?= base_url('controller_admin_landing/loadView/Releasing'); ?>"
+                            class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors <?= $active_view == 'Releasing' ? 'active' : ''; ?>">
+                            <i class='bx bx-package text-xl'></i>
+                            <span class="text">Releasing</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="my-2 px-4 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 pt-4">System
+                </div>
+
+                <ul class="space-y-1">
+                    <li>
+                        <a href="<?= base_url('controller_admin_landing/loadView/Reports'); ?>"
+                            class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors <?= $active_view == 'Reports' ? 'active' : ''; ?>">
+                            <i class='bx bx-bar-chart-alt-2 text-xl'></i>
+                            <span class="text">Reports</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="<?= base_url('controller_admin_landing/loadView/Settings'); ?>"
+                            class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors <?= $active_view == 'Settings' ? 'active' : ''; ?>">
+                            <i class='bx bx-cog text-xl'></i>
+                            <span class="text">Settings</span>
+                        </a>
+                    </li>
+                </ul>
             </div>
+
+          
 
             <div class="bottom-content">
                 <li class="">
@@ -149,7 +189,8 @@
                     </div>
                 <?php endif; ?>
 
-                <?php if (isset($content)) echo $content; ?>
+                <?php if (isset($content))
+                    echo $content; ?>
             </div>
         </div>
     </section>
@@ -201,7 +242,7 @@
                 document.body.classList.remove("dark");
                 modeText.innerText = "Dark Mode";
             }
-            
+
             // Add active class to current view in sidebar
             const activeView = '<?= $active_view ?>';
             if (activeView) {
@@ -219,7 +260,7 @@
                 event.preventDefault();
             }
         }
-        
+
         function filterData() {
             const searchValue = document.getElementById('search-bar').value.toLowerCase();
             // Implement search functionality based on your needs
@@ -228,4 +269,5 @@
         }
     </script>
 </body>
+
 </html>
