@@ -17,6 +17,16 @@ body.dark {
     --accent-color: #0ea5e9;
 }
 
+/* For dark mode */
+body.dark .sidebar .nav-link a.active {
+    background-color: var(--primary-color);
+    color: var(--sidebar-color);
+}
+
+body.dark .sidebar .nav-link a.active .icon,
+body.dark .sidebar .nav-link a.active .text {
+    color: var(--sidebar-color);
+}
 * 
   body.dark ::-webkit-scrollbar {
     width: 10px;

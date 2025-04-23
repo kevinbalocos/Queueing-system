@@ -89,7 +89,7 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
             <?php
             $isProcessingByCurrentUser = ($item->processing_by && strval($item->processing_by) === $currentUser);
             ?>
-            <div class="flex flex-col flex-1 min-w-96 queue-item p-3 bg-white rounded-lg m-1 shadow-md"
+            <div class="flex flex-col flex-1 min-w-96 queue-item p-3 bg-white border rounded-lg m-1 shadow-md"
               id="queue-item-<?= $item->id; ?>" data-id="<?= $item->id; ?>">
 
               <div class="flex flex-col flex-grow space-y-4 max-w-full">
@@ -144,7 +144,7 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
     <!-- Right Section (Fire Protection Queue List) -->
     <div class="ml-5 bg-white p-5 w-[400px] rounded-lg shadow-md flex flex-col">
       <h2 class="text-2xl font-bold text-cyan-900 uppercase tracking-widest text-center">Fire Protection Queue List</h2>
-      <ul id="queueList" class="mt-3 overflow-auto h-[1000px] space-y-3 p-2 bg-white rounded-lg shadow-md">
+      <ul id="queueList" class="mt-3 overflow-auto h-[1000px] space-y-3 p-2 bg-white rounded-lg shadow-md border">
         <?php foreach ($right_items as $item): ?>
           <li class="p-5 bg-cyan-50 border border-cyan-400 rounded-xl shadow-md hover:shadow-lg 
                     transition-all duration-300 hover:bg-cyan-50 flex flex-col space-y-4"

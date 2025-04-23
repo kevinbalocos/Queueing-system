@@ -431,6 +431,20 @@ body {
     display: none;
 }
 
+/* Add this to your admin_view_landingpage.css file */
+
+.sidebar .nav-link a.active {
+    background-color: var(--primary-color);
+    color: var(--sidebar-color);
+    border-radius: 6px;
+}
+
+.sidebar .nav-link a.active .icon,
+.sidebar .nav-link a.active .text {
+    color: var(--sidebar-color);
+}
+
+
 /* For Firefox */
 body {
     scrollbar-width: none; /* Hides scrollbar */

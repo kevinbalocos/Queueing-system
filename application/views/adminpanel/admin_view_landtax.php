@@ -1,4 +1,4 @@
-<?php
+<?php 
 // Determine how many items go to the left section (maximum 20)
 $left_items = array_slice($queue, 0, 20);
 // Remaining queue items go to the right section
