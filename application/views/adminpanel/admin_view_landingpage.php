@@ -9,173 +9,859 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
         crossorigin="anonymous"></script>
-    <link rel="stylesheet"
-        href="<?php echo base_url('assets/css/admin_view_landingpage.css?v=' . filemtime('assets/css/admin_view_landingpage.css')); ?>">
-    <link rel="stylesheet"
-        href="<?php echo base_url('assets/css/darkmode_landing.css?v=' . filemtime('assets/css/darkmode_landing.css')); ?>">
-    <!-- BOXICONS-->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --sidebar-width: 280px;
+            --sidebar-collapsed-width: 80px;
+            --transition-speed: 0.3s;
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-sidebar: #ffffff;
+            --bg-sidebar-dark: #1e1e2d;
+            --text-color: #374151;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+            transition: background-color var(--transition-speed);
+            margin: 0;
+            padding: 0;
+        }
+
+        body.dark {
+            background-color: #111827;
+            color: #f3f4f6;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: var(--sidebar-width);
+            background-color: var(--bg-sidebar);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            transition: all var(--transition-speed) ease;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body.dark .sidebar {
+            background-color: var(--bg-sidebar-dark);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .sidebar.close {
+            width: var(--sidebar-collapsed-width);
+        }
+
+        .sidebar-header {
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            height: 70px;
+        }
+
+        body.dark .sidebar-header {
+            border-color: #2d3748;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            overflow: hidden;
+        }
+
+        .logo-icon {
+            min-width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(45deg, var(--primary-color), #818cf8);
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .logo-text {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-color);
+            white-space: nowrap;
+            opacity: 1;
+            transition: opacity var(--transition-speed);
+        }
+
+        body.dark .logo-text {
+            color: #f3f4f6;
+        }
+
+        .sidebar.close .logo-text {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .toggle-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background-color: #f3f4f6;
+            color: var(--text-color);
+            transition: all var(--transition-speed);
+            transform: rotate(0deg);
+        }
+
+        body.dark .toggle-btn {
+            background-color: #374151;
+            color: #e5e7eb;
+        }
+
+        .sidebar.close .toggle-btn {
+            transform: rotate(180deg);
+        }
+
+        .toggle-btn:hover {
+            background-color: #e5e7eb;
+        }
+
+        body.dark .toggle-btn:hover {
+            background-color: #4b5563;
+        }
+
+        .user-info {
+            padding: 1.25rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        body.dark .user-info {
+            border-color: #2d3748;
+        }
+
+        .profile-image {
+            min-width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #e5e7eb;
+        }
+
+        body.dark .profile-image {
+            border-color: #4b5563;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            white-space: nowrap;
+            opacity: 1;
+            transition: opacity var(--transition-speed);
+        }
+
+        .sidebar.close .user-details {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        body.dark .user-name {
+            color: #f3f4f6;
+        }
+
+        .user-role {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        body.dark .user-role {
+            color: #9ca3af;
+        }
+
+        .search-container {
+            padding: 1rem;
+            position: relative;
+        }
+
+        .sidebar.close .search-container {
+            padding: 1rem 0.5rem;
+        }
+
+        .search-wrapper {
+            display: flex;
+            align-items: center;
+            background-color: #f3f4f6;
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            transition: all var(--transition-speed);
+        }
+
+        body.dark .search-wrapper {
+            background-color: #374151;
+        }
+
+        .search-icon {
+            min-width: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+        }
+
+        .search-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            padding: 0 0.5rem;
+            color: var(--text-color);
+            opacity: 1;
+            transition: opacity var(--transition-speed);
+        }
+
+        body.dark .search-input {
+            color: #e5e7eb;
+        }
+
+        .sidebar.close .search-input {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .sidebar.close .search-wrapper {
+            padding: 0.5rem;
+            justify-content: center;
+        }
+
+        .menu-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem 0;
+        }
+
+        .menu-section {
+            margin-bottom: 1rem;
+        }
+
+        .menu-title {
+            padding: 0.5rem 1.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+            opacity: 1;
+            transition: opacity var(--transition-speed);
+        }
+
+        body.dark .menu-title {
+            color: #9ca3af;
+        }
+
+        .sidebar.close .menu-title {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .menu-items {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .menu-item {
+            position: relative;
+        }
+
+        .menu-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.25rem;
+            text-decoration: none;
+            color: var(--text-color);
+            transition: all var(--transition-speed);
+            border-left: 3px solid transparent;
+            gap: 1rem;
+        }
+
+        body.dark .menu-link {
+            color: #e5e7eb;
+        }
+
+        .menu-link:hover {
+            background-color: #f3f4f6;
+        }
+
+        body.dark .menu-link:hover {
+            background-color: #2d3748;
+        }
+
+        .menu-link.active {
+            background-color: #ede9fe;
+            border-left-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        body.dark .menu-link.active {
+            background-color: #374151;
+            border-left-color: var(--primary-color);
+            color: #a5b4fc;
+        }
+
+        .menu-icon {
+            min-width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            transition: all var(--transition-speed);
+        }
+
+        .menu-text {
+            white-space: nowrap;
+            opacity: 1;
+            transition: opacity var(--transition-speed);
+        }
+
+        .sidebar.close .menu-text {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .sidebar.close .menu-link {
+            padding: 0.75rem;
+            justify-content: center;
+        }
+
+        .menu-tooltip {
+            position: absolute;
+            left: calc(100% + 10px);
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #374151;
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 10;
+        }
+
+        .menu-tooltip::before {
+            content: '';
+            position: absolute;
+            left: -5px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+            border-right: 5px solid #374151;
+        }
+
+        body.dark .menu-tooltip {
+            background-color: #4b5563;
+        }
+
+        body.dark .menu-tooltip::before {
+            border-right-color: #4b5563;
+        }
+
+        .sidebar.close .menu-item:hover .menu-tooltip {
+            opacity: 1;
+        }
+
+        .bottom-container {
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        body.dark .bottom-container {
+            border-color: #2d3748;
+        }
+
+        .mode-switch {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            margin-bottom: 1rem;
+        }
+
+        .mode-text {
+            color: var(--text-color);
+            font-size: 0.875rem;
+            white-space: nowrap;
+            opacity: 1;
+            transition: opacity var(--transition-speed);
+        }
+
+        body.dark .mode-text {
+            color: #e5e7eb;
+        }
+
+        .sidebar.close .mode-text {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 40px;
+            height: 22px;
+            border-radius: 25px;
+            background-color: #cbd5e1;
+            transition: all var(--transition-speed);
+        }
+
+        body.dark .toggle-switch {
+            background-color: var(--primary-color);
+        }
+
+        .switch {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background-color: white;
+            transition: all var(--transition-speed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        body.dark .switch {
+            left: calc(100% - 20px);
+        }
+
+        .sun-icon,
+        .moon-icon {
+            position: absolute;
+            font-size: 0.875rem;
+            color: #f59e0b;
+        }
+
+        .sun-icon {
+            opacity: 1;
+        }
+
+        .moon-icon {
+            opacity: 0;
+        }
+
+        body.dark .sun-icon {
+            opacity: 0;
+        }
+
+        body.dark .moon-icon {
+            opacity: 1;
+            color: #f3f4f6;
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            background-color: #fee2e2;
+            color: #dc2626;
+            text-decoration: none;
+            transition: all var(--transition-speed);
+        }
+
+        body.dark .logout-btn {
+            background-color: #7f1d1d;
+            color: #fecaca;
+        }
+
+        .logout-btn:hover {
+            background-color: #fecaca;
+        }
+
+        body.dark .logout-btn:hover {
+            background-color: #991b1b;
+        }
+
+        .logout-icon {
+            min-width: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logout-text {
+            white-space: nowrap;
+            opacity: 1;
+            transition: opacity var(--transition-speed);
+        }
+
+        .sidebar.close .logout-text {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .sidebar.close .logout-btn {
+            justify-content: center;
+            padding: 0.75rem;
+        }
+
+        .home {
+            position: relative;
+            left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            transition: all var(--transition-speed) ease;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .sidebar.close~.home {
+            left: var(--sidebar-collapsed-width);
+            width: calc(100% - var(--sidebar-collapsed-width));
+        }
+
+        .menu-item.has-dropdown .dropdown-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height var(--transition-speed) ease;
+        }
+
+        .menu-item.has-dropdown.open .dropdown-content {
+            max-height: 500px;
+        }
+
+        .dropdown-trigger {
+            position: relative;
+        }
+
+        .dropdown-icon {
+            position: absolute;
+            right: 1.25rem;
+            top: 50%;
+            transform: translateY(-50%) rotate(0deg);
+            transition: transform var(--transition-speed);
+        }
+
+        .sidebar.close .dropdown-icon {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .menu-item.has-dropdown.open .dropdown-icon {
+            transform: translateY(-50%) rotate(90deg);
+        }
+
+        .submenu-item .menu-link {
+            padding-left: 3.5rem;
+            font-size: 0.875rem;
+        }
+
+        .sidebar.close .submenu-item .menu-link {
+            padding-left: 0.75rem;
+            justify-content: center;
+        }
+
+        /* Responsive */
+        @media screen and (max-width: 768px) {
+            .sidebar {
+                width: 0;
+                left: -280px;
+            }
+
+            .sidebar.close {
+                width: 0;
+                left: -280px;
+            }
+
+            .sidebar.mobile-open {
+                left: 0;
+                width: var(--sidebar-width);
+            }
+
+            .home {
+                left: 0;
+                width: 100%;
+            }
+
+            .sidebar.close~.home,
+            .sidebar.mobile-open~.home {
+                left: 0;
+                width: 100%;
+            }
+
+            .mobile-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 99;
+                opacity: 0;
+                visibility: hidden;
+                transition: all var(--transition-speed);
+            }
+
+            .sidebar.mobile-open~.mobile-overlay {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            .mobile-toggle {
+                display: block;
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                width: 40px;
+                height: 40px;
+                border-radius: 8px;
+                background-color: var(--primary-color);
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                z-index: 98;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            }
+
+            body.dark .mobile-toggle {
+                background-color: var(--bg-sidebar-dark);
+                color: #e5e7eb;
+            }
+        }
+    </style>
 </head>
 
 <body>
-    <!-- SIDE NAVBAR -->
-    <nav class="sidebar close">
-        <header>
-            <div class="image-text">
-                <span class="image">
-                    <?php if (!empty($user['uploaded_profile_image'])): ?>
-                        <img class="profile-image" src="<?= base_url($user['uploaded_profile_image']); ?>"
-                            alt="Uploaded Profile Image">
-                    <?php else: ?>
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Image_created_with_a_mobile_phone.png/1200px-Image_created_with_a_mobile_phone.png"
-                            alt="logo">
-                    <?php endif; ?>
-                </span>
+    <!-- Mobile Menu Toggle Button -->
+    <div class="mobile-toggle">
+        <i class='bx bx-menu'></i>
+    </div>
 
-                <div class="text header-text">
-                    <span class="name"></span>
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay"></div>
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+        <!-- Sidebar Header with Logo -->
+        <div class="sidebar-header">
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <i class='bx bx-cube-alt'></i>
+                </div>
+                <div class="logo-text">Admin Panel</div>
+            </div>
+            <div class="toggle-btn">
+                <i class='bx bx-chevron-left'></i>
+            </div>
+        </div>
+
+        <!-- User Profile Info -->
+        <div class="user-info">
+            <?php if (!empty($user['uploaded_profile_image'])): ?>
+                <img class="profile-image" src="<?= base_url($user['uploaded_profile_image']); ?>" alt="Profile">
+            <?php else: ?>
+                <img class="profile-image" src="https://ui-avatars.com/api/?name=User&background=4f46e5&color=fff"
+                    alt="Profile">
+            <?php endif; ?>
+            <div class="user-details">
+                <div class="user-name">
                     <?php if ($this->session->userdata('logged_in')): ?>
-                        <span class="profession">Welcome,
-                            <?= htmlspecialchars($this->session->userdata('username')); ?>!</span>
+                        <?= htmlspecialchars($this->session->userdata('username')); ?>
                     <?php else: ?>
-                        <span class="text-lg font-semibold">Guest</span>
+                        Guest
                     <?php endif; ?>
                 </div>
+                <div class="user-role">Administrator</div>
             </div>
+        </div>
 
-            <i class='bx bx-chevron-right toggle'></i>
-        </header>
-        <div class="menu-bar overflow-y-auto h-[calc(100%-64px)]">
-            <div class="menu px-2 py-4">
-                <div
-                    class="search-box flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg px-3 py-2 mb-6 mx-2">
-                    <i class='bx bx-search text-gray-500 dark:text-gray-400'></i>
-                    <input
-                        class="w-full bg-transparent border-none outline-none text-sm text-gray-700 dark:text-gray-300"
-                        type="search" id="search-bar" placeholder="Search..." oninput="filterData()">
+        <!-- Search Box -->
+        <div class="search-container">
+            <div class="search-wrapper">
+                <div class="search-icon">
+                    <i class='bx bx-search'></i>
                 </div>
+                <input type="search" class="search-input" placeholder="Search..." id="search-bar"
+                    oninput="filterData()">
+            </div>
+        </div>
 
-                <div class="mb-2 px-4 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Main Menu</div>
-
-                <ul class="space-y-1">
-                    <li>
+        <!-- Menu Container -->
+        <div class="menu-container">
+            <!-- Main Menu Section -->
+            <div class="menu-section">
+                <div class="menu-title">Main Menu</div>
+                <ul class="menu-items">
+                    <li class="menu-item">
                         <a href="<?= base_url('controller_admin_landing/dashboard'); ?>"
-                            class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                            <i class='bx bxs-dashboard text-xl'></i>
-                            <span class="text">Dashboard</span>
+                            class="menu-link <?= ($active_view == 'Dashboard') ? 'active' : ''; ?>">
+                            <div class="menu-icon">
+                                <i class='bx bxs-dashboard'></i>
+                            </div>
+                            <span class="menu-text">Dashboard</span>
                         </a>
+                        <div class="menu-tooltip">Dashboard</div>
                     </li>
 
-                    <li>
-                        <a href="<?= base_url('controller_admin_landing/loadView/LandTax'); ?>"
-                            class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors <?= $active_view == 'LandTax' ? 'active' : ''; ?>">
-                            <i class='bx bx-home-alt text-xl'></i>
-                            <span class="text">Land Tax</span>
+                    <li class="menu-item has-dropdown">
+                        <a href="javascript:void(0)" class="menu-link dropdown-trigger">
+                            <div class="menu-icon">
+                                <i class='bx bx-building-house'></i>
+                            </div>
+                            <span class="menu-text">Properties</span>
+                            <i class='bx bx-chevron-right dropdown-icon'></i>
                         </a>
+                        <div class="menu-tooltip">Properties</div>
+                        <ul class="dropdown-content menu-items">
+                            <li class="submenu-item">
+                                <a href="<?= base_url('controller_admin_landing/loadView/LandTax'); ?>"
+                                    class="menu-link <?= ($active_view == 'LandTax') ? 'active' : ''; ?>">
+                                    <span class="menu-text">Land Tax</span>
+                                </a>
+                                <div class="menu-tooltip">Land Tax</div>
+                            </li>
+                            <li class="submenu-item">
+                                <a href="<?= base_url('controller_admin_landing/loadView/BackRoom'); ?>"
+                                    class="menu-link <?= ($active_view == 'BackRoom') ? 'active' : ''; ?>">
+                                    <span class="menu-text">Backroom</span>
+                                </a>
+                                <div class="menu-tooltip">Backroom</div>
+                            </li>
+                        </ul>
                     </li>
 
-                    <li>
-                        <a href="<?= base_url('controller_admin_landing/loadView/BackRoom'); ?>"
-                            class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors <?= $active_view == 'BackRoom' ? 'active' : ''; ?>">
-                            <i class='bx bx-briefcase text-xl'></i>
-                            <span class="text">Backroom</span>
-                        </a>
-                    </li>
-
-                    <li>
+                    <li class="menu-item">
                         <a href="<?= base_url('controller_admin_landing/loadView/Examiners'); ?>"
-                            class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors <?= $active_view == 'Examiners' ? 'active' : ''; ?>">
-                            <i class='bx bx-analyse text-xl'></i>
-                            <span class="text">Examiners</span>
+                            class="menu-link <?= ($active_view == 'Examiners') ? 'active' : ''; ?>">
+                            <div class="menu-icon">
+                                <i class='bx bx-analyse'></i>
+                            </div>
+                            <span class="menu-text">Examiners</span>
                         </a>
+                        <div class="menu-tooltip">Examiners</div>
                     </li>
 
-                    <li>
+                    <li class="menu-item">
                         <a href="<?= base_url('controller_admin_landing/loadView/BusinessTax'); ?>"
-                            class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors <?= $active_view == 'BusinessTax' ? 'active' : ''; ?>">
-                            <i class='bx bx-store text-xl'></i>
-                            <span class="text">Business Tax</span>
+                            class="menu-link <?= ($active_view == 'BusinessTax') ? 'active' : ''; ?>">
+                            <div class="menu-icon">
+                                <i class='bx bx-store'></i>
+                            </div>
+                            <span class="menu-text">Business Tax</span>
                         </a>
+                        <div class="menu-tooltip">Business Tax</div>
                     </li>
                 </ul>
+            </div>
 
-                <div class="my-2 px-4 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 pt-4">
-                    Transactions</div>
-
-                <ul class="space-y-1">
-                    <li>
-                        <a href="<?= base_url('controller_admin_landing/loadView/Payment'); ?>"
-                            class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors <?= $active_view == 'Payment' ? 'active' : ''; ?>">
-                            <i class='bx bx-credit-card text-xl'></i>
-                            <span class="text">Payment</span>
+            <!-- Transactions Menu Section -->
+            <div class="menu-section">
+                <div class="menu-title">Transactions</div>
+                <ul class="menu-items">
+                    <li class="menu-item has-dropdown">
+                        <a href="javascript:void(0)" class="menu-link dropdown-trigger">
+                            <div class="menu-icon">
+                                <i class='bx bx-transfer'></i>
+                            </div>
+                            <span class="menu-text">Transactions</span>
+                            <i class='bx bx-chevron-right dropdown-icon'></i>
                         </a>
+                        <div class="menu-tooltip">Transactions</div>
+                        <ul class="dropdown-content menu-items">
+                            <li class="submenu-item">
+                                <a href="<?= base_url('controller_admin_landing/loadView/Payment'); ?>"
+                                    class="menu-link <?= ($active_view == 'Payment') ? 'active' : ''; ?>">
+                                    <span class="menu-text">Payment</span>
+                                </a>
+                                <div class="menu-tooltip">Payment</div>
+                            </li>
+                            <li class="submenu-item">
+                                <a href="<?= base_url('controller_admin_landing/loadView/FireProtection'); ?>"
+                                    class="menu-link <?= ($active_view == 'FireProtection') ? 'active' : ''; ?>">
+                                    <span class="menu-text">Fire Protection</span>
+                                </a>
+                                <div class="menu-tooltip">Fire Protection</div>
+                            </li>
+                            <li class="submenu-item">
+                                <a href="<?= base_url('controller_admin_landing/loadView/Releasing'); ?>"
+                                    class="menu-link <?= ($active_view == 'Releasing') ? 'active' : ''; ?>">
+                                    <span class="menu-text">Releasing</span>
+                                </a>
+                                <div class="menu-tooltip">Releasing</div>
+                            </li>
+                        </ul>
                     </li>
 
-                    <li>
-                        <a href="<?= base_url('controller_admin_landing/loadView/FireProtection'); ?>"
-                            class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors <?= $active_view == 'FireProtection' ? 'active' : ''; ?>">
-                            <i class='bx bx-shield-quarter text-xl'></i>
-                            <span class="text">Fire Protection</span>
+                    <li class="menu-item">
+                        <a href="#" class="menu-link">
+                            <div class="menu-icon">
+                                <i class='bx bx-chart'></i>
+                            </div>
+                            <span class="menu-text">Reports</span>
                         </a>
+                        <div class="menu-tooltip">Reports</div>
                     </li>
 
-                    <li>
-                        <a href="<?= base_url('controller_admin_landing/loadView/Releasing'); ?>"
-                            class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors <?= $active_view == 'Releasing' ? 'active' : ''; ?>">
-                            <i class='bx bx-package text-xl'></i>
-                            <span class="text">Releasing</span>
+                    <li class="menu-item">
+                        <a href="#" class="menu-link">
+                            <div class="menu-icon">
+                                <i class='bx bx-cog'></i>
+                            </div>
+                            <span class="menu-text">Settings</span>
                         </a>
+                        <div class="menu-tooltip">Settings</div>
                     </li>
                 </ul>
+            </div>
+        </div>
 
-                <div class="my-2 px-4 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 pt-4">System
+        <!-- Bottom Container with Mode Toggle and Logout -->
+        <div class="bottom-container">
+            <div class="mode-switch">
+                <span class="mode-text">Dark Mode</span>
+                <div class="toggle-switch">
+                    <span class="switch">
+                        <i class='bx bx-sun sun-icon'></i>
+                        <i class='bx bx-moon moon-icon'></i>
+                    </span>
                 </div>
-
-                <ul class="space-y-1">
-                    <li>
-                        <a href="<?= base_url('controller_admin_landing/loadView/Reports'); ?>"
-                            class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors <?= $active_view == 'Reports' ? 'active' : ''; ?>">
-                            <i class='bx bx-bar-chart-alt-2 text-xl'></i>
-                            <span class="text">Reports</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="<?= base_url('controller_admin_landing/loadView/Settings'); ?>"
-                            class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors <?= $active_view == 'Settings' ? 'active' : ''; ?>">
-                            <i class='bx bx-cog text-xl'></i>
-                            <span class="text">Settings</span>
-                        </a>
-                    </li>
-                </ul>
             </div>
 
-          
-
-            <div class="bottom-content">
-                <li class="">
-                    <a onclick="checker()" href="<?php echo base_url('controller_admin_landing/logout'); ?>">
-                        <i class='bx bx-log-out icon'></i>
-                        <span class="text nav-text">Logout</span>
-                    </a>
-                </li>
-
-                <li class="mode">
-                    <div class="moon-sun">
-                        <i class='bx bx-moon icon moon'></i>
-                        <i class='bx bx-sun icon sun'></i>
-                    </div>
-                    <span class="mode-text text">Dark Mode</span>
-
-                    <div class="toggle-switch">
-                        <span class="switch"></span>
-                    </div>
-                </li>
-            </div>
+            <a href="<?php echo base_url('controller_admin_landing/logout'); ?>" class="logout-btn" onclick="checker()">
+                <div class="logout-icon">
+                    <i class='bx bx-log-out'></i>
+                </div>
+                <span class="logout-text">Logout</span>
+            </a>
         </div>
     </nav>
 
@@ -198,9 +884,12 @@
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const sidebar = document.querySelector(".sidebar");
-            const toggle = document.querySelector(".toggle");
-            const modeSwitch = document.querySelector(".toggle-switch");
+            const toggleBtn = document.querySelector(".toggle-btn");
+            const mobileToggle = document.querySelector(".mobile-toggle");
+            const mobileOverlay = document.querySelector(".mobile-overlay");
+            const toggleSwitch = document.querySelector(".toggle-switch");
             const modeText = document.querySelector(".mode-text");
+            const dropdownTriggers = document.querySelectorAll(".dropdown-trigger");
 
             // Function to toggle dark mode
             function toggleDarkMode() {
@@ -208,32 +897,56 @@
 
                 if (document.body.classList.contains("dark")) {
                     modeText.innerText = "Light Mode";
-                    localStorage.setItem('darkMode', true);
+                    localStorage.setItem('darkMode', 'true');
                 } else {
                     modeText.innerText = "Dark Mode";
-                    localStorage.setItem('darkMode', false);
+                    localStorage.setItem('darkMode', 'false');
                 }
             }
 
-            // Sidebar toggle and state persistence
-            toggle.addEventListener("click", () => {
+            // Sidebar toggle functionality
+            toggleBtn.addEventListener("click", () => {
                 sidebar.classList.toggle("close");
                 const sidebarState = sidebar.classList.contains("close") ? "closed" : "open";
                 localStorage.setItem("sidebarState", sidebarState);
             });
 
-            // Check and apply sidebar state on page load
+            // Mobile sidebar toggle
+            mobileToggle.addEventListener("click", () => {
+                sidebar.classList.add("mobile-open");
+            });
+
+            mobileOverlay.addEventListener("click", () => {
+                sidebar.classList.remove("mobile-open");
+            });
+
+            // Dark mode toggle
+            toggleSwitch.addEventListener("click", toggleDarkMode);
+
+            // Dropdown menu functionality
+            dropdownTriggers.forEach(trigger => {
+                trigger.addEventListener("click", (e) => {
+                    const parent = trigger.parentElement;
+                    parent.classList.toggle("open");
+
+                    // Close other open dropdowns
+                    document.querySelectorAll(".menu-item.has-dropdown.open").forEach(item => {
+                        if (item !== parent) {
+                            item.classList.remove("open");
+                        }
+                    });
+                });
+            });
+
+            // Apply saved sidebar state
             const sidebarState = localStorage.getItem("sidebarState");
             if (sidebarState === "open") {
                 sidebar.classList.remove("close");
-            } else {
+            } else if (sidebarState === "closed") {
                 sidebar.classList.add("close");
             }
 
-            // Dark mode toggle functionality
-            modeSwitch.addEventListener("click", toggleDarkMode);
-
-            // Set dark mode preference on page load
+            // Apply saved dark mode preference
             const darkModePreference = localStorage.getItem('darkMode');
             if (darkModePreference === 'true') {
                 document.body.classList.add("dark");
@@ -243,31 +956,76 @@
                 modeText.innerText = "Dark Mode";
             }
 
-            // Add active class to current view in sidebar
-            const activeView = '<?= $active_view ?>';
-            if (activeView) {
-                document.querySelectorAll('.sidebar-link').forEach(link => {
-                    if (link.getAttribute('href').includes(activeView)) {
-                        link.classList.add('active');
+            // Add active class to parent dropdown item if submenu item is active
+            document.querySelectorAll('.submenu-item .menu-link.active').forEach(activeLink => {
+                const dropdownParent = activeLink.closest('.has-dropdown');
+                if (dropdownParent) {
+                    dropdownParent.classList.add('open');
+                }
+            });
+
+            // Show tooltips on hover for collapsed sidebar
+            const menuItems = document.querySelectorAll('.menu-item');
+            menuItems.forEach(item => {
+                item.addEventListener('mouseenter', () => {
+                    if (sidebar.classList.contains('close')) {
+                        const tooltip = item.querySelector('.menu-tooltip');
+                        if (tooltip) {
+                            tooltip.style.opacity = '1';
+                        }
                     }
                 });
+
+                item.addEventListener('mouseleave', () => {
+                    const tooltip = item.querySelector('.menu-tooltip');
+                    if (tooltip) {
+                        tooltip.style.opacity = '0';
+                    }
+                });
+            });
+
+            // Search functionality
+            function filterData() {
+                const searchValue = document.getElementById('search-bar').value.toLowerCase();
+                const menuItems = document.querySelectorAll('.menu-item:not(.has-dropdown), .submenu-item');
+
+                menuItems.forEach(item => {
+                    const menuText = item.querySelector('.menu-text')?.textContent.toLowerCase();
+
+                    if (menuText && menuText.includes(searchValue)) {
+                        item.style.display = 'block';
+                        // Open parent dropdown if this is a submenu item
+                        const parentDropdown = item.closest('.has-dropdown');
+                        if (parentDropdown && searchValue !== '') {
+                            parentDropdown.classList.add('open');
+                        }
+                    } else {
+                        // Don't hide dropdown parents
+                        if (!item.classList.contains('has-dropdown')) {
+                            item.style.display = searchValue === '' ? 'block' : 'none';
+                        }
+                    }
+                });
+
+                // If search is cleared, close all dropdowns
+                if (searchValue === '') {
+                    document.querySelectorAll('.menu-item.has-dropdown.open').forEach(item => {
+                        if (!item.querySelector('.submenu-item .menu-link.active')) {
+                            item.classList.remove('open');
+                        }
+                    });
+                }
             }
+
+            // Add search functionality
+            document.getElementById('search-bar').addEventListener('input', filterData);
         });
 
+        // Confirmation dialog before logout
         function checker() {
-            var result = confirm('Are you sure na gusto mo kong iwan?');
+            var result = confirm('Are you sure you want to logout?');
             if (result == false) {
                 event.preventDefault();
             }
         }
-
-        function filterData() {
-            const searchValue = document.getElementById('search-bar').value.toLowerCase();
-            // Implement search functionality based on your needs
-            console.log("Searching for:", searchValue);
-            // You can add specific search implementation here
-        }
     </script>
-</body>
-
-</html>
