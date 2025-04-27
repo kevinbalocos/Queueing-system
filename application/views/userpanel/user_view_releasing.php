@@ -4,27 +4,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RELEASING</title>
+    <title>RELEASING QUEUE</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
 </head>
 
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-5">
-
-    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-5xl">
-        <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">Releasing Queue</h2>
-
-        <!-- Responsive Grid Layout -->
-        <div id="queue-container" class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            <?php foreach ($releasing as $r): ?>
-                <div class="p-4 bg-gray-50 border rounded-lg shadow flex flex-col items-center">
-                    <span class="text-gray-700 font-medium text-lg"><?= $r->name; ?></span>
-                    <span class="text-green-600 font-bold mt-2">Completed</span>
+    <nav class="bg-white text-cyan-700 fixed top-0 left-0 w-full shadow-lg z-10">
+        <div class="px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-3">
+                    <span class="text-xl font-bold uppercase tracking-widest">Releasing Queue</span>
                 </div>
-            <?php endforeach; ?>
+
+                <!-- User Dropdown -->
+                <div class="relative flex ">
+                    <div class="hidden md:flex space-x-6 items-center mx-5">
+                        <?php if ($this->session->userdata('logged_in')): ?>
+                            <span class="text-lg font-semibold text-xs font-bold uppercase">Welcome,
+                                <?= htmlspecialchars($this->session->userdata('username')); ?>!</span>
+                        <?php else: ?>
+                            <span class="text-lg font-semibold">Guest</span>
+                        <?php endif; ?>
+                    </div>
+                    <button id="user-menu-btn" class="focus:outline-none">
+                        <i class="fas fa-user-circle text-2xl"></i>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div id="user-menu"
+                        class="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg hidden">
+                        <a href="<?= base_url('controller_admin_landing/logout'); ?>"
+                            class="flex items-center px-4 py-2 text-red-600 hover:bg-gray-100">
+                            <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Hamburger Button -->
+                <button id="menu-btn" class="md:hidden focus:outline-none">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- JavaScript for Dropdown -->
+    <script>
+        document.getElementById('user-menu-btn').addEventListener('click', function () {
+            document.getElementById('user-menu').classList.toggle('hidden');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (event) {
+            const menu = document.getElementById('user-menu');
+            const button = document.getElementById('user-menu-btn');
+            if (!menu.contains(event.target) && !button.contains(event.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+    </script>
+
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-5xl mt-16">
+        <!-- <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">Releasing Queue</h2> -->
+
+        <div class="max-h-[80vh] overflow-y-auto">
+            <div id="queue-container"
+                class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                <?php foreach ($releasing as $r): ?>
+                    <div class="p-4 bg-gray-50 border rounded-lg shadow flex flex-col items-center">
+                        <span class="text-gray-700 font-medium text-lg"><?= $r->name; ?></span>
+                        <span class="text-green-600 font-bold mt-2">Completed</span>
+                    </div>
+                <?php endforeach; ?>
+            </div>
         </div>
 
         <!-- Logout Button -->
-        <div class="mt-6 text-center">
+        <!-- <div class="mt-6 text-center">
             <a href="<?= base_url('controller_admin_landing/logout'); ?>"
                 class="inline-flex items-center bg-red-500 text-white px-5 py-2 rounded-lg hover:bg-red-600 transition">
                 <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -34,14 +91,14 @@
                 </svg>
                 Logout
             </a>
-        </div>
+        </div> -->
     </div>
 
     <script>
         // WebSocket initialization
         const socket = new WebSocket("ws://localhost:8080");
 
-        socket.onopen = () => console.log("Connected to WebSocket server (Releasing)"); 
+        socket.onopen = () => console.log("Connected to WebSocket server (Releasing)");
 
         socket.onmessage = (event) => {
             try {

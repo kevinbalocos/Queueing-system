@@ -78,6 +78,16 @@
                 document.getElementById('editModal').classList.add('hidden');
             }
         </script>
+        <script>
+            // Fade out the flash message
+            setTimeout(() => {
+                const flashMessage = document.getElementById('flash-message');
+                if (flashMessage) {
+                    flashMessage.style.opacity = '0'; 
+                    setTimeout(() => flashMessage.remove(), 1000); 
+                }
+            }, 4000);
+        </script>
         <style>
             .animate-fade-in-down {
                 animation: fadeInDown 0.5s ease forwards;
@@ -196,8 +206,8 @@
 
                 <!-- Flash Messages -->
                 <?php if ($this->session->flashdata('success')): ?>
-                    <div
-                        class="bg-green-600/20 border border-green-600/30 text-green-300 px-4 py-3 rounded-lg shadow-inner mb-6">
+                    <div id="flash-message"
+                        class="bg-green-600/20 border border-green-600/30 text-green-300 px-4 py-3 rounded-lg shadow-inner mb-6 transition-opacity duration-1000">
                         <div class="flex items-center">
                             <i class="fas fa-check-circle mr-3 text-green-400"></i>
                             <span><?= $this->session->flashdata('success'); ?></span>
@@ -209,7 +219,8 @@
                 <?php endif; ?>
 
                 <?php if ($this->session->flashdata('error')): ?>
-                    <div class="bg-red-600/20 border border-red-600/30 text-red-300 px-4 py-3 rounded-lg shadow-inner mb-6">
+                    <div id="flash-message"
+                        class="bg-red-600/20 border border-red-600/30 text-red-300 px-4 py-3 rounded-lg shadow-inner mb-6 transition-opacity duration-1000">
                         <div class="flex items-center">
                             <i class="fas fa-exclamation-circle mr-3 text-red-400"></i>
                             <span><?= $this->session->flashdata('error'); ?></span>
@@ -406,7 +417,8 @@
                                                 </div>
                                                 <div>
                                                     <div class="font-medium text-white">
-                                                        <?= htmlspecialchars($user->username); ?></div>
+                                                        <?= htmlspecialchars($user->username); ?>
+                                                    </div>
                                                     <div class="text-sm text-gray-400">ID: <?= $user->id; ?></div>
                                                 </div>
                                             </div>
