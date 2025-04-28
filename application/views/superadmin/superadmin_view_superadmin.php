@@ -83,8 +83,8 @@
             setTimeout(() => {
                 const flashMessage = document.getElementById('flash-message');
                 if (flashMessage) {
-                    flashMessage.style.opacity = '0'; 
-                    setTimeout(() => flashMessage.remove(), 1000); 
+                    flashMessage.style.opacity = '0';
+                    setTimeout(() => flashMessage.remove(), 1000);
                 }
             }, 4000);
         </script>
@@ -181,6 +181,10 @@
                             </span>
                             <input type="text" name="search" placeholder="Search users..."
                                 class="pl-10 pr-4 py-2 w-48 md:w-64 rounded-md bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                            <button type="submit" name="delete_all"
+                                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md">
+                                Delete All
+                            </button>
                         </form>
 
                         <button class="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition">

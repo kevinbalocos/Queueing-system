@@ -153,4 +153,20 @@ class SuperAdmin extends CI_Controller
 
         redirect('SuperAdmin');
     }
+    // Delete all records from the queue table
+    public function delete_all_queue()
+    {
+        // Load your model that handles the queue (create it if you don't have one)
+        $this->load->model('model_queue'); // Create this model if not yet existing
+
+        $result = $this->model_queue->delete_all();
+
+        if ($result) {
+            $this->session->set_flashdata('success', 'All queue entries deleted successfully!');
+        } else {
+            $this->session->set_flashdata('error', 'Failed to delete queue entries.');
+        }
+
+        redirect('SuperAdmin'); // Redirect back to your SuperAdmin dashboard
+    }
 }
