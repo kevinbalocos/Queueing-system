@@ -154,19 +154,107 @@ class SuperAdmin extends CI_Controller
         redirect('SuperAdmin');
     }
     // Delete all records from the queue table
-    public function delete_all_queue()
-    {
-        // Load your model that handles the queue (create it if you don't have one)
-        $this->load->model('model_queue'); // Create this model if not yet existing
-
-        $result = $this->model_queue->delete_all();
-
+    public function delete_all_queue() {
+        $this->load->model('model_queueing'); // Ensure this matches your model
+    
+        // Attempt to delete all queue entries
+        $result = $this->model_queueing->delete_all();
+    
         if ($result) {
-            $this->session->set_flashdata('success', 'All queue entries deleted successfully!');
+            // Send a real-time WebSocket message about the queue deletion
+            $message = json_encode([
+                'status' => 'success',
+                'action' => 'delete_all', // Action to identify the broadcast message
+                'message' => 'All queue entries have been deleted.'
+            ]);
+    
+            // Send the WebSocket message to all connected clients
+            $this->sendWebSocketMessage($message);
+    
+            // Redirect to the SuperAdmin page with a success message
+            $this->session->set_flashdata('success', 'All queue entries have been deleted successfully.');
+            redirect('SuperAdmin');
         } else {
+            // Redirect to the SuperAdmin page with an error message
             $this->session->set_flashdata('error', 'Failed to delete queue entries.');
+            redirect('SuperAdmin');
         }
-
-        redirect('SuperAdmin'); // Redirect back to your SuperAdmin dashboard
     }
+    
+    // WebSocket message sender method
+    private function sendWebSocketMessage($message)
+    {
+        $sock = fsockopen("localhost", 8080); // Ensure WebSocket server is running on port 8080
+    
+        if ($sock) {
+            fwrite($sock, $message); // Send the message to the WebSocket server
+            fclose($sock); // Close the connection
+        }
+    }    
+    
+    public function search_ajax()
+    {
+        $this->load->model('model_queueing'); // or your actual model
+        $search = $this->input->get('search');
+    
+        $users = $this->model_queueing->search_users($search);
+    
+        if (empty($users)) {
+            echo "<tr><td colspan='4' class='px-6 py-4 text-center text-gray-400'>No users found.</td></tr>";
+            return; // stop further execution
+        }
+    
+        $roleColors = [
+            'superadmin' => 'bg-purple-500',
+            'admin' => 'bg-blue-500',
+            'landtax' => 'bg-green-500',
+            'releasing' => 'bg-yellow-500',
+            'payment' => 'bg-pink-500',
+            'backroom' => 'bg-indigo-500',
+            'examiners' => 'bg-red-500',
+            'businesstax' => 'bg-orange-500',
+            'fireprotection' => 'bg-teal-500'
+        ];
+    
+        foreach ($users as $user) {
+            $roleColor = isset($roleColors[$user->role]) ? $roleColors[$user->role] : 'bg-gray-500';
+    
+            echo "<tr class='hover:bg-gray-700/50 transition'>
+                <td class='px-6 py-4'>
+                    <div class='flex items-center'>
+                        <div class='bg-gray-700 rounded-full p-2 mr-3'>
+                            <i class='fas fa-user text-gray-400'></i>
+                        </div>
+                        <div>
+                            <div class='font-medium text-white'>" . htmlspecialchars($user->username) . "</div>
+                            <div class='text-sm text-gray-400'>ID: {$user->id}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class='px-6 py-4'>
+                    <span class='inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {$roleColor}'>
+                        " . ucfirst($user->role) . "
+                    </span>
+                </td>
+                <td class='px-6 py-4'>
+                    <span class='inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400'>
+                        <span class='h-2 w-2 rounded-full bg-green-400 mr-1.5'></span>
+                        Active
+                    </span>
+                </td>
+                <td class='px-6 py-4 text-center'>
+                    <div class='flex justify-center space-x-3'>";
+            if ($user->role !== 'superadmin') {
+                echo "<button onclick=\"openEditModal({$user->id}, '" . htmlspecialchars($user->username) . "', '{$user->role}')\" class='text-blue-400 hover:text-blue-300 transition text-sm font-medium flex items-center'>
+                        <i class='fas fa-edit mr-1'></i> Edit
+                    </button>
+                    <button onclick=\"confirmDelete('" . htmlspecialchars($user->username) . "', {$user->id})\" class='text-red-400 hover:text-red-300 transition text-sm font-medium flex items-center'>
+                        <i class='fas fa-trash-alt mr-1'></i> Delete
+                    </button>";
+            } else {
+                echo "<span class='text-gray-500 text-sm italic'>Protected</span>";
+            }
+            echo "</div></td></tr>";
+        }
+    }    
 }

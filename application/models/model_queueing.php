@@ -243,12 +243,23 @@ class model_queueing extends CI_Model
         return $this->db->update('queue', ['processing_by' => $user_id]);
     }
 
-    public function get_top_queue($sector, $limit = 10) {
+    public function get_top_queue($sector, $limit = 10)
+    {
         $this->db->where('status', $sector);
         $this->db->order_by('id', 'ASC');
         $this->db->limit($limit);
         return $this->db->get('queue')->result(); // adjust table name if needed
     }
-    
+
+    public function delete_all()
+    {
+        return $this->db->empty_table('queue'); // This will clear ALL rows from the queue table
+    }
+    public function search_users($keyword)
+    {
+        $this->db->like('username', $keyword);
+        $this->db->or_like('role', $keyword);
+        return $this->db->get('users')->result(); // make sure 'users' is your actual table name
+    }
 
 }

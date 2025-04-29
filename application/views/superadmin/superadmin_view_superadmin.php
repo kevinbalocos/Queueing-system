@@ -174,15 +174,12 @@
                     </div>
 
                     <div class="flex items-center space-x-4">
-                        <form method="GET" class="relative">
-                            <span
-                                class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                                <i class="fas fa-search"></i>
-                            </span>
-                            <input type="text" name="search" placeholder="Search users..."
-                                class="pl-10 pr-4 py-2 w-48 md:w-64 rounded-md bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                            <button type="submit" name="delete_all"
-                                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md">
+                        <input type="text" id="liveSearch" name="search" placeholder="Search users..."
+                            class="pl-10 pr-4 py-2 w-48 md:w-64 rounded-md bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                        <form method="POST" action="<?= base_url('SuperAdmin/delete_all_queue') ?>"
+                            onsubmit="return confirm('Are you sure you want to delete all queue entries?');">
+                            <button type="submit"
+                                class="mt-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md">
                                 Delete All
                             </button>
                         </form>
@@ -411,69 +408,75 @@
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-700">
-                                <?php foreach ($users as $user): ?>
-                                    <tr class="hover:bg-gray-700/50 transition">
-                                        <td class="px-6 py-4">
-                                            <div class="flex items-center">
-                                                <div class="bg-gray-700 rounded-full p-2 mr-3">
-                                                    <i class="fas fa-user text-gray-400"></i>
-                                                </div>
-                                                <div>
-                                                    <div class="font-medium text-white">
-                                                        <?= htmlspecialchars($user->username); ?>
+                            <tbody id="resultsTable" class="divide-y divide-gray-700">
+                                <?php if (!empty($users)): ?>
+                                    <?php foreach ($users as $user): ?>
+                                        <tr class="hover:bg-gray-700/50 transition">
+                                            <td class="px-6 py-4">
+                                                <div class="flex items-center">
+                                                    <div class="bg-gray-700 rounded-full p-2 mr-3">
+                                                        <i class="fas fa-user text-gray-400"></i>
                                                     </div>
-                                                    <div class="text-sm text-gray-400">ID: <?= $user->id; ?></div>
+                                                    <div>
+                                                        <div class="font-medium text-white">
+                                                            <?= htmlspecialchars($user->username); ?>
+                                                        </div>
+                                                        <div class="text-sm text-gray-400">ID: <?= $user->id; ?></div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <?php
-                                            $roleColors = [
-                                                'superadmin' => 'bg-purple-500',
-                                                'admin' => 'bg-blue-500',
-                                                'landtax' => 'bg-green-500',
-                                                'releasing' => 'bg-yellow-500',
-                                                'payment' => 'bg-pink-500',
-                                                'backroom' => 'bg-indigo-500',
-                                                'examiners' => 'bg-red-500',
-                                                'businesstax' => 'bg-orange-500',
-                                                'fireprotection' => 'bg-teal-500'
-                                            ];
-                                            $roleColor = isset($roleColors[$user->role]) ? $roleColors[$user->role] : 'bg-gray-500';
-                                            ?>
-                                            <span
-                                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium <?= $roleColor; ?>">
-                                                <?= ucfirst($user->role); ?>
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <span
-                                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
-                                                <span class="h-2 w-2 rounded-full bg-green-400 mr-1.5"></span>
-                                                Active
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 text-center">
-                                            <div class="flex justify-center space-x-3">
-                                                <?php if ($user->role !== 'superadmin'): ?>
-                                                    <button
-                                                        onclick="openEditModal(<?= $user->id; ?>, '<?= htmlspecialchars($user->username); ?>', '<?= $user->role; ?>')"
-                                                        class="text-blue-400 hover:text-blue-300 transition text-sm font-medium flex items-center">
-                                                        <i class="fas fa-edit mr-1"></i> Edit
-                                                    </button>
-                                                    <button
-                                                        onclick="confirmDelete('<?= htmlspecialchars($user->username); ?>', <?= $user->id; ?>)"
-                                                        class="text-red-400 hover:text-red-300 transition text-sm font-medium flex items-center">
-                                                        <i class="fas fa-trash-alt mr-1"></i> Delete
-                                                    </button>
-                                                <?php else: ?>
-                                                    <span class="text-gray-500 text-sm italic">Protected</span>
-                                                <?php endif; ?>
-                                            </div>
-                                        </td>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <?php
+                                                $roleColors = [
+                                                    'superadmin' => 'bg-purple-500',
+                                                    'admin' => 'bg-blue-500',
+                                                    'landtax' => 'bg-green-500',
+                                                    'releasing' => 'bg-yellow-500',
+                                                    'payment' => 'bg-pink-500',
+                                                    'backroom' => 'bg-indigo-500',
+                                                    'examiners' => 'bg-red-500',
+                                                    'businesstax' => 'bg-orange-500',
+                                                    'fireprotection' => 'bg-teal-500'
+                                                ];
+                                                $roleColor = isset($roleColors[$user->role]) ? $roleColors[$user->role] : 'bg-gray-500';
+                                                ?>
+                                                <span
+                                                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium <?= $roleColor; ?>">
+                                                    <?= ucfirst($user->role); ?>
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <span
+                                                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
+                                                    <span class="h-2 w-2 rounded-full bg-green-400 mr-1.5"></span>
+                                                    Active
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 text-center">
+                                                <div class="flex justify-center space-x-3">
+                                                    <?php if ($user->role !== 'superadmin'): ?>
+                                                        <button
+                                                            onclick="openEditModal(<?= $user->id; ?>, '<?= htmlspecialchars($user->username); ?>', '<?= $user->role; ?>')"
+                                                            class="text-blue-400 hover:text-blue-300 transition text-sm font-medium flex items-center">
+                                                            <i class="fas fa-edit mr-1"></i> Edit
+                                                        </button>
+                                                        <button
+                                                            onclick="confirmDelete('<?= htmlspecialchars($user->username); ?>', <?= $user->id; ?>)"
+                                                            class="text-red-400 hover:text-red-300 transition text-sm font-medium flex items-center">
+                                                            <i class="fas fa-trash-alt mr-1"></i> Delete
+                                                        </button>
+                                                    <?php else: ?>
+                                                        <span class="text-gray-500 text-sm italic">Protected</span>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr id="noResultsRow" style="display: none;">
+                                        <td colspan="4" class="px-6 py-4 text-center text-gray-400">No users found.</td>
                                     </tr>
-                                <?php endforeach; ?>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
@@ -563,6 +566,41 @@
             </form>
         </div>
     </div>
+    <script>
+        document.getElementById('liveSearch').addEventListener('keyup', function () {
+            let query = this.value;
+
+            fetch('<?= base_url("superadmin/search_ajax") ?>?search=' + encodeURIComponent(query))
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('resultsTable').innerHTML = data;
+                })
+                .catch(error => console.error('Error:', error));
+        });
+    </script>
+    <script>
+        const socket = new WebSocket('ws://localhost:8080'); // Connect to your WebSocket server
+
+        socket.onopen = function () {
+            console.log("Connected to WebSocket server");
+        };
+
+        socket.onmessage = function (event) {
+            const message = JSON.parse(event.data);
+            if (message.status === 'success' && message.action === 'delete_all') {
+                alert(message.message);  // Alert the user or update the UI accordingly
+                // Optionally update the UI (e.g., clear the queue list) here
+            }
+        };
+
+        socket.onerror = function (error) {
+            console.error("WebSocket error:", error);
+        };
+
+        socket.onclose = function () {
+            console.log("Disconnected from WebSocket server");
+        };
+    </script>
 </body>
 
 </html>
