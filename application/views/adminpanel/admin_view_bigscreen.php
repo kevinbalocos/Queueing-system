@@ -455,14 +455,15 @@
                     </div>
                     <div class="queue-items-container">
                         <?php if (!empty($$sector)): ?>
-                            <?php foreach (array_slice($$sector, 0, 10) as $item): ?>
+                            <?php foreach ($$sector as $index => $item): ?>
                                 <div id="queue-item-<?= htmlspecialchars($item->queue_id ?? $item->id); ?>"
-                                    class="queue-item bg-<?= $details['color'] ?>-900 bg-opacity-30 border-l-4 border-<?= $details['color'] ?>-500"
+                                    class="queue-item bg-<?= $details['color'] ?>-900 bg-opacity-30 border-l-4 border-<?= $details['color'] ?>-500 <?= $index >= 10 ? 'hidden queue-hidden' : '' ?>"
                                     data-sector="<?= $sector ?>">
                                     <h3 class="text-<?= $details['color'] ?>-400">
                                         <?= htmlspecialchars($item->queue_number ?? 'N/A'); ?>
                                     </h3>
-                                    <p class="text-<?= $details['color'] ?>-200"><?= htmlspecialchars($item->name ?? 'Unknown'); ?>
+                                    <p class="text-<?= $details['color'] ?>-200">
+                                        <?= htmlspecialchars($item->name ?? 'Unknown'); ?>
                                     </p>
                                 </div>
                             <?php endforeach; ?>
@@ -1016,127 +1017,127 @@
 
         // Add these functions to your existing JavaScript code
 
-// Function to handle sector expansion
-function toggleSectorExpansion(sectorId) {
-    const sector = document.getElementById(sectorId);
-    const sectorsGrid = document.querySelector('.sectors-grid');
-    const allSectors = document.querySelectorAll('.queue-row');
-    
-    // Check if this sector is already expanded
-    const isExpanded = sector.classList.contains('expanded-sector');
-    
-    // Reset all sectors first
-    allSectors.forEach(s => {
-        s.classList.remove('expanded-sector');
-        s.style.gridColumn = '';
-        s.style.gridRow = '';
-        s.style.height = '';
-        s.style.zIndex = '';
-    });
-    
-    // Reset grid template if we're collapsing
-    if (isExpanded) {
-        sectorsGrid.style.gridTemplateColumns = 'repeat(2, 1fr)';
-        document.getElementById('expand-collapse-icon').className = 'fas fa-expand';
-        document.getElementById('expand-collapse-text').textContent = 'Expand';
-        return;
-    }
-    
-    // Otherwise expand the clicked sector
-    sector.classList.add('expanded-sector');
-    sector.style.gridColumn = '1 / -1'; // Span all columns
-    sector.style.gridRow = '1 / span 4'; // Take up most of the grid
-    sector.style.height = 'calc(100vh - 220px)'; // Adjust height as needed
-    sector.style.zIndex = '10';
-    
-    // Change grid to single column to ensure proper layout
-    sectorsGrid.style.gridTemplateColumns = '1fr';
-    
-    // Update expand/collapse button
-    document.getElementById('expand-collapse-icon').className = 'fas fa-compress';
-    document.getElementById('expand-collapse-text').textContent = 'Collapse';
-}
+        // Function to handle sector expansion
+        function toggleSectorExpansion(sectorId) {
+            const sector = document.getElementById(sectorId);
+            const sectorsGrid = document.querySelector('.sectors-grid');
+            const allSectors = document.querySelectorAll('.queue-row');
 
-// Function to check for empty sectors and add a message
-function checkEmptySectors() {
-    const sectors = document.querySelectorAll('.queue-row');
-    
-    sectors.forEach(sector => {
-        const itemsContainer = sector.querySelector('.queue-items-container');
-        const items = itemsContainer.querySelectorAll('.queue-item');
-        const emptyMessage = sector.querySelector('.empty-sector-message');
-        
-        if (items.length === 0) {
-            // If no items and no message yet, add the empty message
-            if (!emptyMessage) {
-                const sectorName = sector.querySelector('.sector-title').textContent.trim();
-                const color = sector.id.split('-')[0];
-                const sectorColor = sectorColors[color] || 'gray';
-                
-                const message = document.createElement('div');
-                message.className = 'empty-sector-message';
-                message.innerHTML = `
+            // Check if this sector is already expanded
+            const isExpanded = sector.classList.contains('expanded-sector');
+
+            // Reset all sectors first
+            allSectors.forEach(s => {
+                s.classList.remove('expanded-sector');
+                s.style.gridColumn = '';
+                s.style.gridRow = '';
+                s.style.height = '';
+                s.style.zIndex = '';
+            });
+
+            // Reset grid template if we're collapsing
+            if (isExpanded) {
+                sectorsGrid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+                document.getElementById('expand-collapse-icon').className = 'fas fa-expand';
+                document.getElementById('expand-collapse-text').textContent = 'Expand';
+                return;
+            }
+
+            // Otherwise expand the clicked sector
+            sector.classList.add('expanded-sector');
+            sector.style.gridColumn = '1 / -1'; // Span all columns
+            sector.style.gridRow = '1 / span 4'; // Take up most of the grid
+            sector.style.height = 'calc(100vh - 220px)'; // Adjust height as needed
+            sector.style.zIndex = '10';
+
+            // Change grid to single column to ensure proper layout
+            sectorsGrid.style.gridTemplateColumns = '1fr';
+
+            // Update expand/collapse button
+            document.getElementById('expand-collapse-icon').className = 'fas fa-compress';
+            document.getElementById('expand-collapse-text').textContent = 'Collapse';
+        }
+
+        // Function to check for empty sectors and add a message
+        function checkEmptySectors() {
+            const sectors = document.querySelectorAll('.queue-row');
+
+            sectors.forEach(sector => {
+                const itemsContainer = sector.querySelector('.queue-items-container');
+                const items = itemsContainer.querySelectorAll('.queue-item');
+                const emptyMessage = sector.querySelector('.empty-sector-message');
+
+                if (items.length === 0) {
+                    // If no items and no message yet, add the empty message
+                    if (!emptyMessage) {
+                        const sectorName = sector.querySelector('.sector-title').textContent.trim();
+                        const color = sector.id.split('-')[0];
+                        const sectorColor = sectorColors[color] || 'gray';
+
+                        const message = document.createElement('div');
+                        message.className = 'empty-sector-message';
+                        message.innerHTML = `
                     <div class="flex flex-col items-center justify-center p-6 text-center h-full">
                         <i class="fas fa-inbox text-${sectorColor}-400 text-4xl mb-3 opacity-60"></i>
                         <p class="text-${sectorColor}-300 text-lg">No queue items in ${sectorName} yet</p>
                         <p class="text-${sectorColor}-400 text-sm mt-2 opacity-70">New items will appear here</p>
                     </div>
                 `;
-                itemsContainer.appendChild(message);
-            }
-        } else if (emptyMessage) {
-            // If we have items but still have the message, remove it
-            emptyMessage.remove();
+                        itemsContainer.appendChild(message);
+                    }
+                } else if (emptyMessage) {
+                    // If we have items but still have the message, remove it
+                    emptyMessage.remove();
+                }
+            });
         }
-    }); 
-}
 
-// Add click event listeners to sector headers
-function setupSectorExpansion() {
-    const sectorHeaders = document.querySelectorAll('.sector-header');
-    
-    sectorHeaders.forEach(header => {
-        header.style.cursor = 'pointer';
-        header.addEventListener('click', function() {
-            const sectorId = this.closest('.queue-row').id;
-            toggleSectorExpansion(sectorId);
-        });
-    });
-    
-    // Add expand/collapse button to subheader
-    const subheader = document.querySelector('.subheader');
-    const expandButton = document.createElement('div');
-    expandButton.className = 'stat-item cursor-pointer';
-    expandButton.innerHTML = `
+        // Add click event listeners to sector headers
+        function setupSectorExpansion() {
+            const sectorHeaders = document.querySelectorAll('.sector-header');
+
+            sectorHeaders.forEach(header => {
+                header.style.cursor = 'pointer';
+                header.addEventListener('click', function () {
+                    const sectorId = this.closest('.queue-row').id;
+                    toggleSectorExpansion(sectorId);
+                });
+            });
+
+            // Add expand/collapse button to subheader
+            const subheader = document.querySelector('.subheader');
+            const expandButton = document.createElement('div');
+            expandButton.className = 'stat-item cursor-pointer';
+            expandButton.innerHTML = `
         <span class="stat-icon"><i id="expand-collapse-icon" class="fas fa-expand"></i></span>
         <span id="expand-collapse-text">Expand</span>
     `;
-    expandButton.addEventListener('click', function() {
-        const expandedSector = document.querySelector('.expanded-sector');
-        if (expandedSector) {
-            toggleSectorExpansion(expandedSector.id); // Collapse
-        } else {
-            // If none is expanded, expand the first non-empty sector
-            const sectors = document.querySelectorAll('.queue-row');
-            for (const sector of sectors) {
-                const items = sector.querySelectorAll('.queue-item');
-                if (items.length > 0) {
-                    toggleSectorExpansion(sector.id);
-                    break;
+            expandButton.addEventListener('click', function () {
+                const expandedSector = document.querySelector('.expanded-sector');
+                if (expandedSector) {
+                    toggleSectorExpansion(expandedSector.id); // Collapse
+                } else {
+                    // If none is expanded, expand the first non-empty sector
+                    const sectors = document.querySelectorAll('.queue-row');
+                    for (const sector of sectors) {
+                        const items = sector.querySelectorAll('.queue-item');
+                        if (items.length > 0) {
+                            toggleSectorExpansion(sector.id);
+                            break;
+                        }
+                    }
                 }
-            }
+            });
+            subheader.appendChild(expandButton);
+
+            // Initial check for empty sectors
+            checkEmptySectors();
         }
-    });
-    subheader.appendChild(expandButton);
 
-    // Initial check for empty sectors
-    checkEmptySectors();
-}
-
-// Add CSS for expanded sectors
-function addExpandedSectorStyles() {
-    const style = document.createElement('style');
-    style.textContent = `
+        // Add CSS for expanded sectors
+        function addExpandedSectorStyles() {
+            const style = document.createElement('style');
+            style.textContent = `
         .expanded-sector {
             transition: all 0.3s ease-in-out;
             overflow: auto;
@@ -1182,55 +1183,55 @@ function addExpandedSectorStyles() {
             cursor: pointer;
         }
     `;
-    document.head.appendChild(style);
-}
-
-// Call these functions after the page loads
-window.addEventListener('load', () => {
-    // Add the new styles
-    addExpandedSectorStyles();
-    
-    // Setup sector expansion
-    setupSectorExpansion();
-    
-    // Check for empty sectors after any queue update
-    const originalAddQueueItem = addQueueItem;
-    addQueueItem = function(data, isMoved = false) {
-        originalAddQueueItem(data, isMoved);
-        checkEmptySectors();
-    };
-    
-    const originalRemoveQueueItem = removeQueueItem;
-    removeQueueItem = function(queueId) {
-        originalRemoveQueueItem(queueId);
-        checkEmptySectors();
-        
-        // If an expanded sector becomes empty, collapse it
-        const expandedSector = document.querySelector('.expanded-sector');
-        if (expandedSector) {
-            const items = expandedSector.querySelectorAll('.queue-item:not(.hidden)');
-            if (items.length === 0) {
-                toggleSectorExpansion(expandedSector.id);
-            }
+            document.head.appendChild(style);
         }
-    };
-    
-    // Also hook into the demo function if it's running
-    if (typeof runDemo === 'function') {
-        const originalRunDemo = runDemo;
-        runDemo = function() {
-            originalRunDemo();
+
+        // Call these functions after the page loads
+        window.addEventListener('load', () => {
+            // Add the new styles
+            addExpandedSectorStyles();
+
+            // Setup sector expansion
+            setupSectorExpansion();
+
+            // Check for empty sectors after any queue update
+            const originalAddQueueItem = addQueueItem;
+            addQueueItem = function (data, isMoved = false) {
+                originalAddQueueItem(data, isMoved);
+                checkEmptySectors();
+            };
+
+            const originalRemoveQueueItem = removeQueueItem;
+            removeQueueItem = function (queueId) {
+                originalRemoveQueueItem(queueId);
+                checkEmptySectors();
+
+                // If an expanded sector becomes empty, collapse it
+                const expandedSector = document.querySelector('.expanded-sector');
+                if (expandedSector) {
+                    const items = expandedSector.querySelectorAll('.queue-item:not(.hidden)');
+                    if (items.length === 0) {
+                        toggleSectorExpansion(expandedSector.id);
+                    }
+                }
+            };
+
+            // Also hook into the demo function if it's running
+            if (typeof runDemo === 'function') {
+                const originalRunDemo = runDemo;
+                runDemo = function () {
+                    originalRunDemo();
+                    checkEmptySectors();
+                };
+            }
+
+            // Initial check
             checkEmptySectors();
-        };
-    }
-    
-    // Initial check
-    checkEmptySectors();
-});
+        });
         // Run demo if needed
         runDemo();
-        
-        
+
+
     </script>
 </body>
 

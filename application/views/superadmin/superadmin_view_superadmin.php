@@ -176,13 +176,25 @@
                     <div class="flex items-center space-x-4">
                         <input type="text" id="liveSearch" name="search" placeholder="Search users..."
                             class="pl-10 pr-4 py-2 w-48 md:w-64 rounded-md bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                        <form method="POST" action="<?= base_url('SuperAdmin/delete_all_queue') ?>"
-                            onsubmit="return confirm('Are you sure you want to delete all queue entries?');">
-                            <button type="submit"
-                                class="mt-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md">
-                                Delete All
+                        <div class="relative inline-block text-left">
+                            <!-- Three dot button -->
+                            <button onclick="toggleDropdown()"
+                                class="px-3 py-1 text-gray-700 hover:text-black focus:outline-none">
+                                &#x22EE; <!-- vertical ellipsis -->
                             </button>
-                        </form>
+
+                            <!-- Dropdown menu -->
+                            <div id="dropdownMenu"
+                                class="hidden absolute right-0 mt-2 w-40 bg-white border rounded-md shadow-lg z-10">
+                                <form method="POST" action="<?= base_url('SuperAdmin/delete_all_queue') ?>"
+                                    onsubmit="return confirm('Are you sure you want to delete all queue entries?');">
+                                    <button type="submit"
+                                        class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-100">
+                                        Delete All Queue
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
 
                         <button class="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition">
                             <i class="fas fa-bell text-gray-300"></i>
@@ -600,6 +612,20 @@
         socket.onclose = function () {
             console.log("Disconnected from WebSocket server");
         };
+    </script>
+    <script>
+        function toggleDropdown() {
+            const menu = document.getElementById('dropdownMenu');
+            menu.classList.toggle('hidden');
+        }
+
+        // Optional: Close dropdown if clicked outside
+        window.addEventListener('click', function (e) {
+            const menu = document.getElementById('dropdownMenu');
+            if (!e.target.closest('.relative')) {
+                menu.classList.add('hidden');
+            }
+        });
     </script>
 </body>
 
