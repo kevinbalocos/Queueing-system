@@ -113,10 +113,10 @@
             <div>
                 <div class="flex items-center justify-between mb-1">
                     <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                    <a href="#" id="forgotPasswordLink"
+                    <!-- <a href="#" id="forgotPasswordLink"
                         class="text-xs text-blue-600 hover:text-blue-800 hover:underline">
                         Forgot password?
-                    </a>
+                    </a> -->
                 </div>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -164,15 +164,15 @@
         <!-- Divider -->
         <div class="relative my-6">
             <div class="absolute inset-0 flex items-center">
-                <div class="w-full border-t border-gray-300"></div>
+                <div class="w-full"></div>
             </div>
-            <div class="relative flex justify-center text-sm">
+            <!-- <div class="relative flex justify-center text-sm">
                 <span class="px-2 bg-white text-gray-500">Or continue with</span>
-            </div>
+            </div> -->
         </div>
 
         <!-- Social Logins -->
-        <div class="flex gap-4 mb-6">
+        <!-- <div class="flex gap-4 mb-6">
             <button type="button"
                 class="flex-1 py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
                 <div class="flex items-center justify-center">
@@ -187,7 +187,7 @@
                     <span class="ml-2 text-sm font-medium text-gray-700">Microsoft</span>
                 </div>
             </button>
-        </div>
+        </div> -->
 
 
     </div>
