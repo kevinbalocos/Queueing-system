@@ -80,6 +80,19 @@ class controller_admin_landing extends CI_Controller
      * 
      * @param string $view The section name to load
      */
+
+
+    public function Dashboard()
+    {
+        $data['landtax'] = $this->model_queueing->get_queue();
+        $data['backroom'] = $this->model_queueing->get_backroom();
+        $data['examiner'] = $this->model_queueing->get_examiners();
+        $data['businesstax'] = $this->model_queueing->get_businesstax();
+        $data['payment'] = $this->model_queueing->get_payment();
+        $data['fireprotection'] = $this->model_queueing->get_fireprotection();
+        $data['releasing'] = $this->model_queueing->get_releasing();
+        $this->load->view('adminpanel/admin_view_dashboard', $data);
+    }
     public function loadView($view)
     {
         // Check if valid section
@@ -90,7 +103,8 @@ class controller_admin_landing extends CI_Controller
             'BusinessTax',
             'Payment',
             'FireProtection',
-            'Releasing'
+            'Releasing',
+            'Dashboard'
         ];
 
         if (!in_array($view, $valid_sections)) {
@@ -149,7 +163,11 @@ class controller_admin_landing extends CI_Controller
             case 'releasing':
                 $data['releasing'] = $this->model_queueing->get_releasing();
                 break;
-                
+            case 'dashboard':
+                // Any dashboard-specific data can go here
+                // Example: $data['dashboard_stats'] = $this->model_queueing->get_dashboard_stats();
+                break;
+
         }
 
         // Load content of specific view section

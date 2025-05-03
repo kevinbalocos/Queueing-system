@@ -31,7 +31,7 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
 
 
 
-  <div class="flex h-screen  p-5 pt-20">
+  <div class="flex h-screen">
     <!-- Left Section (Now Serving) -->
     <div class="flex-1 bg-white p-5 h-[calc(100vh-100px)] rounded-lg shadow-md overflow-y-auto ">
       <!-- <h2 class="text-2xl font-bold text-cyan-500 uppercase tracking-wider pb-5 text-center">Now Serving</h2> -->

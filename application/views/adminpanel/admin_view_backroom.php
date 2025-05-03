@@ -27,61 +27,9 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
 </head>
 
 <body class="bg-gray-100">
-  <nav class="bg-white text-cyan-700 fixed top-0 left-0 w-full shadow-lg z-10">
-    <div class="px-4">
-      <div class="flex justify-between items-center py-4">
-        <div class="flex items-center space-x-3">
-          <span class="text-xl font-bold uppercase tracking-widest">Backroom Queue</span>
-        </div>
 
-        <!-- User Dropdown -->
-        <div class="relative flex">
-          <div class="hidden md:flex space-x-6 items-center mx-5">
-            <?php if ($this->session->userdata('logged_in')): ?>
-              <span class="text-lg font-semibold text-xs font-bold uppercase">Welcome,
-                <?= htmlspecialchars($this->session->userdata('username')); ?>!</span>
-            <?php else: ?>
-              <span class="text-lg font-semibold">Guest</span>
-            <?php endif; ?>
-          </div>
-          <button id="user-menu-btn" class="focus:outline-none">
-            <i class="fas fa-user-circle text-2xl"></i>
-          </button>
 
-          <!-- Dropdown Menu -->
-          <div id="user-menu"
-            class="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg hidden">
-            <a href="<?= base_url('controller_admin_landing/logout'); ?>"
-              class="flex items-center px-4 py-2 text-red-600 hover:bg-gray-100">
-              <i class="fas fa-sign-out-alt mr-2"></i> Logout
-            </a>
-          </div>
-        </div>
-
-        <!-- Hamburger Button -->
-        <button id="menu-btn" class="md:hidden focus:outline-none">
-          <i class="fas fa-bars text-2xl"></i>
-        </button>
-      </div>
-    </div>
-  </nav>
-
-  <script>
-    document.getElementById('user-menu-btn').addEventListener('click', function () {
-      document.getElementById('user-menu').classList.toggle('hidden');
-    });
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function (event) {
-      const menu = document.getElementById('user-menu');
-      const button = document.getElementById('user-menu-btn');
-      if (!menu.contains(event.target) && !button.contains(event.target)) {
-        menu.classList.add('hidden');
-      }
-    });
-  </script>
-
-  <div class="flex h-screen p-5 pt-20">
+  <div class="flex h-screen">
     <!-- Left Section (Now Serving - Backroom) -->
     <div class="flex-1 bg-white p-5 h-[calc(100vh-100px)] rounded-lg shadow-md overflow-y-auto">
       <!-- <h2 class="text-2xl font-bold text-cyan-500 uppercase tracking-wider pb-5 text-center">
@@ -146,7 +94,8 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
     </div>
 
     <!-- Right Section (Backroom Queue List) -->
-    <div class="ml-5 bg-white p-5 w-[400px] rounded-lg shadow-md flex flex-col">
+    <div class="ml-5 bg-white p-5 w-[400px]  h-[calc(100vh-100px)] rounded-lg shadow-md flex flex-col">
+
       <h2 class="text-2xl font-bold text-cyan-900 uppercase tracking-widest text-center">Backroom Queue List</h2>
       <ul id="queueList" class="mt-3 overflow-auto h-[1000px] space-y-3 p-2 bg-white rounded-lg shadow-md border">
         <?php foreach ($right_items as $item): ?>

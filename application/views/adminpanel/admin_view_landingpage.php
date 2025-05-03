@@ -64,14 +64,7 @@
             width: var(--sidebar-collapsed-width);
         }
 
-        .sidebar-header {
-            padding: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid var(--border-color);
-            height: 70px;
-        }
+       
 
         body.dark .sidebar-header {
             border-color: #2d3748;
@@ -115,34 +108,51 @@
         }
 
         .toggle-btn {
-            width: 30px;
-            height: 30px;
+            position: absolute;
+            top: 50%;
+            right: -10px;
+            transform: translateY(-50%);
+            width: 25px;
+            height: 25px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            background-color: #f3f4f6;
-            color: var(--text-color);
+            background-color: var(--primary-color);
+            color: white;
             transition: all var(--transition-speed);
-            transform: rotate(0deg);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 10;
         }
 
         body.dark .toggle-btn {
-            background-color: #374151;
-            color: #e5e7eb;
+            background-color: var(--primary-color);
+            color: white;
         }
 
         .sidebar.close .toggle-btn {
-            transform: rotate(180deg);
+            transform: translateY(-50%) rotate(180deg);
         }
 
         .toggle-btn:hover {
-            background-color: #e5e7eb;
+            background-color: var(--primary-hover);
         }
 
         body.dark .toggle-btn:hover {
-            background-color: #4b5563;
+            background-color: var(--primary-hover);
+        }
+
+        /* Adjust the sidebar header to make space for the toggle button */
+        .sidebar-header {
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            height: 70px;
+            position: relative;
+            /* Added to make absolute positioning work properly */
         }
 
         .user-info {
@@ -257,7 +267,6 @@
 
         .menu-container {
             flex: 1;
-            overflow-y: auto;
             padding: 0.5rem 0;
         }
 
@@ -346,9 +355,12 @@
             transition: opacity var(--transition-speed);
         }
 
-        .sidebar.close .menu-text {
+        .sidebar.close .menu-text,
+        .sidebar.close .dropdown-icon {
             opacity: 0;
             pointer-events: none;
+            width: 0;
+            display: none;
         }
 
         .sidebar.close .menu-link {
@@ -588,6 +600,31 @@
             justify-content: center;
         }
 
+        /* Loading indicator */
+        .loading-spinner {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
         /* Responsive */
         @media screen and (max-width: 768px) {
             .sidebar {
@@ -669,6 +706,11 @@
     <!-- Mobile Overlay -->
     <div class="mobile-overlay"></div>
 
+    <!-- Loading Spinner -->
+    <div class="loading-spinner">
+        <div class="spinner"></div>
+    </div>
+
     <!-- SIDEBAR -->
     <nav class="sidebar">
         <!-- Sidebar Header with Logo -->
@@ -710,8 +752,7 @@
                 <div class="search-icon">
                     <i class='bx bx-search'></i>
                 </div>
-                <input type="search" class="search-input" placeholder="Search..." id="search-bar"
-                    oninput="filterData()">
+                <input type="search" class="search-input" placeholder="Search..." id="search-bar">
             </div>
         </div>
 
@@ -722,8 +763,9 @@
                 <div class="menu-title">Main Menu</div>
                 <ul class="menu-items">
                     <li class="menu-item">
-                        <a href="<?= base_url('controller_admin_landing/dashboard'); ?>"
-                            class="menu-link <?= ($active_view == 'Dashboard') ? 'active' : ''; ?>">
+                        <a href="<?= base_url('controller_admin_landing/loadView/Dashboard'); ?>"
+                            class="menu-link ajax-link <?= ($active_view == 'Dashboard') ? 'active' : ''; ?>"
+                            data-view="Dashboard">
                             <div class="menu-icon">
                                 <i class='bx bxs-dashboard'></i>
                             </div>
@@ -732,7 +774,7 @@
                         <div class="menu-tooltip">Dashboard</div>
                     </li>
 
-                    <li class="menu-item has-dropdown">
+                    <li class="menu-item has-dropdown" id="properties-dropdown">
                         <a href="javascript:void(0)" class="menu-link dropdown-trigger">
                             <div class="menu-icon">
                                 <i class='bx bx-building-house'></i>
@@ -744,14 +786,16 @@
                         <ul class="dropdown-content menu-items">
                             <li class="submenu-item">
                                 <a href="<?= base_url('controller_admin_landing/loadView/LandTax'); ?>"
-                                    class="menu-link <?= ($active_view == 'LandTax') ? 'active' : ''; ?>">
+                                    class="menu-link ajax-link <?= ($active_view == 'LandTax') ? 'active' : ''; ?>"
+                                    data-view="LandTax">
                                     <span class="menu-text">Land Tax</span>
                                 </a>
                                 <div class="menu-tooltip">Land Tax</div>
                             </li>
                             <li class="submenu-item">
                                 <a href="<?= base_url('controller_admin_landing/loadView/BackRoom'); ?>"
-                                    class="menu-link <?= ($active_view == 'BackRoom') ? 'active' : ''; ?>">
+                                    class="menu-link ajax-link <?= ($active_view == 'BackRoom') ? 'active' : ''; ?>"
+                                    data-view="BackRoom">
                                     <span class="menu-text">Backroom</span>
                                 </a>
                                 <div class="menu-tooltip">Backroom</div>
@@ -761,7 +805,8 @@
 
                     <li class="menu-item">
                         <a href="<?= base_url('controller_admin_landing/loadView/Examiners'); ?>"
-                            class="menu-link <?= ($active_view == 'Examiners') ? 'active' : ''; ?>">
+                            class="menu-link ajax-link <?= ($active_view == 'Examiners') ? 'active' : ''; ?>"
+                            data-view="Examiners">
                             <div class="menu-icon">
                                 <i class='bx bx-analyse'></i>
                             </div>
@@ -772,7 +817,8 @@
 
                     <li class="menu-item">
                         <a href="<?= base_url('controller_admin_landing/loadView/BusinessTax'); ?>"
-                            class="menu-link <?= ($active_view == 'BusinessTax') ? 'active' : ''; ?>">
+                            class="menu-link ajax-link <?= ($active_view == 'BusinessTax') ? 'active' : ''; ?>"
+                            data-view="BusinessTax">
                             <div class="menu-icon">
                                 <i class='bx bx-store'></i>
                             </div>
@@ -787,7 +833,7 @@
             <div class="menu-section">
                 <div class="menu-title">Transactions</div>
                 <ul class="menu-items">
-                    <li class="menu-item has-dropdown">
+                    <li class="menu-item has-dropdown" id="transactions-dropdown">
                         <a href="javascript:void(0)" class="menu-link dropdown-trigger">
                             <div class="menu-icon">
                                 <i class='bx bx-transfer'></i>
@@ -799,21 +845,24 @@
                         <ul class="dropdown-content menu-items">
                             <li class="submenu-item">
                                 <a href="<?= base_url('controller_admin_landing/loadView/Payment'); ?>"
-                                    class="menu-link <?= ($active_view == 'Payment') ? 'active' : ''; ?>">
+                                    class="menu-link ajax-link <?= ($active_view == 'Payment') ? 'active' : ''; ?>"
+                                    data-view="Payment">
                                     <span class="menu-text">Payment</span>
                                 </a>
                                 <div class="menu-tooltip">Payment</div>
                             </li>
                             <li class="submenu-item">
                                 <a href="<?= base_url('controller_admin_landing/loadView/FireProtection'); ?>"
-                                    class="menu-link <?= ($active_view == 'FireProtection') ? 'active' : ''; ?>">
+                                    class="menu-link ajax-link <?= ($active_view == 'FireProtection') ? 'active' : ''; ?>"
+                                    data-view="FireProtection">
                                     <span class="menu-text">Fire Protection</span>
                                 </a>
                                 <div class="menu-tooltip">Fire Protection</div>
                             </li>
                             <li class="submenu-item">
                                 <a href="<?= base_url('controller_admin_landing/loadView/Releasing'); ?>"
-                                    class="menu-link <?= ($active_view == 'Releasing') ? 'active' : ''; ?>">
+                                    class="menu-link ajax-link <?= ($active_view == 'Releasing') ? 'active' : ''; ?>"
+                                    data-view="Releasing">
                                     <span class="menu-text">Releasing</span>
                                 </a>
                                 <div class="menu-tooltip">Releasing</div>
@@ -880,7 +929,6 @@
             </div>
         </div>
     </section>
-
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const sidebar = document.querySelector(".sidebar");
@@ -890,6 +938,8 @@
             const toggleSwitch = document.querySelector(".toggle-switch");
             const modeText = document.querySelector(".mode-text");
             const dropdownTriggers = document.querySelectorAll(".dropdown-trigger");
+            const contentContainer = document.getElementById("content-container");
+            const loadingSpinner = document.querySelector(".loading-spinner");
 
             // Function to toggle dark mode
             function toggleDarkMode() {
@@ -929,10 +979,22 @@
                     const parent = trigger.parentElement;
                     parent.classList.toggle("open");
 
+                    // Store dropdown state in localStorage
+                    const dropdownId = parent.id;
+                    if (dropdownId) {
+                        const isOpen = parent.classList.contains("open");
+                        localStorage.setItem(dropdownId, isOpen ? "open" : "closed");
+                    }
+
                     // Close other open dropdowns
                     document.querySelectorAll(".menu-item.has-dropdown.open").forEach(item => {
                         if (item !== parent) {
                             item.classList.remove("open");
+                            // Also update localStorage for other dropdowns
+                            const itemId = item.id;
+                            if (itemId) {
+                                localStorage.setItem(itemId, "closed");
+                            }
                         }
                     });
                 });
@@ -956,11 +1018,29 @@
                 modeText.innerText = "Dark Mode";
             }
 
+            // Apply saved dropdown states
+            document.querySelectorAll('.menu-item.has-dropdown').forEach(dropdown => {
+                const dropdownId = dropdown.id;
+                if (dropdownId) {
+                    const savedState = localStorage.getItem(dropdownId);
+                    if (savedState === "open") {
+                        dropdown.classList.add('open');
+                    } else if (savedState === "closed") {
+                        dropdown.classList.remove('open');
+                    }
+                }
+            });
+
             // Add active class to parent dropdown item if submenu item is active
             document.querySelectorAll('.submenu-item .menu-link.active').forEach(activeLink => {
                 const dropdownParent = activeLink.closest('.has-dropdown');
                 if (dropdownParent) {
                     dropdownParent.classList.add('open');
+                    // Also update localStorage
+                    const dropdownId = dropdownParent.id;
+                    if (dropdownId) {
+                        localStorage.setItem(dropdownId, "open");
+                    }
                 }
             });
 
@@ -1019,6 +1099,71 @@
 
             // Add search functionality
             document.getElementById('search-bar').addEventListener('input', filterData);
+
+            // AJAX navigation - prevent page reload and fetch content via AJAX
+            document.querySelectorAll('.ajax-link').forEach(link => {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault(); // Prevent default link behavior
+
+                    const url = this.getAttribute('href');
+                    const view = this.getAttribute('data-view');
+
+                    // Update active class
+                    document.querySelectorAll('.menu-link').forEach(menuLink => {
+                        menuLink.classList.remove('active');
+                    });
+                    this.classList.add('active');
+
+                    // Show loading spinner
+                    loadingSpinner.style.display = 'block';
+
+                    // Make AJAX request
+                    fetch(url)
+                        .then(response => response.text())
+                        .then(html => {
+                            // Update browser URL without reloading
+                            history.pushState({ view: view }, view, url);
+
+                            // Extract content from response
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const content = doc.getElementById('content');
+
+                            if (content) {
+                                document.getElementById('content').innerHTML = content.innerHTML;
+                            } else {
+                                document.getElementById('content').innerHTML = html;
+                            }
+
+                            // Hide loading spinner
+                            loadingSpinner.style.display = 'none';
+                        })
+                        .catch(error => {
+                            console.error('Error loading page:', error);
+                            loadingSpinner.style.display = 'none';
+
+                            // Show error message
+                            Toastify({
+                                text: "Error loading page. Please try again.",
+                                duration: 3000,
+                                close: true,
+                                gravity: "top",
+                                position: "right",
+                                backgroundColor: "#f44336",
+                            }).showToast();
+                        });
+                });
+            });
+
+            // Handle browser back/forward buttons
+            window.addEventListener('popstate', function (event) {
+                if (event.state && event.state.view) {
+                    const link = document.querySelector(`.ajax-link[data-view="${event.state.view}"]`);
+                    if (link) {
+                        link.click();
+                    }
+                }
+            });
         });
 
         // Confirmation dialog before logout
