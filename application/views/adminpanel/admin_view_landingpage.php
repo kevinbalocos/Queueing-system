@@ -15,17 +15,401 @@
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+        * {
+            font-family: 'Poppins';
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         :root {
             --sidebar-width: 280px;
             --sidebar-collapsed-width: 80px;
             --transition-speed: 0.3s;
-            --primary-color: #4f46e5;
-            --primary-hover: #4338ca;
+            --primary-color: #0891b2;
+            /* Changed to teal-600 */
+            --primary-hover: #0e7490;
+            /* Changed to teal-700 */
             --bg-sidebar: #ffffff;
-            --bg-sidebar-dark: #1e1e2d;
-            --text-color: #374151;
-            --text-muted: #6b7280;
-            --border-color: #e5e7eb;
+            --bg-sidebar-dark: #1e293b;
+            /* Changed to slate-800 */
+            --text-color: #334155;
+            /* Changed to slate-700 */
+            --text-muted: #64748b;
+            /* Changed to slate-500 */
+            --border-color: #e2e8f0;
+            /* Changed to slate-200 */
+        }
+
+        body.dark {
+            --body-color: #0f172a;
+            /* slate-900 */
+            --sidebar-color: #1e293b;
+            /* slate-800 */
+            --primary-color: #f8fafc;
+            /* slate-50 */
+            --primary-color-light: #334155;
+            /* slate-700 */
+            --toggle-color: #0f172a;
+            /* slate-900 */
+            --text-color: #94a3b8;
+            /* slate-400 */
+            --text-light-color: #f1f5f9;
+            /* slate-100 */
+            --hover-color: #164e63;
+            /* teal-800 */
+            --table-header-color: #475569;
+            /* slate-600 */
+            --border-color: rgba(255, 255, 255, 0.1);
+            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            --input-bg: #1e293b;
+            /* slate-800 */
+            --input-text: #f8fafc;
+            /* slate-50 */
+            --scrollbar-thumb: #334155;
+            /* slate-700 */
+            --scrollbar-track: #0f172a;
+            /* slate-900 */
+            --accent-color: #0ea5e9;
+            /* sky-500 */
+
+            background-color: #0f172a;
+            /* slate-900 */
+            color: #f3f4f6;
+            /* gray-100 */
+        }
+
+
+
+
+
+        body.dark .user-info {
+            border-color: #2d3748;
+            /* gray-800 */
+        }
+
+
+        body.dark .profile-image {
+            border-color: #4b5563;
+            /* gray-600 */
+        }
+
+        body.dark .user-name {
+            color: #f3f4f6;
+            /* gray-100 */
+        }
+
+        .user-role {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        body.dark .user-role {
+            color: #9ca3af;
+            /* gray-400 */
+        }
+
+
+
+        body.dark .search-wrapper {
+            background-color: #374151;
+            /* gray-700 */
+        }
+
+
+
+        body.dark .search-input {
+            color: #e5e7eb;
+            /* gray-200 */
+        }
+
+
+        body.dark .menu-tooltip {
+            background-color: #475569;
+            /* slate-600 */
+        }
+
+        body.dark .menu-tooltip::before {
+            border-right-color: #475569;
+            /* slate-600 */
+        }
+
+
+
+        .home {
+            position: relative;
+            left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            transition: all var(--transition-speed) ease;
+            padding: 20px;
+            min-height: 100vh;
+            background-color: #f9fafb;
+            /* gray-50 */
+        }
+
+        body.dark .home {
+            background-color: #0f172a;
+            /* slate-900 */
+        }
+
+
+
+
+        body.dark .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #0ea5e9;
+            /* sky-500 */
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Additional dark mode styles */
+        body.dark ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        body.dark ::-webkit-scrollbar-track {
+            background: var(--scrollbar-track);
+        }
+
+        body.dark ::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 10px;
+        }
+
+        body.dark #queue-container {
+            background-color: #0f172a;
+            /* slate-900 */
+        }
+
+        body.dark h5 {
+            color: var(--primary-color) !important;
+        }
+
+        body.dark .searcbox_darkmode {
+            background-color: var(--sidebar-color) !important;
+        }
+
+        body.dark .switch::before {
+            background: #475569 !important;
+            /* slate-600 */
+        }
+
+        body.dark .hover_darkmode_gray:hover {
+            background-color: var(--hover-color) !important;
+            color: var(--text-light-color) !important;
+        }
+
+        body.dark .bg-white {
+            background-color: var(--sidebar-color) !important;
+            color: var(--text-light-color) !important;
+        }
+
+        body.dark span {
+            background-color: transparent !important;
+            border-color: var(--primary-color-light) !important;
+        }
+
+        body.dark .table tr,
+        body.dark .table td,
+        body.dark .table th,
+        body.dark .darkmode_h1,
+        body.dark li {
+            background-color: var(--sidebar-color) !important;
+            color: var(--text-light-color) !important;
+            border-color: var(--primary-color-light) !important;
+        }
+
+        body.dark .darkmode_lines {
+            border-color: var(--border-color);
+        }
+
+        body.dark td:hover {
+            background-color: var(--hover-color) !important;
+            color: var(--text-light-color) !important;
+        }
+
+        body.dark .right-section {
+            background-color: var(--sidebar-color) !important;
+            color: var(--text-light-color) !important;
+        }
+
+        body.dark .darkmode {
+            background-color: var(--sidebar-color) !important;
+            color: var(--text-light-color) !important;
+        }
+
+        body.dark .shadow-lg {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6) !important;
+        }
+
+        body.dark .divide-gray-200 {
+            border-color: var(--primary-color-light) !important;
+        }
+
+        body.dark .text-gray-600,
+        body.dark .text-gray-500 {
+            color: var(--text-color) !important;
+        }
+
+        body.dark h2 {
+            color: var(--text-color) !important;
+        }
+
+        body.dark .text-gray-800 {
+            color: var(--text-light-color) !important;
+        }
+
+        body.dark .hover\:bg-gray-50:hover {
+            background-color: var(--hover-color) !important;
+        }
+
+        body.dark table tr th {
+            background-color: var(--table-header-color) !important;
+            color: var(--text-light-color) !important;
+        }
+
+        body.dark td {
+            color: var(--text-light-color) !important;
+            border-color: var(--primary-color-light) !important;
+        }
+
+        body.dark a {
+            color: var(--primary-color) !important;
+        }
+
+        body.dark p,
+        body.dark h3,
+        body.dark .darkmode_green {
+            color: var(--primary-color) !important;
+        }
+
+        body.dark a:hover {
+            color: #22d3ee !important;
+            /* cyan-400 */
+        }
+
+        body.dark button {
+            color: var(--text-light-color) !important;
+            background-color: var(--primary-color-light) !important;
+            border: none;
+        }
+
+        body.dark .toggle {
+            color: black !important;
+        }
+
+        body.dark button:hover {
+            color: var(--primary-color) !important;
+            background-color: #164e63 !important;
+            /* teal-800 */
+        }
+
+        body.dark select,
+        body.dark input[type="text"],
+        body.dark input[type="number"],
+        body.dark .darkmode_text,
+        body.dark input[type="date"] {
+            background-color: var(--input-bg) !important;
+            color: var(--input-text) !important;
+            border: 1px solid var(--primary-color-light) !important;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            box-shadow: none;
+            transition: background-color 0.3s ease;
+        }
+
+        body.dark select:focus {
+            outline: none;
+            border-color: #0ea5e9 !important;
+            /* sky-500 */
+        }
+
+        body.dark select option {
+            background-color: var(--sidebar-color) !important;
+            color: var(--text-light-color) !important;
+        }
+
+        body.dark select option:hover {
+            background-color: var(--hover-color) !important;
+            color: var(--text-light-color) !important;
+        }
+
+        /* Responsive styles */
+        @media screen and (max-width: 768px) {
+            .sidebar {
+                width: 0;
+                left: -280px;
+            }
+
+            .sidebar.close {
+                width: 0;
+                left: -280px;
+            }
+
+            .sidebar.mobile-open {
+                left: 0;
+                width: var(--sidebar-width);
+            }
+
+            .home {
+                left: 0;
+                width: 100%;
+            }
+
+            .sidebar.close~.home,
+            .sidebar.mobile-open~.home {
+                left: 0;
+                width: 100%;
+            }
+
+            .mobile-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 99;
+                opacity: 0;
+                visibility: hidden;
+                transition: all var(--transition-speed);
+            }
+
+            .sidebar.mobile-open~.mobile-overlay {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            .mobile-toggle {
+                display: block;
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                width: 40px;
+                height: 40px;
+                border-radius: 8px;
+                background-color: var(--primary-color);
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                z-index: 98;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            }
+
+            body.dark .mobile-toggle {
+                background-color: var(--bg-sidebar-dark);
+                color: #e5e7eb;
+                /* gray-200 */
+            }
         }
 
         body {
@@ -37,8 +421,10 @@
         }
 
         body.dark {
-            background-color: #111827;
-            color: #f3f4f6;
+            background-color: #0f172a;
+            /* Changed to slate-900 */
+            color: #f8fafc;
+            /* Changed to slate-50 */
         }
 
         .sidebar {
@@ -64,10 +450,9 @@
             width: var(--sidebar-collapsed-width);
         }
 
-       
-
         body.dark .sidebar-header {
-            border-color: #2d3748;
+            border-color: #334155;
+            /* Changed to slate-700 */
         }
 
         .logo-container {
@@ -84,7 +469,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(45deg, var(--primary-color), #818cf8);
+            background: linear-gradient(45deg, var(--primary-color), #22d3ee);
+            /* Changed second color to cyan-400 */
             color: white;
             font-size: 1.2rem;
         }
@@ -99,7 +485,8 @@
         }
 
         body.dark .logo-text {
-            color: #f3f4f6;
+            color: #f8fafc;
+            /* Changed to slate-50 */
         }
 
         .sidebar.close .logo-text {
@@ -139,6 +526,15 @@
             background-color: var(--primary-hover);
         }
 
+        body.dark .toggle-btn {
+            background-color: var(--primary-hover);
+        }
+
+        body.dark .toggle-switch {
+            background-color: #0ea5e9;
+            /* sky-500 */
+        }
+
         body.dark .toggle-btn:hover {
             background-color: var(--primary-hover);
         }
@@ -164,7 +560,8 @@
         }
 
         body.dark .user-info {
-            border-color: #2d3748;
+            border-color: #334155;
+            /* Changed to slate-700 */
         }
 
         .profile-image {
@@ -172,11 +569,13 @@
             height: 40px;
             border-radius: 50%;
             object-fit: cover;
-            border: 2px solid #e5e7eb;
+            border: 2px solid #e2e8f0;
+            /* Changed to slate-200 */
         }
 
         body.dark .profile-image {
-            border-color: #4b5563;
+            border-color: #475569;
+            /* Changed to slate-600 */
         }
 
         .user-details {
@@ -198,7 +597,8 @@
         }
 
         body.dark .user-name {
-            color: #f3f4f6;
+            color: #f8fafc;
+            /* Changed to slate-50 */
         }
 
         .user-role {
@@ -207,7 +607,8 @@
         }
 
         body.dark .user-role {
-            color: #9ca3af;
+            color: #94a3b8;
+            /* Changed to slate-400 */
         }
 
         .search-container {
@@ -222,14 +623,16 @@
         .search-wrapper {
             display: flex;
             align-items: center;
-            background-color: #f3f4f6;
+            background-color: #f1f5f9;
+            /* Changed to slate-100 */
             border-radius: 8px;
             padding: 0.5rem 0.75rem;
             transition: all var(--transition-speed);
         }
 
         body.dark .search-wrapper {
-            background-color: #374151;
+            background-color: #334155;
+            /* Changed to slate-700 */
         }
 
         .search-icon {
@@ -252,7 +655,8 @@
         }
 
         body.dark .search-input {
-            color: #e5e7eb;
+            color: #e2e8f0;
+            /* Changed to slate-200 */
         }
 
         .sidebar.close .search-input {
@@ -286,7 +690,8 @@
         }
 
         body.dark .menu-title {
-            color: #9ca3af;
+            color: #94a3b8;
+            /* Changed to slate-400 */
         }
 
         .sidebar.close .menu-title {
@@ -316,27 +721,33 @@
         }
 
         body.dark .menu-link {
-            color: #e5e7eb;
+            color: #e2e8f0;
+            /* Changed to slate-200 */
         }
 
         .menu-link:hover {
-            background-color: #f3f4f6;
+            background-color: #f1f5f9;
+            /* Changed to slate-100 */
         }
 
         body.dark .menu-link:hover {
-            background-color: #2d3748;
+            background-color: #334155;
+            /* Changed to slate-700 */
         }
 
         .menu-link.active {
-            background-color: #ede9fe;
+            background-color: #ecfeff;
+            /* Changed to cyan-50 */
             border-left-color: var(--primary-color);
             color: var(--primary-color);
         }
 
         body.dark .menu-link.active {
-            background-color: #374151;
+            background-color: #164e63;
+            /* Changed to cyan-900 */
             border-left-color: var(--primary-color);
-            color: #a5b4fc;
+            color: #67e8f9;
+            /* Changed to cyan-300 */
         }
 
         .menu-icon {
@@ -373,7 +784,8 @@
             left: calc(100% + 10px);
             top: 50%;
             transform: translateY(-50%);
-            background-color: #374151;
+            background-color: #334155;
+            /* Changed to slate-700 */
             color: white;
             padding: 0.5rem 0.75rem;
             border-radius: 6px;
@@ -393,15 +805,18 @@
             transform: translateY(-50%);
             border-top: 5px solid transparent;
             border-bottom: 5px solid transparent;
-            border-right: 5px solid #374151;
+            border-right: 5px solid #334155;
+            /* Changed to slate-700 */
         }
 
         body.dark .menu-tooltip {
-            background-color: #4b5563;
+            background-color: #475569;
+            /* Changed to slate-600 */
         }
 
         body.dark .menu-tooltip::before {
-            border-right-color: #4b5563;
+            border-right-color: #475569;
+            /* Changed to slate-600 */
         }
 
         .sidebar.close .menu-item:hover .menu-tooltip {
@@ -414,7 +829,8 @@
         }
 
         body.dark .bottom-container {
-            border-color: #2d3748;
+            border-color: #334155;
+            /* Changed to slate-700 */
         }
 
         .mode-switch {
@@ -434,7 +850,8 @@
         }
 
         body.dark .mode-text {
-            color: #e5e7eb;
+            color: #e2e8f0;
+            /* Changed to slate-200 */
         }
 
         .sidebar.close .mode-text {
@@ -448,12 +865,10 @@
             height: 22px;
             border-radius: 25px;
             background-color: #cbd5e1;
+            /* Changed to slate-300 */
             transition: all var(--transition-speed);
         }
 
-        body.dark .toggle-switch {
-            background-color: var(--primary-color);
-        }
 
         .switch {
             position: absolute;
@@ -494,7 +909,8 @@
 
         body.dark .moon-icon {
             opacity: 1;
-            color: #f3f4f6;
+            color: #f8fafc;
+            /* Changed to slate-50 */
         }
 
         .logout-btn {
@@ -504,22 +920,28 @@
             padding: 0.75rem 1rem;
             border-radius: 8px;
             background-color: #fee2e2;
+            /* Changed to red-100 */
             color: #dc2626;
+            /* Changed to red-600 */
             text-decoration: none;
             transition: all var(--transition-speed);
         }
 
         body.dark .logout-btn {
             background-color: #7f1d1d;
+            /* Changed to red-900 */
             color: #fecaca;
+            /* Changed to red-200 */
         }
 
         .logout-btn:hover {
             background-color: #fecaca;
+            /* Changed to red-200 */
         }
 
         body.dark .logout-btn:hover {
             background-color: #991b1b;
+            /* Changed to red-800 */
         }
 
         .logout-icon {
@@ -691,7 +1113,8 @@
 
             body.dark .mobile-toggle {
                 background-color: var(--bg-sidebar-dark);
-                color: #e5e7eb;
+                color: #e2e8f0;
+                /* Changed to slate-200 */
             }
         }
     </style>
@@ -763,7 +1186,7 @@
                 <div class="menu-title">Main Menu</div>
                 <ul class="menu-items">
                     <li class="menu-item">
-                        <a href="<?= base_url('controller_admin_landing/loadView/Dashboard'); ?>"
+                        <a href="<?= base_url('controller_admin_landing/index/Dashboard'); ?>"
                             class="menu-link ajax-link <?= ($active_view == 'Dashboard') ? 'active' : ''; ?>"
                             data-view="Dashboard">
                             <div class="menu-icon">
@@ -785,7 +1208,7 @@
                         <div class="menu-tooltip">Properties</div>
                         <ul class="dropdown-content menu-items">
                             <li class="submenu-item">
-                                <a href="<?= base_url('controller_admin_landing/loadView/LandTax'); ?>"
+                                <a href="<?= base_url('controller_admin_landing/index/LandTax'); ?>"
                                     class="menu-link ajax-link <?= ($active_view == 'LandTax') ? 'active' : ''; ?>"
                                     data-view="LandTax">
                                     <span class="menu-text">Land Tax</span>
@@ -793,7 +1216,7 @@
                                 <div class="menu-tooltip">Land Tax</div>
                             </li>
                             <li class="submenu-item">
-                                <a href="<?= base_url('controller_admin_landing/loadView/BackRoom'); ?>"
+                                <a href="<?= base_url('controller_admin_landing/index/BackRoom'); ?>"
                                     class="menu-link ajax-link <?= ($active_view == 'BackRoom') ? 'active' : ''; ?>"
                                     data-view="BackRoom">
                                     <span class="menu-text">Backroom</span>
@@ -804,7 +1227,7 @@
                     </li>
 
                     <li class="menu-item">
-                        <a href="<?= base_url('controller_admin_landing/loadView/Examiners'); ?>"
+                        <a href="<?= base_url('controller_admin_landing/index/Examiners'); ?>"
                             class="menu-link ajax-link <?= ($active_view == 'Examiners') ? 'active' : ''; ?>"
                             data-view="Examiners">
                             <div class="menu-icon">
@@ -816,7 +1239,7 @@
                     </li>
 
                     <li class="menu-item">
-                        <a href="<?= base_url('controller_admin_landing/loadView/BusinessTax'); ?>"
+                        <a href="<?= base_url('controller_admin_landing/index/BusinessTax'); ?>"
                             class="menu-link ajax-link <?= ($active_view == 'BusinessTax') ? 'active' : ''; ?>"
                             data-view="BusinessTax">
                             <div class="menu-icon">
@@ -844,7 +1267,7 @@
                         <div class="menu-tooltip">Transactions</div>
                         <ul class="dropdown-content menu-items">
                             <li class="submenu-item">
-                                <a href="<?= base_url('controller_admin_landing/loadView/Payment'); ?>"
+                                <a href="<?= base_url('controller_admin_landing/index/Payment'); ?>"
                                     class="menu-link ajax-link <?= ($active_view == 'Payment') ? 'active' : ''; ?>"
                                     data-view="Payment">
                                     <span class="menu-text">Payment</span>
@@ -852,7 +1275,7 @@
                                 <div class="menu-tooltip">Payment</div>
                             </li>
                             <li class="submenu-item">
-                                <a href="<?= base_url('controller_admin_landing/loadView/FireProtection'); ?>"
+                                <a href="<?= base_url('controller_admin_landing/index/FireProtection'); ?>"
                                     class="menu-link ajax-link <?= ($active_view == 'FireProtection') ? 'active' : ''; ?>"
                                     data-view="FireProtection">
                                     <span class="menu-text">Fire Protection</span>
@@ -860,7 +1283,7 @@
                                 <div class="menu-tooltip">Fire Protection</div>
                             </li>
                             <li class="submenu-item">
-                                <a href="<?= base_url('controller_admin_landing/loadView/Releasing'); ?>"
+                                <a href="<?= base_url('controller_admin_landing/index/Releasing'); ?>"
                                     class="menu-link ajax-link <?= ($active_view == 'Releasing') ? 'active' : ''; ?>"
                                     data-view="Releasing">
                                     <span class="menu-text">Releasing</span>
@@ -870,25 +1293,7 @@
                         </ul>
                     </li>
 
-                    <li class="menu-item">
-                        <a href="#" class="menu-link">
-                            <div class="menu-icon">
-                                <i class='bx bx-chart'></i>
-                            </div>
-                            <span class="menu-text">Reports</span>
-                        </a>
-                        <div class="menu-tooltip">Reports</div>
-                    </li>
 
-                    <li class="menu-item">
-                        <a href="#" class="menu-link">
-                            <div class="menu-icon">
-                                <i class='bx bx-cog'></i>
-                            </div>
-                            <span class="menu-text">Settings</span>
-                        </a>
-                        <div class="menu-tooltip">Settings</div>
-                    </li>
                 </ul>
             </div>
         </div>
@@ -973,32 +1378,41 @@
             // Dark mode toggle
             toggleSwitch.addEventListener("click", toggleDarkMode);
 
-            // Dropdown menu functionality
-            dropdownTriggers.forEach(trigger => {
-                trigger.addEventListener("click", (e) => {
-                    const parent = trigger.parentElement;
-                    parent.classList.toggle("open");
+            // Apply dropdown functionality
+            function applyDropdownFunctionality() {
+                document.querySelectorAll(".dropdown-trigger").forEach(trigger => {
+                    // Remove any existing event listeners to avoid duplicates
+                    const newTrigger = trigger.cloneNode(true);
+                    trigger.parentNode.replaceChild(newTrigger, trigger);
 
-                    // Store dropdown state in localStorage
-                    const dropdownId = parent.id;
-                    if (dropdownId) {
-                        const isOpen = parent.classList.contains("open");
-                        localStorage.setItem(dropdownId, isOpen ? "open" : "closed");
-                    }
+                    newTrigger.addEventListener("click", (e) => {
+                        const parent = newTrigger.parentElement;
+                        parent.classList.toggle("open");
 
-                    // Close other open dropdowns
-                    document.querySelectorAll(".menu-item.has-dropdown.open").forEach(item => {
-                        if (item !== parent) {
-                            item.classList.remove("open");
-                            // Also update localStorage for other dropdowns
-                            const itemId = item.id;
-                            if (itemId) {
-                                localStorage.setItem(itemId, "closed");
-                            }
+                        // Store dropdown state in localStorage
+                        const dropdownId = parent.id;
+                        if (dropdownId) {
+                            const isOpen = parent.classList.contains("open");
+                            localStorage.setItem(dropdownId, isOpen ? "open" : "closed");
                         }
+
+                        // Close other open dropdowns
+                        document.querySelectorAll(".menu-item.has-dropdown.open").forEach(item => {
+                            if (item !== parent) {
+                                item.classList.remove("open");
+                                // Also update localStorage for other dropdowns
+                                const itemId = item.id;
+                                if (itemId) {
+                                    localStorage.setItem(itemId, "closed");
+                                }
+                            }
+                        });
                     });
                 });
-            });
+            }
+
+            // Apply dropdown functionality initially
+            applyDropdownFunctionality();
 
             // Apply saved sidebar state
             const sidebarState = localStorage.getItem("sidebarState");
@@ -1019,50 +1433,60 @@
             }
 
             // Apply saved dropdown states
-            document.querySelectorAll('.menu-item.has-dropdown').forEach(dropdown => {
-                const dropdownId = dropdown.id;
-                if (dropdownId) {
-                    const savedState = localStorage.getItem(dropdownId);
-                    if (savedState === "open") {
-                        dropdown.classList.add('open');
-                    } else if (savedState === "closed") {
-                        dropdown.classList.remove('open');
-                    }
-                }
-            });
-
-            // Add active class to parent dropdown item if submenu item is active
-            document.querySelectorAll('.submenu-item .menu-link.active').forEach(activeLink => {
-                const dropdownParent = activeLink.closest('.has-dropdown');
-                if (dropdownParent) {
-                    dropdownParent.classList.add('open');
-                    // Also update localStorage
-                    const dropdownId = dropdownParent.id;
+            function applyDropdownStates() {
+                document.querySelectorAll('.menu-item.has-dropdown').forEach(dropdown => {
+                    const dropdownId = dropdown.id;
                     if (dropdownId) {
-                        localStorage.setItem(dropdownId, "open");
-                    }
-                }
-            });
-
-            // Show tooltips on hover for collapsed sidebar
-            const menuItems = document.querySelectorAll('.menu-item');
-            menuItems.forEach(item => {
-                item.addEventListener('mouseenter', () => {
-                    if (sidebar.classList.contains('close')) {
-                        const tooltip = item.querySelector('.menu-tooltip');
-                        if (tooltip) {
-                            tooltip.style.opacity = '1';
+                        const savedState = localStorage.getItem(dropdownId);
+                        if (savedState === "open") {
+                            dropdown.classList.add('open');
+                        } else if (savedState === "closed") {
+                            dropdown.classList.remove('open');
                         }
                     }
                 });
 
-                item.addEventListener('mouseleave', () => {
-                    const tooltip = item.querySelector('.menu-tooltip');
-                    if (tooltip) {
-                        tooltip.style.opacity = '0';
+                // Add active class to parent dropdown item if submenu item is active
+                document.querySelectorAll('.submenu-item .menu-link.active').forEach(activeLink => {
+                    const dropdownParent = activeLink.closest('.has-dropdown');
+                    if (dropdownParent) {
+                        dropdownParent.classList.add('open');
+                        // Also update localStorage
+                        const dropdownId = dropdownParent.id;
+                        if (dropdownId) {
+                            localStorage.setItem(dropdownId, "open");
+                        }
                     }
                 });
-            });
+            }
+
+            // Apply dropdown states initially
+            applyDropdownStates();
+
+            // Apply tooltips
+            function applyTooltips() {
+                const menuItems = document.querySelectorAll('.menu-item');
+                menuItems.forEach(item => {
+                    item.addEventListener('mouseenter', () => {
+                        if (sidebar.classList.contains('close')) {
+                            const tooltip = item.querySelector('.menu-tooltip');
+                            if (tooltip) {
+                                tooltip.style.opacity = '1';
+                            }
+                        }
+                    });
+
+                    item.addEventListener('mouseleave', () => {
+                        const tooltip = item.querySelector('.menu-tooltip');
+                        if (tooltip) {
+                            tooltip.style.opacity = '0';
+                        }
+                    });
+                });
+            }
+
+            // Apply tooltips initially
+            applyTooltips();
 
             // Search functionality
             function filterData() {
@@ -1100,60 +1524,103 @@
             // Add search functionality
             document.getElementById('search-bar').addEventListener('input', filterData);
 
-            // AJAX navigation - prevent page reload and fetch content via AJAX
-            document.querySelectorAll('.ajax-link').forEach(link => {
-                link.addEventListener('click', function (e) {
-                    e.preventDefault(); // Prevent default link behavior
-
-                    const url = this.getAttribute('href');
-                    const view = this.getAttribute('data-view');
-
-                    // Update active class
-                    document.querySelectorAll('.menu-link').forEach(menuLink => {
-                        menuLink.classList.remove('active');
-                    });
-                    this.classList.add('active');
-
-                    // Show loading spinner
-                    loadingSpinner.style.display = 'block';
-
-                    // Make AJAX request
-                    fetch(url)
-                        .then(response => response.text())
-                        .then(html => {
-                            // Update browser URL without reloading
-                            history.pushState({ view: view }, view, url);
-
-                            // Extract content from response
-                            const parser = new DOMParser();
-                            const doc = parser.parseFromString(html, 'text/html');
-                            const content = doc.getElementById('content');
-
-                            if (content) {
-                                document.getElementById('content').innerHTML = content.innerHTML;
-                            } else {
-                                document.getElementById('content').innerHTML = html;
-                            }
-
-                            // Hide loading spinner
-                            loadingSpinner.style.display = 'none';
-                        })
-                        .catch(error => {
-                            console.error('Error loading page:', error);
-                            loadingSpinner.style.display = 'none';
-
-                            // Show error message
-                            Toastify({
-                                text: "Error loading page. Please try again.",
-                                duration: 3000,
-                                close: true,
-                                gravity: "top",
-                                position: "right",
-                                backgroundColor: "#f44336",
-                            }).showToast();
-                        });
+            // Function to initialize any scripts that need to be run after AJAX content is loaded
+            function initializeAjaxContent() {
+                // Execute any script tags in the loaded content
+                const scripts = document.getElementById('content').querySelectorAll('script');
+                scripts.forEach(script => {
+                    if (script.textContent) {
+                        // Execute inline scripts
+                        eval(script.textContent);
+                    } else if (script.src) {
+                        // Load external scripts
+                        const newScript = document.createElement('script');
+                        newScript.src = script.src;
+                        document.head.appendChild(newScript);
+                    }
                 });
-            });
+
+                // Re-apply event listeners after content loads
+                applyDropdownFunctionality();
+                applyDropdownStates();
+                applyTooltips();
+
+                // Re-attach event listeners to any new elements
+                attachAjaxLinksEventListeners();
+
+                // Re-execute any custom functions that your views might need
+                // For example, if you have data tables, form validation, etc.
+                if (typeof initializeViewSpecificFunctions === 'function') {
+                    initializeViewSpecificFunctions();
+                }
+            }
+
+            // Function to attach event listeners to AJAX links
+            function attachAjaxLinksEventListeners() {
+                document.querySelectorAll('.ajax-link').forEach(link => {
+                    // Remove existing listeners to avoid duplicates
+                    const newLink = link.cloneNode(true);
+                    link.parentNode.replaceChild(newLink, link);
+
+                    newLink.addEventListener('click', function (e) {
+                        e.preventDefault(); // Prevent default link behavior
+
+                        const url = this.getAttribute('href');
+                        const view = this.getAttribute('data-view');
+
+                        // Update active class
+                        document.querySelectorAll('.menu-link').forEach(menuLink => {
+                            menuLink.classList.remove('active');
+                        });
+                        this.classList.add('active');
+
+                        // Show loading spinner
+                        loadingSpinner.style.display = 'block';
+
+                        // Make AJAX request
+                        fetch(url)
+                            .then(response => response.text())
+                            .then(html => {
+                                // Update browser URL without reloading
+                                history.pushState({ view: view }, view, url);
+
+                                // Extract content from response
+                                const parser = new DOMParser();
+                                const doc = parser.parseFromString(html, 'text/html');
+                                const content = doc.getElementById('content');
+
+                                if (content) {
+                                    document.getElementById('content').innerHTML = content.innerHTML;
+                                } else {
+                                    document.getElementById('content').innerHTML = html;
+                                }
+
+                                // Initialize the new content
+                                initializeAjaxContent();
+
+                                // Hide loading spinner
+                                loadingSpinner.style.display = 'none';
+                            })
+                            .catch(error => {
+                                console.error('Error loading page:', error);
+                                loadingSpinner.style.display = 'none';
+
+                                // Show error message
+                                Toastify({
+                                    text: "Error loading page. Please try again.",
+                                    duration: 3000,
+                                    close: true,
+                                    gravity: "top",
+                                    position: "right",
+                                    backgroundColor: "#f44336",
+                                }).showToast();
+                            });
+                    });
+                });
+            }
+
+            // Initialize AJAX links
+            attachAjaxLinksEventListeners();
 
             // Handle browser back/forward buttons
             window.addEventListener('popstate', function (event) {
@@ -1171,6 +1638,50 @@
             var result = confirm('Are you sure you want to logout?');
             if (result == false) {
                 event.preventDefault();
+            }
+        }
+
+        // Add a global function that can be called from AJAX-loaded views
+        function initializeViewSpecificFunctions() {
+            // This function will be called after AJAX content is loaded
+            // Views can define their own initialization functions and call them here
+
+            // Check if specific view functions exist and call them
+            if (typeof initDashboard === 'function') {
+                initDashboard();
+            }
+
+            if (typeof initLandTax === 'function') {
+                initLandTax();
+            }
+
+            if (typeof initBackRoom === 'function') {
+                initBackRoom();
+            }
+
+            if (typeof initExaminers === 'function') {
+                initExaminers();
+            }
+
+            if (typeof initBusinessTax === 'function') {
+                initBusinessTax();
+            }
+
+            if (typeof initPayment === 'function') {
+                initPayment();
+            }
+
+            if (typeof initFireProtection === 'function') {
+                initFireProtection();
+            }
+
+            if (typeof initReleasing === 'function') {
+                initReleasing();
+            }
+
+            // Re-initialize any common UI components
+            if (typeof reinitializeUIComponents === 'function') {
+                reinitializeUIComponents();
             }
         }
     </script>

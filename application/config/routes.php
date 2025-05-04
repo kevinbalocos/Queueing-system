@@ -1,5 +1,5 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') or exit('No direct script access allowed');
 
 /*
 | -------------------------------------------------------------------------
@@ -53,4 +53,4 @@ $route['default_controller'] = 'controller_login';
 $route['SuperAdmin'] = 'SuperAdmin/index';
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;
-$route['admin/(:any)'] = 'controller_admin_landing/loadView/$1';
+$route['admin/(:any)'] = 'controller_admin_landing/$1';

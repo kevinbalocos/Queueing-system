@@ -1,4 +1,4 @@
-<?php 
+<?php
 // Determine how many items go to the left section (maximum 20)
 $left_items = array_slice($queue, 0, 20);
 // Remaining queue items go to the right section
@@ -27,7 +27,7 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
 </head>
 
 <body class="bg-gray-100">
- 
+
 
 
 
@@ -104,7 +104,8 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
     </div>
 
     <!-- Right Section (Queue List) -->
-    <div class="ml-5 bg-white p-5 w-[400px] rounded-lg shadow-md flex flex-col">
+    <div class="ml-5 bg-white p-5 w-[400px]  h-[calc(100vh-100px)] rounded-lg shadow-md flex flex-col">
+
       <h2 class="text-2xl font-bold text-cyan-900 uppercase tracking-widest text-center">Queue List</h2>
       <ul id="queueList" class="mt-3 overflow-auto h-[1000px] space-y-3 p-2 bg-white rounded-lg shadow-md">
         <?php foreach ($right_items as $item): ?>
