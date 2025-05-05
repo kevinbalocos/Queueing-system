@@ -25,10 +25,8 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
 <body class="bg-gray-100">
 
 
-
-  <div class="flex h-screen">
-    <!-- Left Section (Now Serving - Business Tax) -->
-    <div class="flex-1 bg-white p-5 h-[calc(100vh-100px)] rounded-lg shadow-md overflow-y-auto">
+<div class="flex h-auto">
+    <div class="flex-1 bg-white p-5 h-[calc(100vh-50px)] rounded-lg shadow-md overflow-y-auto">
       <div id="queue-container" class="flex flex-wrap gap-1 max-h-[calc(100vh-150px)] bg-cyan-100 overflow-y-auto">
         <?php if ($businesstax): ?>
           <?php foreach ($left_items as $item): ?>
@@ -90,7 +88,7 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
     </div>
 
     <!-- Right Section (Queue List & Add Form) -->
-    <div class="ml-5 bg-white p-5 w-[400px]  h-[calc(100vh-100px)] rounded-lg shadow-md flex flex-col">
+    <div class="ml-5 bg-white p-5 w-[400px]  h-[calc(100vh-50px)] rounded-lg shadow-md flex flex-col">
       <h2 class="text-2xl font-bold text-cyan-900 uppercase tracking-widest text-center">Business Tax Queue List</h2>
       <ul id="queueList" class="mt-3 overflow-auto h-[1000px] space-y-3 p-2 bg-white rounded-lg shadow-md">
         <?php foreach ($right_items as $item): ?>

@@ -1121,14 +1121,7 @@
 </head>
 
 <body>
-    <!-- Mobile Menu Toggle Button -->
-    <div class="mobile-toggle">
-        <i class='bx bx-menu'></i>
-    </div>
-
-    <!-- Mobile Overlay -->
-    <div class="mobile-overlay"></div>
-
+ 
     <!-- Loading Spinner -->
     <div class="loading-spinner">
         <div class="spinner"></div>
@@ -1167,6 +1160,13 @@
                 </div>
                 <div class="user-role">Administrator</div>
             </div>
+                <!-- Mobile Menu Toggle Button -->
+    <div class="mobile-toggle">
+    </div>
+
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay"></div>
+
         </div>
 
         <!-- Search Box -->
