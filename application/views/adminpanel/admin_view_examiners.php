@@ -29,7 +29,7 @@ $currentUser = isset($_SESSION['username']) ? strval($_SESSION['username']) : ''
 
 <div class="flex h-auto">
     <div class="flex-1 bg-white p-5 h-[calc(100vh-50px)] rounded-lg shadow-md overflow-y-auto">
-      <div id="queue-container" class="flex flex-wrap gap-1 max-h-[calc(100vh-150px)] bg-cyan-100 overflow-y-auto">
+      <div id="queue-container" class="flex flex-wrap gap-1 max-h-[calc(100vh-100px)] bg-cyan-100 overflow-y-auto">
         <?php if ($examiners): ?>
           <?php foreach ($left_items as $item): ?>
             <?php

@@ -29,7 +29,7 @@ $currentUser = isset($_SESSION['username']) ? $_SESSION['username'] : '';
       <!-- <h2 class="text-2xl font-bold text-cyan-500 uppercase tracking-wider pb-5 text-center">
         Now Serving - Fire Protection
       </h2> -->
-      <div id="queue-container" class="flex flex-wrap gap-1 max-h-[calc(100vh-150px)] bg-cyan-100 overflow-y-auto">
+      <div id="queue-container" class="flex flex-wrap gap-1 max-h-[calc(100vh-100px)] bg-cyan-100 overflow-y-auto">
         <?php if ($fireprotection): ?>
           <?php foreach ($left_items as $item): ?>
             <?php
