@@ -840,42 +840,44 @@
             padding: 0.5rem 0;
             margin-bottom: 1rem;
         }
-/* Adjust the mode-switch container for closed sidebar */
-.sidebar.close .mode-switch {
-    justify-content: center;
-    padding: 0.5rem 0;
-}
 
-/* Center the toggle-switch when sidebar is closed */
-.sidebar.close .toggle-switch {
-    margin-left: 0;
-}
+        /* Adjust the mode-switch container for closed sidebar */
+        .sidebar.close .mode-switch {
+            justify-content: center;
+            padding: 0.5rem 0;
+        }
 
-/* Hide mode text but maintain spacing */
-.sidebar.close .mode-text {
-    width: 0;
-    margin: 0;
-    padding: 0;
-}
+        /* Center the toggle-switch when sidebar is closed */
+        .sidebar.close .toggle-switch {
+            margin-left: 0;
+        }
 
-/* Ensure the toggle switch is properly sized and centered */
-.toggle-switch {
-    position: relative;
-    width: 40px;
-    height: 22px;
-    border-radius: 25px;
-    background-color: #cbd5e1;
-    transition: all var(--transition-speed);
-    margin-left: auto;
-}
+        /* Hide mode text but maintain spacing */
+        .sidebar.close .mode-text {
+            width: 0;
+            margin: 0;
+            padding: 0;
+        }
 
-/* Adjust the bottom container padding when sidebar is closed */
-.sidebar.close .bottom-container {
-    padding: 1rem 0.5rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
+        /* Ensure the toggle switch is properly sized and centered */
+        .toggle-switch {
+            position: relative;
+            width: 40px;
+            height: 22px;
+            border-radius: 25px;
+            background-color: #cbd5e1;
+            transition: all var(--transition-speed);
+            margin-left: auto;
+        }
+
+        /* Adjust the bottom container padding when sidebar is closed */
+        .sidebar.close .bottom-container {
+            padding: 1rem 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
         .mode-text {
             color: var(--text-color);
             font-size: 0.875rem;
@@ -1170,73 +1172,34 @@
                 <div class="logo-icon">
                     <i class='bx bx-cube-alt'></i>
                 </div>
-                 <!-- User Profile Info -->
-        <div class="user-info">
-           
-           <div class="user-details">
-               <div class="user-name">
-                   <?php if ($this->session->userdata('logged_in')): ?>
-                       <?= htmlspecialchars($this->session->userdata('username')); ?>
-                   <?php else: ?>
-                       Guest
-                   <?php endif; ?>
-               </div>
-               <div class="user-role">Administrator</div>
-           </div>
-               <!-- Mobile Menu Toggle Button -->
-   <div class="mobile-toggle">
-   </div>
+                <!-- User Profile Info -->
+                <div class="user-info">
 
-   <!-- Mobile Overlay -->
-   <div class="mobile-overlay"></div>
+                    <div class="user-details">
+                        <div class="user-name">
+                            <?php if ($this->session->userdata('logged_in')): ?>
+                                <?= htmlspecialchars($this->session->userdata('username')); ?>
+                            <?php else: ?>
+                                Guest
+                            <?php endif; ?>
+                        </div>
+                        <div class="user-role">Administrator</div>
+                    </div>
+                    <!-- Mobile Menu Toggle Button -->
+                    <div class="mobile-toggle">
+                    </div>
 
-       </div>
+                    <!-- Mobile Overlay -->
+                    <div class="mobile-overlay"></div>
+
+                </div>
             </div>
             <div class="toggle-btn">
                 <i class='bx bx-chevron-left'></i>
             </div>
         </div>
 
-        <!-- User Profile Info -->
-        <div class="user-info">
-            <?php if (!empty($user['uploaded_profile_image'])): ?>
-                <img class="profile-image" src="<?= base_url($user['uploaded_profile_image']); ?>" alt="Profile">
-            <?php else: ?>
-                <img class="profile-image" src="https://ui-avatars.com/api/?name=User&background=4f46e5&color=fff"
-                    alt="Profile">
-            <?php endif; ?>
-            <div class="user-details">
-                <div class="user-name">
-                    <?php if ($this->session->userdata('logged_in')): ?>
-                        <?= htmlspecialchars($this->session->userdata('username')); ?>
-                    <?php else: ?>
-                        Guest
-                    <?php endif; ?>
-                </div>
-                <div class="user-role">Administrator</div>
-            </div>
-            <!-- Mobile Menu Toggle Button -->
-            <div class="mobile-toggle">
-            </div>
-           
-           <div class="user-details">
-               <div class="user-name">
-                   <?php if ($this->session->userdata('logged_in')): ?>
-                       <?= htmlspecialchars($this->session->userdata('username')); ?>
-                   <?php else: ?>
-                       Guest
-                   <?php endif; ?>
-               </div>
-               <div class="user-role">Administrator</div>
-           </div>
-               <!-- Mobile Menu Toggle Button -->
-   <div class="mobile-toggle">
-   </div>
 
-            <!-- Mobile Overlay -->
-            <div class="mobile-overlay"></div>
-
-        </div>
 
         <!-- Search Box -->
         <div class="search-container">
@@ -1252,7 +1215,7 @@
         <div class="menu-container">
             <!-- Main Menu Section -->
             <div class="menu-section">
-                <div class="menu-title">Main Menu</div>
+                <div class="menu-title">Main Menu</div>~
                 <ul class="menu-items">
                     <li class="menu-item">
                         <a href="<?= base_url('controller_admin_landing/index/Dashboard'); ?>"
