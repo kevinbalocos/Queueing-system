@@ -1156,7 +1156,7 @@
 </head>
 
 <body>
- 
+
     <!-- Loading Spinner -->
     <div class="loading-spinner">
         <div class="spinner"></div>
@@ -1197,7 +1197,46 @@
             </div>
         </div>
 
-    
+        <!-- User Profile Info -->
+        <div class="user-info">
+            <?php if (!empty($user['uploaded_profile_image'])): ?>
+                <img class="profile-image" src="<?= base_url($user['uploaded_profile_image']); ?>" alt="Profile">
+            <?php else: ?>
+                <img class="profile-image" src="https://ui-avatars.com/api/?name=User&background=4f46e5&color=fff"
+                    alt="Profile">
+            <?php endif; ?>
+            <div class="user-details">
+                <div class="user-name">
+                    <?php if ($this->session->userdata('logged_in')): ?>
+                        <?= htmlspecialchars($this->session->userdata('username')); ?>
+                    <?php else: ?>
+                        Guest
+                    <?php endif; ?>
+                </div>
+                <div class="user-role">Administrator</div>
+            </div>
+            <!-- Mobile Menu Toggle Button -->
+            <div class="mobile-toggle">
+            </div>
+           
+           <div class="user-details">
+               <div class="user-name">
+                   <?php if ($this->session->userdata('logged_in')): ?>
+                       <?= htmlspecialchars($this->session->userdata('username')); ?>
+                   <?php else: ?>
+                       Guest
+                   <?php endif; ?>
+               </div>
+               <div class="user-role">Administrator</div>
+           </div>
+               <!-- Mobile Menu Toggle Button -->
+   <div class="mobile-toggle">
+   </div>
+
+            <!-- Mobile Overlay -->
+            <div class="mobile-overlay"></div>
+
+        </div>
 
         <!-- Search Box -->
         <div class="search-container">
@@ -1340,7 +1379,7 @@
                 </div>
             </div>
 
-            <a href="<?php echo base_url('controller_admin_landing/logout'); ?>" class="logout-btn" onclick="checker()">
+            <a href="#" onclick="confirmLogout(); return false;" class="logout-btn">
                 <div class="logout-icon">
                     <i class='bx bx-log-out'></i>
                 </div>
@@ -1364,6 +1403,45 @@
             </div>
         </div>
     </section>
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg max-w-md w-full mx-4 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Confirm Logout</h3>
+            </div>
+
+            <div class="px-6 py-4">
+                <p class="text-gray-700">Are you sure you want to log out?</p>
+            </div>
+
+            <div class="px-6 py-4 bg-gray-50 flex justify-end space-x-3">
+                <button id="cancelLogout"
+                    class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition focus:outline-none focus:ring-2 focus:ring-gray-400">
+                    Cancel
+                </button>
+                <button id="confirmLogout"
+                    class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition focus:outline-none focus:ring-2 focus:ring-red-500">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </div>
+    <script>
+        function confirmLogout() {
+            const modal = document.getElementById('logoutModal');
+            modal.classList.remove('hidden');
+
+            document.getElementById('cancelLogout').onclick = function () {
+                modal.classList.add('hidden');
+            };
+
+            document.getElementById('confirmLogout').onclick = function () {
+                const baseUrl = "<?= base_url(); ?>";
+                window.location.href = `${baseUrl}controller_admin_landing/logout`;
+            };
+        }
+
+    </script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const sidebar = document.querySelector(".sidebar");

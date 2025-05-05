@@ -578,6 +578,50 @@
             </form>
         </div>
     </div>
+
+    <div id="deleteModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg max-w-md w-full mx-4 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Confirm Deletion</h3>
+            </div>
+
+            <div class="px-6 py-4">
+                <p class="text-gray-700">Are you sure you want to delete <span id="deleteUsername"
+                        class="font-medium"></span>? This action cannot be undone.</p>
+            </div>
+
+            <div class="px-6 py-4 bg-gray-50 flex justify-end space-x-3">
+                <button id="cancelDelete"
+                    class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition focus:outline-none focus:ring-2 focus:ring-gray-400">
+                    Cancel
+                </button>
+                <button id="confirmDelete"
+                    class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition focus:outline-none focus:ring-2 focus:ring-red-500">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function confirmDelete(username, userId) {
+            const modal = document.getElementById('deleteModal');
+            modal.classList.remove('hidden');
+
+            document.getElementById('deleteUsername').textContent = username;
+
+            document.getElementById('cancelDelete').onclick = function () {
+                modal.classList.add('hidden');
+            };
+
+            document.getElementById('confirmDelete').onclick = function () {
+                // Use base_url from PHP to build correct path
+                const baseUrl = "<?= base_url(); ?>";
+                window.location.href = `${baseUrl}SuperAdmin/delete_user/${userId}`;
+            };
+        }
+    </script>
+
     <script>
         document.getElementById('liveSearch').addEventListener('keyup', function () {
             let query = this.value;
